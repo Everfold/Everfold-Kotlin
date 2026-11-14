@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -34,7 +32,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.PermanentDrawerSheet
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,7 +60,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -100,7 +96,6 @@ import everfold.shared.generated.resources.setup_preferences
 import everfold.shared.generated.resources.test_connection
 import everfold.shared.generated.resources.testing_connection
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.StringResource
 
 private enum class SetupStep { Welcome, Preferences, Mode, Cluster }
 
@@ -314,31 +309,6 @@ internal fun OnboardingScreen(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SetupChoice(
-    label: StringResource,
-    selected: Boolean,
-    onClick: () -> Unit,
-    detail: StringResource? = null,
-) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Row(
-            Modifier.fillMaxWidth().selectable(selected, role = Role.RadioButton, onClick = onClick).padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            RadioButton(selected, onClick = null)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(localizedString(label), style = MaterialTheme.typography.titleSmall)
-                if (detail != null) Text(localizedString(detail), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
