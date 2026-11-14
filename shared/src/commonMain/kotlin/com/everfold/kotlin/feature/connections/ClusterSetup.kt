@@ -46,10 +46,13 @@ internal fun validIp(value: String): Boolean {
         val parts = value.split('.')
         return parts.size == 4 && parts.all { it.isNotEmpty() && it.length <= 3 && it.all(Char::isDigit) && it.toIntOrNull() in 0..255 }
     }
-    if (value.count { it == ':' } < 2 || value.contains(":::")) return false
+    return validIpv6(value)
+}
+
+private fun validIpv6(value: String): Boolean {
     val halves = value.split("::")
-    if (halves.size > 2) return false
-    val groups = halves.flatMap { it.split(':') }.filter { it.isNotEmpty() }
-    if (groups.any { it.length > 4 || it.any { char -> char !in "0123456789abcdefABCDEF" } }) return false
-    return if (halves.size == 2) groups.size < 8 else groups.size == 8 && !value.startsWith(':') && !value.endsWith(':')
+    val groups = halves.flatMap { if (it.isEmpty()) emptyList() else it.split(':') }
+    val validGroups = groups.all { it.isNotEmpty() && it.length <= 4 && it.all { char -> char in "0123456789abcdefABCDEF" } }
+    val validCount = if (halves.size == 2) groups.size < 8 else groups.size == 8
+    return halves.size <= 2 && validGroups && validCount
 }

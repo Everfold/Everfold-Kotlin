@@ -49,6 +49,17 @@ class ClusterSetupTest {
     }
 
     @Test
+    fun compressedIpv6RejectsStrayBoundaryColons() {
+        listOf(":1::", "::1:", ":2001:db8::1", "2001:db8::1:").forEach { address ->
+            val setup = ClusterSetup(method = ClusterMethod.Central, ip = address, port = "443")
+            assertEquals(setOf(ClusterField.Ip), setup.invalidFields, address)
+        }
+        listOf("::", "::1", "2001:db8::", "2001:db8::1", "1:2:3:4:5:6:7:8").forEach { address ->
+            assertTrue(ClusterSetup(method = ClusterMethod.Central, ip = address, port = "443").isValid, address)
+        }
+    }
+
+    @Test
     fun validationReportsOnlyFieldsRequiredByTheActiveMethod() {
         val form = ClusterSetup(method = ClusterMethod.Central, ip = "not-an-ip", port = "70000", auth = ClusterAuth.Password)
         assertEquals(setOf(ClusterField.Ip, ClusterField.Port, ClusterField.Account, ClusterField.Password), form.invalidFields)
