@@ -1,5 +1,6 @@
 package com.everfold.kotlin.feature.conversation
 
+import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.ui.localization.UiText
 
 /** 消息角色区分用户输入与助手回复 */
@@ -17,6 +18,7 @@ data class ConversationUiState(
     val title: UiText,
     val preview: UiText,
     val updatedLabel: UiText,
+    val connectionId: String = BUILT_IN_CONNECTION_ID,
     val messages: List<ChatMessage> = emptyList(),
     val draft: String = "",
     val isPinned: Boolean = false,

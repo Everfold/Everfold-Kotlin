@@ -96,7 +96,9 @@ fun ConversationScreen(
     onDraftChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
-    connectionLabel: String,
+    connectionContent: @Composable () -> Unit,
+    connectionNotice: @Composable () -> Unit,
+    canSend: Boolean,
     onRetry: () -> Unit,
     onPreviewState: (AgentRunState) -> Unit,
     autoFocusInput: Boolean,
@@ -161,11 +163,7 @@ fun ConversationScreen(
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(state.title.resolve(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    connectionLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                connectionContent()
             }
             if (compactNavigation) {
                 // 新建会话
@@ -177,6 +175,7 @@ fun ConversationScreen(
             if (showPreviewMenu) key(state.id) { AgentPreviewMenu(onPreviewState) }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        connectionNotice()
         key(state.id) { AgentStatusBar(state.runState, onRetry) }
         if (state.messages.isEmpty()) {
             WelcomeContent({
@@ -229,7 +228,7 @@ fun ConversationScreen(
                                                         inputValue.composition != null,
                                                 )
                                             ) {
-                                                if (!state.isResponding && state.draft.isNotBlank()) send()
+                                                if (canSend && !state.isResponding && state.draft.isNotBlank()) send()
                                                 true
                                             } else {
                                                 false
@@ -266,7 +265,7 @@ fun ConversationScreen(
                         ) {
                             FilledIconButton(
                                 onClick = if (state.isResponding) onStop else send,
-                                enabled = state.isResponding || state.draft.isNotBlank(),
+                                enabled = state.isResponding || (canSend && state.draft.isNotBlank()),
                                 modifier = Modifier.padding(bottom = 4.dp),
                             ) {
                                 AppIcon(

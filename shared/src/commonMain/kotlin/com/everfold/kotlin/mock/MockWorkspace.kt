@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.everfold.kotlin.feature.connections.ClusterSetup
-import com.everfold.kotlin.feature.connections.ConnectionMode
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ChatMessage
 import com.everfold.kotlin.feature.conversation.ConversationUiState
@@ -31,13 +30,17 @@ import kotlinx.coroutines.launch
 class MockWorkspace : ViewModel() {
     var initialized by mutableStateOf(false)
         private set
-    var clusterSetup by mutableStateOf(ClusterSetup())
-        private set
+    internal val connections = MockConnections(viewModelScope, ::stopConnectionSessions)
 
     fun completeSetup(setup: ClusterSetup?) {
-        clusterSetup = setup ?: ClusterSetup()
-        connectionMode = if (setup == null) ConnectionMode.Local else ConnectionMode.Remote
-        connectionPreview = setup != null
+        if (initialized) return
+        if (setup != null) {
+            val id = connections.add(setup.ip.ifBlank { "Beamlet" }, setup, autoConnect = true)
+            if (id != null) {
+                connections.connect(id)
+                selectNewConversationConnection(id)
+            }
+        }
         initialized = true
     }
 
@@ -47,11 +50,6 @@ class MockWorkspace : ViewModel() {
         private set
     var themeColor by mutableStateOf(ThemeColorSelection())
         private set
-    var connectionMode by mutableStateOf(ConnectionMode.Local)
-        private set
-    var connectionPreview by mutableStateOf(false)
-        private set
-
     private var nextId = 0
     private val replies = mutableMapOf<String, Job>()
 
@@ -75,7 +73,7 @@ class MockWorkspace : ViewModel() {
     /** 首次发送时把草稿转为正式会话置顶会话仍排在列表前方 */
     fun submitNewConversation(reply: String): String? {
         val input = newConversation.draft.trim()
-        if (input.isEmpty()) return null
+        if (input.isEmpty() || connections.find(newConversation.connectionId)?.isConnected != true) return null
         val id = "new-${++nextId}"
         val session = newConversation.copy(id = id, title = UiText.Literal(input.take(24)))
         conversations = (listOf(session) + conversations).sortedByDescending { it.isPinned }
@@ -128,18 +126,14 @@ class MockWorkspace : ViewModel() {
         themeColor = themeColor.copy(mode = ThemeColorMode.Custom, customSeed = color)
     }
 
-    fun changeConnectionMode(mode: ConnectionMode) {
-        connectionMode = mode
-        connectionPreview = false
+    fun selectNewConversationConnection(id: String) {
+        if (connections.find(id) != null) newConversation = newConversation.copy(connectionId = id)
     }
 
-    fun updateClusterSetup(value: ClusterSetup) {
-        clusterSetup = value
-        connectionPreview = false
-    }
-
-    fun updateConnectionPreview(connected: Boolean) {
-        connectionPreview = connected && connectionMode == ConnectionMode.Remote
+    private fun stopConnectionSessions(connectionId: String) {
+        conversations
+            .filter { it.connectionId == connectionId && it.runState in listOf(AgentRunState.Running, AgentRunState.Waiting) }
+            .forEach { stop(it.id) }
     }
 
     fun send(
@@ -148,7 +142,7 @@ class MockWorkspace : ViewModel() {
     ) {
         val session = conversations.firstOrNull { it.id == id } ?: return
         val input = session.draft.trim()
-        if (input.isEmpty() || session.isResponding) return
+        if (input.isEmpty() || session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
         update(id) {
             it.copy(
@@ -173,7 +167,7 @@ class MockWorkspace : ViewModel() {
         reply: String,
     ) {
         val session = conversations.firstOrNull { it.id == id } ?: return
-        if (session.isResponding) return
+        if (session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
         update(id) { it.copy(runState = AgentRunState.Running, messages = it.messages + ChatMessage(messageId, MessageRole.Assistant, "")) }
         streamReply(id, messageId, reply)

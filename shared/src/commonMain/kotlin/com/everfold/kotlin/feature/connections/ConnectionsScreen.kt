@@ -1,152 +1,148 @@
 package com.everfold.kotlin.feature.connections
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.SaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.everfold.kotlin.ui.components.SettingsLayout
+import com.everfold.kotlin.mock.MockConnections
+import com.everfold.kotlin.ui.components.AppIcon
+import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.connected_preview
-import everfold.shared.generated.resources.connection_mode
+import everfold.shared.generated.resources.connection_add
+import everfold.shared.generated.resources.connection_back
+import everfold.shared.generated.resources.connection_select_hint
 import everfold.shared.generated.resources.nav_connections
-import everfold.shared.generated.resources.not_connected
-import everfold.shared.generated.resources.retry_connection
-import everfold.shared.generated.resources.test_connection
-import everfold.shared.generated.resources.testing_connection
-import kotlinx.coroutines.delay
 
-/** 连接管理页切换本地或集群模式校验表单并演示测试结果 */
+/** 宽屏并列展示列表和详情窄屏逐级进入同一详情状态随连接 ID 保存 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConnectionsScreen(
-    mode: ConnectionMode,
-    setup: ClusterSetup,
-    previewConnected: Boolean,
-    onModeChange: (ConnectionMode) -> Unit,
-    onSetupChange: (ClusterSetup) -> Unit,
-    onConnectionChange: (Boolean) -> Unit,
+internal fun ConnectionsScreen(
+    connections: MockConnections,
+    navigation: ConnectionNavigationState,
+    onNewConversation: (String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
 ) {
-    var testing by remember(mode, setup) { mutableStateOf(false) }
-    var failed by remember(mode, setup) { mutableStateOf(false) }
-    var showError by remember(mode, setup.method, setup.auth) { mutableStateOf(false) }
-    var previewResult by remember { mutableStateOf(ConnectionPreviewResult.Success) }
-    val updateConnection by rememberUpdatedState(onConnectionChange)
-    // 延迟模拟测试参数变化时取消旧效果避免旧结果覆盖新配置
-    LaunchedEffect(testing, mode, setup, previewResult) {
-        if (testing) {
-            delay(900)
-            testing = false
-            failed = previewResult != ConnectionPreviewResult.Success
-            updateConnection(previewResult == ConnectionPreviewResult.Success)
-        }
-    }
-
-    // 连接
-    SettingsLayout(localizedString(Res.string.nav_connections), modifier, onBack) {
-        // 运行方式
-        Text(localizedString(Res.string.connection_mode), style = MaterialTheme.typography.titleMedium)
-        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            ConnectionMode.entries.forEach { item ->
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color =
-                        if (mode ==
-                            item
-                        ) {
-                            MaterialTheme.colorScheme.secondaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        },
-                ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                mode == item,
-                                role = Role.RadioButton,
-                                onClick = { onModeChange(item) },
-                            ).padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        RadioButton(selected = mode == item, onClick = null)
-
-                        // 标签见 ConnectionMode
-                        Text(localizedString(item.label), style = MaterialTheme.typography.titleMedium)
+    val pages = rememberSaveableStateHolder()
+    var query by rememberSaveable { mutableStateOf("") }
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val wide = maxWidth >= 900.dp
+        val selected = connections.find(navigation.selectedId.orEmpty())
+        val showingDetail = navigation.adding || selected != null
+        Column {
+            TopAppBar(
+                title = { Text(localizedString(Res.string.nav_connections)) },
+                navigationIcon = {
+                    if (!wide || navigation.canGoBack) {
+                        IconButton(onClick = onBack) {
+                            AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
+                        }
+                    }
+                },
+                actions = {
+                    if (!navigation.adding) {
+                        TextButton(onClick = navigation::add) {
+                            AppIcon(AppSymbol.Plus)
+                            Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
+                        }
+                    }
+                },
+            )
+            Row(Modifier.weight(1f)) {
+                if (wide || !showingDetail) {
+                    pages.SaveableStateProvider("list") {
+                        ConnectionList(
+                            connections.connections,
+                            selectedId = if (navigation.adding) null else navigation.selectedId,
+                            query = query,
+                            onQueryChange = { query = it },
+                            onSelect = navigation::open,
+                            modifier = if (wide) Modifier.width(300.dp) else Modifier.weight(1f),
+                        )
+                    }
+                    if (wide) VerticalDivider()
+                }
+                if (wide || showingDetail) {
+                    Box(Modifier.weight(1f).fillMaxSize()) {
+                        ConnectionPane(connections, navigation, pages, selected, onNewConversation)
                     }
                 }
             }
         }
-        if (mode == ConnectionMode.Remote) {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                ClusterConnectionForm(setup, wide = maxWidth >= 600.dp, onChange = onSetupChange, showErrors = showError)
-            }
-            ConnectionPreviewOptions(previewResult, onSelect = {
-                previewResult = it
-                testing = false
-                failed = false
-                onConnectionChange(false)
-            })
-            if (testing) LinearProgressIndicator(Modifier.fillMaxWidth())
-            Text(
-                localizedString(
-                    if (failed) {
-                        previewResult.description
-                    } else if (previewConnected) {
-                        // 已连接
-                        Res.string.connected_preview
-                    } else {
-                        // 尚未连接
-                        Res.string.not_connected
+    }
+}
+
+@Composable
+private fun ConnectionPane(
+    connections: MockConnections,
+    navigation: ConnectionNavigationState,
+    pages: SaveableStateHolder,
+    selected: Connection?,
+    onNewConversation: (String) -> Unit,
+) {
+    when {
+        navigation.adding -> {
+            pages.SaveableStateProvider("add") {
+                ConnectionEditor(
+                    profile = null,
+                    onSave = { draft, connect ->
+                        val id = connections.add(draft.name, draft.setup ?: ClusterSetup(), draft.autoConnect)
+                        if (id != null) {
+                            if (connect) connections.connect(id)
+                            navigation.open(id)
+                            pages.removeState("add")
+                        }
+                        id != null
                     },
-                ),
-                color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Button(onClick = {
-                showError = !setup.isValid
-                if (setup.isValid) {
-                    failed = false
-                    onConnectionChange(false)
-                    testing = true
-                }
-            }, enabled = !testing) {
+                    onCancel = { navigation.back() },
+                )
+            }
+        }
+
+        selected != null -> {
+            pages.SaveableStateProvider(selected.id) {
+                ConnectionDetails(
+                    connection = selected,
+                    onConnect = { connections.connect(selected.id, it) },
+                    onDisconnect = { connections.disconnect(selected.id) },
+                    onSave = { draft -> connections.save(selected.id, draft.name, draft.setup, draft.autoConnect) },
+                    onRemove = {
+                        connections.remove(selected.id)
+                        navigation.back()
+                        pages.removeState(selected.id)
+                    },
+                    onNewConversation = { onNewConversation(selected.id) },
+                )
+            }
+        }
+
+        else -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    localizedString(
-                        if (testing) {
-                            // 正在测试连接
-                            Res.string.testing_connection
-                        } else if (failed) {
-                            // 重试连接
-                            Res.string.retry_connection
-                        } else {
-                            // 测试连接
-                            Res.string.test_connection
-                        },
-                    ),
+                    localizedString(Res.string.connection_select_hint),
+                    Modifier.padding(24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

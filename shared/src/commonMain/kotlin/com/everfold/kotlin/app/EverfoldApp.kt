@@ -60,8 +60,10 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.app.navigation.AppDestination
-import com.everfold.kotlin.feature.connections.ConnectionMode
+import com.everfold.kotlin.feature.connections.ConnectionNavigationState
+import com.everfold.kotlin.feature.connections.ConnectionUnavailableNotice
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
+import com.everfold.kotlin.feature.connections.ConversationConnection
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ConversationScreen
 import com.everfold.kotlin.feature.sessions.SessionsScreen
@@ -75,9 +77,6 @@ import com.everfold.kotlin.ui.components.horizontalResizePointer
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.connected_preview
-import everfold.shared.generated.resources.connection_local
-import everfold.shared.generated.resources.not_connected
 import everfold.shared.generated.resources.resize_sessions
 import everfold.shared.generated.resources.sample_reply
 import kotlinx.coroutines.launch
@@ -104,6 +103,8 @@ fun EverfoldApp(
     val focusManager = LocalFocusManager.current
     val conversationStates = rememberSaveableStateHolder()
     val sessionListState = rememberSaveableStateHolder()
+    val connectionPageStates = rememberSaveableStateHolder()
+    val connectionNavigation = rememberSaveable(saver = ConnectionNavigationState.Saver) { ConnectionNavigationState() }
 
     var focusComposer by rememberSaveable { mutableStateOf(true) }
     var sessionsVisible by rememberSaveable { mutableStateOf(true) }
@@ -179,16 +180,27 @@ fun EverfoldApp(
                     )
                 }
             }
+            val navigateBack: () -> Unit = {
+                if (!wide && drawerState.isOpen) {
+                    closeDrawer()
+                } else if (destination != AppDestination.Connections || !connectionNavigation.back()) {
+                    destination = AppDestination.Sessions
+                }
+            }
+            val sessionConnectionId = (selected ?: workspace.newConversation).connectionId
+            val sessionConnection = workspace.connections.find(sessionConnectionId)
+            val openSessionConnection: () -> Unit = {
+                if (sessionConnection != null) {
+                    connectionNavigation.open(sessionConnectionId)
+                } else {
+                    connectionNavigation.showList()
+                }
+                destination = AppDestination.Connections
+            }
             NavigationBackHandler(
                 state = rememberNavigationEventState(NavigationEventInfo.None),
                 isBackEnabled = (!wide && drawerState.isOpen) || destination != AppDestination.Sessions,
-                onBackCompleted = {
-                    if (!wide && drawerState.isOpen) {
-                        closeDrawer()
-                    } else {
-                        destination = AppDestination.Sessions
-                    }
-                },
+                onBackCompleted = navigateBack,
             )
             ModalNavigationDrawer(
                 modifier =
@@ -196,7 +208,7 @@ fun EverfoldApp(
                         if (it.type == KeyEventType.KeyDown && it.key == Key.Escape &&
                             ((!wide && drawerState.isOpen) || destination != AppDestination.Sessions)
                         ) {
-                            if (!wide && drawerState.isOpen) closeDrawer() else destination = AppDestination.Sessions
+                            navigateBack()
                             true
                         } else if (it.type == KeyEventType.KeyDown && (it.isCtrlPressed || it.isMetaPressed)) {
                             when (it.key) {
@@ -374,19 +386,22 @@ fun EverfoldApp(
                                                     }
                                                 },
                                                 onStop = { selected?.let { workspace.stop(it.id) } },
-                                                connectionLabel =
-                                                    localizedString(
-                                                        when {
-                                                            // 本地
-                                                            workspace.connectionMode == ConnectionMode.Local -> Res.string.connection_local
-
-                                                            // 已连接
-                                                            workspace.connectionPreview -> Res.string.connected_preview
-
-                                                            // 尚未连接
-                                                            else -> Res.string.not_connected
-                                                        },
-                                                    ),
+                                                canSend = sessionConnection?.isConnected == true,
+                                                connectionContent = {
+                                                    ConversationConnection(
+                                                        workspace.connections.connections,
+                                                        sessionConnectionId,
+                                                        canSelect = selected == null,
+                                                        onSelect = workspace::selectNewConversationConnection,
+                                                        onOpen = openSessionConnection,
+                                                    )
+                                                },
+                                                connectionNotice = {
+                                                    ConnectionUnavailableNotice(
+                                                        sessionConnection,
+                                                        openSessionConnection,
+                                                    )
+                                                },
                                                 onRetry = { selected?.let { workspace.retry(it.id, reply) } },
                                                 onPreviewState = {
                                                     if (selected != null && it == AgentRunState.Running) {
@@ -402,15 +417,17 @@ fun EverfoldApp(
                                 }
 
                                 AppDestination.Connections -> {
-                                    ConnectionsScreen(
-                                        workspace.connectionMode,
-                                        workspace.clusterSetup,
-                                        workspace.connectionPreview,
-                                        workspace::changeConnectionMode,
-                                        workspace::updateClusterSetup,
-                                        workspace::updateConnectionPreview,
-                                        onBack = if (wide) null else ({ destination = AppDestination.Sessions }),
-                                    )
+                                    connectionPageStates.SaveableStateProvider("connections") {
+                                        ConnectionsScreen(
+                                            workspace.connections,
+                                            connectionNavigation,
+                                            onNewConversation = { id ->
+                                                workspace.selectNewConversationConnection(id)
+                                                openNewConversation()
+                                            },
+                                            onBack = navigateBack,
+                                        )
+                                    }
                                 }
 
                                 AppDestination.Settings -> {
