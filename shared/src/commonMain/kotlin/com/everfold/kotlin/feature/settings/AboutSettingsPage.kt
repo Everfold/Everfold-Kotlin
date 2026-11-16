@@ -26,6 +26,7 @@ import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.github_repository
+import everfold.shared.generated.resources.kernel_github_repository
 import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.official_website
 import everfold.shared.generated.resources.open_in_browser
@@ -68,10 +69,17 @@ internal fun AboutSettingsPage() {
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 AboutLink(
-                    // GitHub 仓库
+                    // 应用 GitHub 仓库
                     title = localizedString(Res.string.github_repository),
                     detail = "github.com/Everfold/Everfold-Kotlin",
                     url = "https://github.com/Everfold/Everfold-Kotlin",
+                )
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                AboutLink(
+                    // 内核 GitHub 仓库
+                    title = localizedString(Res.string.kernel_github_repository),
+                    detail = "github.com/Everfold/Beamlet",
+                    url = "https://github.com/Everfold/Beamlet",
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 AboutLink(

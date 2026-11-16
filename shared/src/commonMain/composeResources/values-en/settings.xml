@@ -12,7 +12,8 @@
     <string name="preview_notice">What should we write here?</string>
 
     <string name="official_website">Official website</string>
-    <string name="github_repository">GitHub repository</string>
+    <string name="github_repository">App GitHub repository</string>
+    <string name="kernel_github_repository">Core GitHub repository</string>
     <string name="open_source_license">Open-source license</string>
     <string name="open_in_browser">Open in browser</string>
 
