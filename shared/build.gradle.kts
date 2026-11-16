@@ -67,6 +67,10 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutinesTest)
         }
+        jvmTest.dependencies {
+            implementation(libs.compose.uiTest)
+            implementation(compose.desktop.currentOs)
+        }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.testRunner)
         }
@@ -75,4 +79,9 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+tasks.withType<Test>().configureEach {
+    systemProperty("java.awt.headless", "true")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
