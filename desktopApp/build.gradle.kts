@@ -18,6 +18,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.everfold.kotlin.MainKt"
+        jvmArgs += listOf("--enable-native-access=ALL-UNNAMED")
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
