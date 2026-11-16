@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -399,15 +399,21 @@ internal fun EverfoldApp(
                                                 onStop = { selected?.let { workspace.stop(it.id) } },
                                                 canSend = sessionConnection?.isConnected == true,
                                                 connectionContent = {
-                                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                         ConversationConnection(
                                                             workspace.connections.connections,
                                                             sessionConnectionId,
                                                             canSelect = selected == null,
                                                             onSelect = workspace::selectNewConversationConnection,
                                                             onOpen = openSessionConnection,
+                                                            modifier = Modifier.weight(1f, fill = false),
                                                         )
-                                                        WorkspaceSelector(session, options, canSelect = selected == null)
+                                                        WorkspaceSelector(
+                                                            session,
+                                                            options,
+                                                            canSelect = selected == null,
+                                                            modifier = Modifier.weight(1f, fill = false),
+                                                        )
                                                     }
                                                 },
                                                 composerTools = {

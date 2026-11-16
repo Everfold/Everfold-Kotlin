@@ -1,25 +1,17 @@
 package com.everfold.kotlin.feature.conversation
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
+import com.everfold.kotlin.ui.components.SelectionButton
 import com.everfold.kotlin.ui.components.SelectionChoice
 import com.everfold.kotlin.ui.components.SelectionMenu
 import com.everfold.kotlin.ui.localization.localizedString
@@ -35,6 +27,7 @@ internal fun WorkspaceSelector(
     state: ConversationUiState,
     options: ConversationOptions,
     canSelect: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val choices = if (canSelect) options.workspaces(state.connectionId) else listOfNotNull(state.workspace)
     ConversationSelector(
@@ -42,6 +35,7 @@ internal fun WorkspaceSelector(
         label = state.workspace?.name?.resolve() ?: localizedString(Res.string.workspace_unavailable),
         choices = choices.map { SelectionChoice(it.id, it.name.resolve(), it.path, it.id == state.workspace?.id) },
         onSelect = { if (canSelect) options.selectWorkspace(state.id, it) },
+        modifier = modifier,
         symbol = AppSymbol.Folder,
         showArrow = canSelect,
         enabled = choices.isNotEmpty(),
@@ -78,19 +72,14 @@ private fun ConversationSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier) {
-        TextButton(onClick = { expanded = true }, enabled = enabled, modifier = Modifier.semantics { contentDescription = title }) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (symbol != null) AppIcon(symbol)
-                Text(
-                    label,
-                    Modifier.widthIn(max = 180.dp).weight(1f, fill = false),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                if (showArrow) AppIcon(AppSymbol.ChevronDown)
-            }
-        }
+        SelectionButton(
+            title = title,
+            label = label,
+            onClick = { expanded = true },
+            enabled = enabled,
+            showArrow = showArrow,
+            leadingIcon = symbol?.let { { AppIcon(it, Modifier.size(18.dp)) } },
+        )
         SelectionMenu(title, choices, expanded && enabled, { expanded = false }) {
             expanded = false
             onSelect(it)

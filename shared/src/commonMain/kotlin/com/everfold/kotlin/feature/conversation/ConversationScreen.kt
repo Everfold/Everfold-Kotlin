@@ -143,7 +143,7 @@ fun ConversationScreen(
         onSend()
     }
     Column(modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             run {
                 val label =
                     localizedString(
@@ -164,16 +164,22 @@ fun ConversationScreen(
                     ) { AppIcon(if (compactNavigation) AppSymbol.Menu else AppSymbol.Sidebar, description = label) }
                 }
             }
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(state.title.resolve(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                connectionContent()
-            }
+            Text(
+                state.title.resolve(),
+                Modifier.weight(1f).padding(horizontal = 12.dp),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             // 新建会话
             val newConversationLabel = localizedString(Res.string.new_session)
             AppTooltip(newConversationLabel) {
                 IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
             }
             if (showPreviewMenu) key(state.id) { AgentPreviewMenu(onPreviewState) }
+        }
+        Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) {
+            connectionContent()
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         connectionNotice()
@@ -249,7 +255,6 @@ fun ConversationScreen(
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             composerTools()
-                            Spacer(Modifier.weight(1f))
                             AppTooltip(
                                 localizedString(
                                     when {
