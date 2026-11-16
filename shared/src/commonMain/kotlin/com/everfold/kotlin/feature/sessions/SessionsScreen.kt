@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,12 +20,14 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -46,7 +49,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ConversationUiState
+import com.everfold.kotlin.feature.conversation.label
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.components.AppTooltip
@@ -72,7 +77,6 @@ import everfold.shared.generated.resources.pin_session
 import everfold.shared.generated.resources.pinned_session
 import everfold.shared.generated.resources.recent_sessions
 import everfold.shared.generated.resources.rename_session
-import everfold.shared.generated.resources.replying
 import everfold.shared.generated.resources.restore_session
 import everfold.shared.generated.resources.save_session
 import everfold.shared.generated.resources.search_sessions
@@ -183,7 +187,7 @@ fun SessionsScreen(
                 label = { Text(localizedString(Res.string.archived_sessions)) },
             )
         }
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
+        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(filtered, key = { it.id }) { session ->
                 Surface(
                     modifier =
@@ -200,7 +204,7 @@ fun SessionsScreen(
                                     }
                                 }
                             },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color =
                         if (session.id ==
                             selectedId
@@ -210,26 +214,28 @@ fun SessionsScreen(
                             MaterialTheme.colorScheme.surfaceContainerLow
                         },
                 ) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    session.title.resolve(),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                if (session.isPinned) {
-                                    Text(
-                                        localizedString(Res.string.pinned_session),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                            }
+                            Text(
+                                session.title.resolve(),
+                                Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                             Box {
-                                IconButton(onClick = { menuId = session.id }) {
-                                    AppIcon(AppSymbol.More, description = localizedString(Res.string.session_actions))
+                                val menuButtonSize = if (desktopUi) 32.dp else 48.dp
+                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides menuButtonSize) {
+                                    IconButton(onClick = { menuId = session.id }, modifier = Modifier.size(menuButtonSize)) {
+                                        AppIcon(
+                                            AppSymbol.More,
+                                            modifier = Modifier.size(20.dp),
+                                            description = localizedString(Res.string.session_actions),
+                                        )
+                                    }
                                 }
                                 DropdownMenu(menuId == session.id, onDismissRequest = { menuId = null }) {
                                     DropdownMenuItem(text = { Text(localizedString(Res.string.rename_session)) }, onClick = {
@@ -276,18 +282,33 @@ fun SessionsScreen(
                                 }
                             }
                         }
-                        Text(
-                            session.preview.resolve(),
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            if (session.isResponding) localizedString(Res.string.replying) else session.updatedLabel.resolve(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val status = localizedString(session.runState.label)
+                            Text(
+                                if (session.isPinned) "${localizedString(Res.string.pinned_session)} · $status" else status,
+                                Modifier.weight(1f),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color =
+                                    when (session.runState) {
+                                        AgentRunState.Failed -> MaterialTheme.colorScheme.error
+                                        AgentRunState.Running -> MaterialTheme.colorScheme.primary
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                            )
+                            Text(
+                                session.updatedLabel.resolve(),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
