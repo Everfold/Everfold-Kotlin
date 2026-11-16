@@ -5,16 +5,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.back_to_conversation
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsLayout(
     title: String,
@@ -33,39 +35,43 @@ fun SettingsLayout(
     navigation: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            Modifier
-                .widthIn(max = 760.dp)
-                .fillMaxSize(),
-        ) {
-            Row(
-                Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+    Column(modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+            },
+            navigationIcon = {
                 if (onBack != null) {
                     IconButton(onClick = onBack) {
                         AppIcon(AppSymbol.Back, description = localizedString(Res.string.back_to_conversation))
                     }
                 }
-                Text(
-                    title,
-                    Modifier.padding(vertical = 12.dp),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-            navigation()
+            },
+        )
+        Box(
+            Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
             Column(
                 Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState)
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                content = content,
-            )
+                    .widthIn(max = 760.dp)
+                    .fillMaxSize(),
+            ) {
+                navigation()
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    content = content,
+                )
+            }
         }
     }
 }
