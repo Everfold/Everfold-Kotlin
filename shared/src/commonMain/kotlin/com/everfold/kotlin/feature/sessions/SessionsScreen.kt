@@ -214,25 +214,35 @@ fun SessionsScreen(
                             MaterialTheme.colorScheme.surfaceContainerLow
                         },
                 ) {
+                    val menuButtonSize = 32.dp
+                    val menuIconSize = 20.dp
+                    val textEdgeInset = (menuButtonSize - menuIconSize) / 2
                     Column(
-                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Text(
                                 session.title.resolve(),
-                                Modifier.weight(1f),
+                                Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Box {
-                                val menuButtonSize = if (desktopUi) 32.dp else 48.dp
+                                // Reserve compact layout space; Compose expands the touch target independently.
                                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides menuButtonSize) {
-                                    IconButton(onClick = { menuId = session.id }, modifier = Modifier.size(menuButtonSize)) {
+                                    IconButton(
+                                        onClick = { menuId = session.id },
+                                        modifier = Modifier.size(menuButtonSize),
+                                    ) {
                                         AppIcon(
                                             AppSymbol.More,
-                                            modifier = Modifier.size(20.dp),
+                                            modifier = Modifier.size(menuIconSize),
                                             description = localizedString(Res.string.session_actions),
                                         )
                                     }
@@ -290,7 +300,7 @@ fun SessionsScreen(
                             val status = localizedString(session.runState.label)
                             Text(
                                 if (session.isPinned) "${localizedString(Res.string.pinned_session)} · $status" else status,
-                                Modifier.weight(1f),
+                                Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -303,6 +313,7 @@ fun SessionsScreen(
                             )
                             Text(
                                 session.updatedLabel.resolve(),
+                                Modifier.padding(end = textEdgeInset),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
