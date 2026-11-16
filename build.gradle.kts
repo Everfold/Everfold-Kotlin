@@ -35,6 +35,10 @@ tasks.withType<DetektCreateBaselineTask>().configureEach {
     exclude("**/build/**")
 }
 
+tasks.named("check") {
+    dependsOn(":shared:jvmTest")
+}
+
 tasks.named<DependencyUpdatesTask>("dependencyUpdates") {
     checkConstraints = true
     rejectPreReleases = true
