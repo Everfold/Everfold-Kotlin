@@ -1,5 +1,8 @@
 package com.everfold.kotlin.feature.conversation
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -109,6 +113,17 @@ fun ConversationScreen(
         if (inputValue.text != state.draft) inputValue = TextFieldValue(state.draft, TextRange(state.draft.length))
     }
     val inputFocus = remember { FocusRequester() }
+    var inputFocused by remember { mutableStateOf(false) }
+    val inputBorderColor by animateColorAsState(
+        targetValue =
+            if (inputFocused) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
+        animationSpec = tween(150),
+        label = "inputBorderColor",
+    )
     LaunchedEffect(state.id, autoFocusInput, inputFocusRequest) {
         if (desktopUi && autoFocusInput) {
             withFrameNanos { }
@@ -177,7 +192,11 @@ fun ConversationScreen(
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Column(Modifier.widthIn(max = 840.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
-                Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    border = BorderStroke(1.dp, inputBorderColor),
+                ) {
                     Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.Bottom) {
                         ConversationTextScale(textSize) {
                             TextField(
@@ -187,30 +206,35 @@ fun ConversationScreen(
                                     onDraftChange(it.text)
                                 },
                                 modifier =
-                                    Modifier.weight(1f).focusRequester(inputFocus).onPreviewKeyEvent {
-                                        if (it.type == KeyEventType.KeyDown && it.key == Key.Enter &&
-                                            shortcut.matches(
-                                                ctrl = it.isCtrlPressed,
-                                                meta = it.isMetaPressed,
-                                                shift = it.isShiftPressed,
-                                                alt = it.isAltPressed,
-                                                desktop = desktopUi,
-                                                composing =
-                                                    inputValue.composition != null,
-                                            )
-                                        ) {
-                                            if (!state.isResponding && state.draft.isNotBlank()) send()
-                                            true
-                                        } else {
-                                            false
-                                        }
-                                    },
+                                    Modifier
+                                        .weight(
+                                            1f,
+                                        ).focusRequester(inputFocus)
+                                        .onFocusChanged { inputFocused = it.isFocused }
+                                        .onPreviewKeyEvent {
+                                            if (it.type == KeyEventType.KeyDown && it.key == Key.Enter &&
+                                                shortcut.matches(
+                                                    ctrl = it.isCtrlPressed,
+                                                    meta = it.isMetaPressed,
+                                                    shift = it.isShiftPressed,
+                                                    alt = it.isAltPressed,
+                                                    desktop = desktopUi,
+                                                    composing =
+                                                        inputValue.composition != null,
+                                                )
+                                            ) {
+                                                if (!state.isResponding && state.draft.isNotBlank()) send()
+                                                true
+                                            } else {
+                                                false
+                                            }
+                                        },
                                 placeholder = { Text(localizedString(Res.string.message_placeholder)) },
                                 maxLines = 5,
                                 colors =
                                     TextFieldDefaults.colors(
-                                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                        unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
                                         focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                                         unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                                     ),
