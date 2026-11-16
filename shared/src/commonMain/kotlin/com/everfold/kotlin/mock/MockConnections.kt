@@ -6,10 +6,12 @@ import androidx.compose.runtime.setValue
 import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.connections.Connection
+import com.everfold.kotlin.feature.connections.ConnectionManager
 import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.ConnectionProfile
 import com.everfold.kotlin.feature.connections.ConnectionRuntimeState
 import com.everfold.kotlin.feature.connections.ConnectionStatus
+import com.everfold.kotlin.feature.connections.failure
 import com.everfold.kotlin.ui.localization.UiText
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_this_device
@@ -26,8 +28,8 @@ private const val DISCONNECT_DELAY_MILLIS = 250L
 internal class MockConnections(
     private val scope: CoroutineScope,
     private val onUnavailable: (String) -> Unit,
-) {
-    var connections by mutableStateOf(
+) : ConnectionManager {
+    override var connections by mutableStateOf(
         listOf(
             Connection(
                 ConnectionProfile(BUILT_IN_CONNECTION_ID, UiText.Resource(Res.string.connection_this_device), autoConnect = true),
@@ -44,12 +46,10 @@ internal class MockConnections(
     private var nextId = 0
     private val operations = mutableMapOf<String, Job>()
 
-    fun find(id: String): Connection? = connections.firstOrNull { it.id == id }
-
-    fun add(
+    override fun add(
         name: String,
         setup: ClusterSetup,
-        autoConnect: Boolean = false,
+        autoConnect: Boolean,
     ): String? {
         if (name.isBlank() || !setup.isValid) return null
         val id = "connection-${++nextId}"
@@ -57,7 +57,7 @@ internal class MockConnections(
         return id
     }
 
-    fun save(
+    override fun save(
         id: String,
         name: String?,
         setup: ClusterSetup?,
@@ -77,9 +77,22 @@ internal class MockConnections(
         return true
     }
 
+    private var previewResults by mutableStateOf(emptyMap<String, ConnectionPreviewResult>())
+
+    fun previewResult(id: String): ConnectionPreviewResult = previewResults[id] ?: ConnectionPreviewResult.Success
+
+    fun selectPreviewResult(
+        id: String,
+        result: ConnectionPreviewResult,
+    ) {
+        if (find(id) != null) previewResults = previewResults + (id to result)
+    }
+
+    override fun connect(id: String) = connect(id, previewResult(id))
+
     fun connect(
         id: String,
-        result: ConnectionPreviewResult = ConnectionPreviewResult.Success,
+        result: ConnectionPreviewResult,
     ) {
         val connection = find(id) ?: return
         if (connection.runtime.status in
@@ -102,7 +115,7 @@ internal class MockConnections(
                                     kernelVersion = "Beamlet · preview",
                                 )
                             } else {
-                                it.runtime.copy(status = ConnectionStatus.Failed, failure = result)
+                                it.runtime.copy(status = ConnectionStatus.Failed, failure = result.failure)
                             },
                     )
                 }
@@ -110,7 +123,7 @@ internal class MockConnections(
             }
     }
 
-    fun disconnect(id: String) {
+    override fun disconnect(id: String) {
         val connection = find(id) ?: return
         cancelOperation(id)
         onUnavailable(id)
@@ -127,11 +140,12 @@ internal class MockConnections(
             }
     }
 
-    fun remove(id: String) {
+    override fun remove(id: String) {
         if (find(id)?.profile?.canRemove != true) return
         cancelOperation(id)
         onUnavailable(id)
         connections = connections.filterNot { it.id == id }
+        previewResults = previewResults - id
     }
 
     private fun cancelOperation(id: String) {

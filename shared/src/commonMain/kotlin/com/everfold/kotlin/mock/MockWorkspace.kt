@@ -16,6 +16,7 @@ import com.everfold.kotlin.ui.theme.ThemeColorMode
 import com.everfold.kotlin.ui.theme.ThemeColorSelection
 import com.everfold.kotlin.ui.theme.ThemeMode
 import com.everfold.kotlin.ui.theme.ThemePreset
+import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.just_now
 import everfold.shared.generated.resources.new_conversation_hint
@@ -27,10 +28,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 内存模拟工作区驱动界面演示不创建 Agent连接网络或持久化数据 */
-class MockWorkspace : ViewModel() {
+internal class MockWorkspace :
+    ViewModel(),
+    Workspace {
     var initialized by mutableStateOf(false)
         private set
-    internal val connections = MockConnections(viewModelScope, ::stopConnectionSessions)
+    override val connections = MockConnections(viewModelScope, ::stopConnectionSessions)
 
     fun completeSetup(setup: ClusterSetup?) {
         if (initialized) return
@@ -44,16 +47,18 @@ class MockWorkspace : ViewModel() {
         initialized = true
     }
 
-    var conversations by mutableStateOf(sampleConversations())
+    override var conversations by mutableStateOf(sampleConversations())
         private set
-    var themeMode by mutableStateOf(ThemeMode.System)
+    override var themeMode by mutableStateOf(ThemeMode.System)
         private set
-    var themeColor by mutableStateOf(ThemeColorSelection())
+    override var themeColor by mutableStateOf(ThemeColorSelection())
         private set
+    var replyText: String = "Preview reply"
+
     private var nextId = 0
     private val replies = mutableMapOf<String, Job>()
 
-    var newConversation by mutableStateOf(
+    override var newConversation by mutableStateOf(
         ConversationUiState(
             id = "new-conversation",
             // 新建会话
@@ -66,23 +71,23 @@ class MockWorkspace : ViewModel() {
     )
         private set
 
-    fun updateNewConversationDraft(value: String) {
+    override fun updateNewConversationDraft(value: String) {
         newConversation = newConversation.copy(draft = value)
     }
 
     /** 首次发送时把草稿转为正式会话置顶会话仍排在列表前方 */
-    fun submitNewConversation(reply: String): String? {
+    override fun submitNewConversation(): String? {
         val input = newConversation.draft.trim()
         if (input.isEmpty() || connections.find(newConversation.connectionId)?.isConnected != true) return null
         val id = "new-${++nextId}"
         val session = newConversation.copy(id = id, title = UiText.Literal(input.take(24)))
         conversations = (listOf(session) + conversations).sortedByDescending { it.isPinned }
         newConversation = newConversation.copy(draft = "")
-        send(id, reply)
+        send(id)
         return id
     }
 
-    fun renameConversation(
+    override fun renameConversation(
         id: String,
         title: String,
     ) {
@@ -90,7 +95,7 @@ class MockWorkspace : ViewModel() {
         update(id) { it.copy(title = UiText.Literal(title.trim())) }
     }
 
-    fun togglePinned(id: String) {
+    override fun togglePinned(id: String) {
         update(id) { it.copy(isPinned = !it.isPinned) }
         conversations = conversations.sortedByDescending { it.isPinned }
     }
@@ -100,33 +105,33 @@ class MockWorkspace : ViewModel() {
         update(id) { it.copy(isArchived = !it.isArchived) }
     }
 
-    fun deleteConversation(id: String) {
+    override fun deleteConversation(id: String) {
         replies.remove(id)?.cancel()
         conversations = conversations.filterNot { it.id == id }
     }
 
-    fun updateDraft(
+    override fun updateDraft(
         id: String,
         value: String,
     ) = update(id) { it.copy(draft = value) }
 
-    fun setTheme(mode: ThemeMode) {
+    override fun setTheme(mode: ThemeMode) {
         themeMode = mode
     }
 
-    fun useSystemThemeColor() {
+    override fun useSystemThemeColor() {
         themeColor = themeColor.copy(mode = ThemeColorMode.System)
     }
 
-    fun selectThemePreset(preset: ThemePreset) {
+    override fun selectThemePreset(preset: ThemePreset) {
         themeColor = themeColor.copy(mode = ThemeColorMode.Preset, preset = preset)
     }
 
-    fun applyCustomThemeColor(color: Color) {
+    override fun applyCustomThemeColor(color: Color) {
         themeColor = themeColor.copy(mode = ThemeColorMode.Custom, customSeed = color)
     }
 
-    fun selectNewConversationConnection(id: String) {
+    override fun selectNewConversationConnection(id: String) {
         if (connections.find(id) != null) newConversation = newConversation.copy(connectionId = id)
     }
 
@@ -136,10 +141,7 @@ class MockWorkspace : ViewModel() {
             .forEach { stop(it.id) }
     }
 
-    fun send(
-        id: String,
-        reply: String,
-    ) {
+    override fun send(id: String) {
         val session = conversations.firstOrNull { it.id == id } ?: return
         val input = session.draft.trim()
         if (input.isEmpty() || session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
@@ -159,18 +161,15 @@ class MockWorkspace : ViewModel() {
                         ),
             )
         }
-        streamReply(id, messageId, reply)
+        streamReply(id, messageId, replyText)
     }
 
-    fun retry(
-        id: String,
-        reply: String,
-    ) {
+    override fun retry(id: String) {
         val session = conversations.firstOrNull { it.id == id } ?: return
         if (session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
         update(id) { it.copy(runState = AgentRunState.Running, messages = it.messages + ChatMessage(messageId, MessageRole.Assistant, "")) }
-        streamReply(id, messageId, reply)
+        streamReply(id, messageId, replyText)
     }
 
     /** 切换演示状态前取消模拟回复并移除尚无内容的助手占位消息 */
@@ -214,7 +213,7 @@ class MockWorkspace : ViewModel() {
             }
     }
 
-    fun stop(id: String) {
+    override fun stop(id: String) {
         replies.remove(id)?.cancel()
         update(id) {
             it.copy(

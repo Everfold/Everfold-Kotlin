@@ -6,7 +6,7 @@
     <ID>ComplexCondition:EverfoldApp.kt:it.type == KeyEventType.KeyDown &amp;&amp; it.key == Key.Escape &amp;&amp; ((!wide &amp;&amp; drawerState.isOpen) || destination != AppDestination.Sessions)</ID>
     <ID>CyclomaticComplexMethod:ClusterConnectionForm.kt:@Composable internal fun ClusterConnectionForm</ID>
     <ID>CyclomaticComplexMethod:ConversationScreen.kt:@Composable fun ConversationScreen</ID>
-    <ID>CyclomaticComplexMethod:EverfoldApp.kt:@Composable fun EverfoldApp</ID>
+    <ID>CyclomaticComplexMethod:EverfoldApp.kt:@Composable internal fun EverfoldApp</ID>
     <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable internal fun OnboardingScreen</ID>
     <ID>CyclomaticComplexMethod:SessionsScreen.kt:@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class) @Composable fun SessionsScreen</ID>
     <ID>EmptyFunctionBlock:ConversationScrollbar.android.kt:{ }</ID>
@@ -17,7 +17,7 @@
     <ID>LongMethod:ConversationMessages.kt:@Composable internal fun ConversationMessages</ID>
     <ID>LongMethod:ConversationScreen.kt:@Composable fun ConversationScreen</ID>
     <ID>LongMethod:CustomColorDialog.kt:@Composable internal fun CustomColorDialog</ID>
-    <ID>LongMethod:EverfoldApp.kt:@Composable fun EverfoldApp</ID>
+    <ID>LongMethod:EverfoldApp.kt:@Composable internal fun EverfoldApp</ID>
     <ID>LongMethod:OnboardingScreen.kt:@Composable internal fun OnboardingScreen</ID>
     <ID>LongMethod:SessionsScreen.kt:@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class) @Composable fun SessionsScreen</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
@@ -61,6 +61,6 @@
     <ID>MatchingDeclarationName:EverfoldTheme.kt:ThemeMode</ID>
     <ID>ReturnCount:ClusterSetup.kt:internal fun validIp: Boolean</ID>
     <ID>ReturnCount:ThemeColor.kt:internal fun parseHexColor: Color?</ID>
-    <ID>TooManyFunctions:MockWorkspace.kt:MockWorkspace : ViewModel</ID>
+    <ID>TooManyFunctions:MockWorkspace.kt:MockWorkspace : ViewModelWorkspace</ID>
   </CurrentIssues>
 </SmellBaseline>

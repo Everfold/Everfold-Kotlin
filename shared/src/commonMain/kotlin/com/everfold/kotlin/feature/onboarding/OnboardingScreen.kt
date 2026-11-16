@@ -74,11 +74,11 @@ import com.everfold.kotlin.feature.connections.description
 import com.everfold.kotlin.feature.settings.AppearanceSettings
 import com.everfold.kotlin.feature.settings.LanguageSettings
 import com.everfold.kotlin.feature.settings.ThemeColorSettings
-import com.everfold.kotlin.mock.MockWorkspace
 import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.theme.AppearancePreferences
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_success
 import everfold.shared.generated.resources.continue_setup_shortcut
@@ -105,7 +105,7 @@ private enum class ConnectionTest { Idle, Testing, Success, Failure }
 /** 首次设置向导协调步骤偏好与模拟连接测试完成后回传配置 */
 @Composable
 internal fun OnboardingScreen(
-    workspace: MockWorkspace,
+    appearance: AppearancePreferences,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     onComplete: (ClusterSetup?) -> Unit,
@@ -242,7 +242,7 @@ internal fun OnboardingScreen(
 
                                 SetupStep.Preferences -> {
                                     OnboardingPreferences(
-                                        workspace,
+                                        appearance,
                                         language,
                                         onLanguageChange,
                                         preferenceColumns,
@@ -388,7 +388,7 @@ private fun SetupSidebar(
 
 @Composable
 private fun OnboardingPreferences(
-    workspace: MockWorkspace,
+    appearance: AppearancePreferences,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     columns: Int,
@@ -401,12 +401,12 @@ private fun OnboardingPreferences(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            OnboardingAppearance(workspace, appearanceHorizontal)
-            if (columns == 2) OnboardingThemeColors(workspace)
+            OnboardingAppearance(appearance, appearanceHorizontal)
+            if (columns == 2) OnboardingThemeColors(appearance)
         }
         if (columns != 2) {
             Column(Modifier.weight(1f)) {
-                OnboardingThemeColors(workspace)
+                OnboardingThemeColors(appearance)
             }
         }
         Column(Modifier.weight(1f)) {
@@ -416,19 +416,19 @@ private fun OnboardingPreferences(
 }
 
 @Composable
-private fun OnboardingThemeColors(workspace: MockWorkspace) {
+private fun OnboardingThemeColors(appearance: AppearancePreferences) {
     ThemeColorSettings(
-        workspace.themeColor,
-        workspace::useSystemThemeColor,
-        workspace::selectThemePreset,
-        workspace::applyCustomThemeColor,
+        appearance.themeColor,
+        appearance::useSystemThemeColor,
+        appearance::selectThemePreset,
+        appearance::applyCustomThemeColor,
     )
 }
 
 @Composable
 private fun OnboardingAppearance(
-    workspace: MockWorkspace,
+    appearance: AppearancePreferences,
     horizontal: Boolean,
 ) {
-    AppearanceSettings(workspace.themeMode, workspace::setTheme, horizontal)
+    AppearanceSettings(appearance.themeMode, appearance::setTheme, horizontal)
 }

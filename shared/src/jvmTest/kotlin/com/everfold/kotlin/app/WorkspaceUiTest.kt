@@ -7,6 +7,7 @@ import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.lifecycle.ViewModelStore
+import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.MockWorkspace
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
@@ -42,7 +43,13 @@ internal fun workspaceUiTest(
             setContent {
                 AppLanguageEnvironment(fixture.language) {
                     EverfoldTheme {
-                        EverfoldApp(fixture.workspace, fixture.language, { fixture.language = it })
+                        EverfoldApp(
+                            fixture.workspace,
+                            fixture.language,
+                            { fixture.language = it },
+                            onPreviewState = fixture.workspace::previewRunState,
+                            connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
+                        )
                     }
                 }
             }

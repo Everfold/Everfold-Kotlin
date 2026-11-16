@@ -13,9 +13,6 @@ import androidx.compose.runtime.setValue
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_success
-import everfold.shared.generated.resources.failure_certificate_hint
-import everfold.shared.generated.resources.failure_credentials_hint
-import everfold.shared.generated.resources.failure_timeout_hint
 import everfold.shared.generated.resources.preview_certificate
 import everfold.shared.generated.resources.preview_credentials
 import everfold.shared.generated.resources.preview_result
@@ -25,22 +22,17 @@ import everfold.shared.generated.resources.preview_timeout
 /** 连接测试的模拟结果界面演示不发起真实网络连接 */
 internal enum class ConnectionPreviewResult { Success, Timeout, Credentials, Certificate }
 
-internal val ConnectionPreviewResult.description
+internal val ConnectionPreviewResult.failure: ConnectionFailure?
     get() =
         when (this) {
-
-            // 连接成功
-            ConnectionPreviewResult.Success -> Res.string.connection_success
-
-            // 连接超时请检查 IP端口及节点是否可达然后重试
-            ConnectionPreviewResult.Timeout -> Res.string.failure_timeout_hint
-
-            // 身份验证失败请检查用户名和密码后重试
-            ConnectionPreviewResult.Credentials -> Res.string.failure_credentials_hint
-
-            // 证书验证失败请检查所需证书和密钥文件是否匹配再重新导入
-            ConnectionPreviewResult.Certificate -> Res.string.failure_certificate_hint
+            ConnectionPreviewResult.Success -> null
+            ConnectionPreviewResult.Timeout -> ConnectionFailure.Timeout
+            ConnectionPreviewResult.Credentials -> ConnectionFailure.Credentials
+            ConnectionPreviewResult.Certificate -> ConnectionFailure.Certificate
         }
+
+internal val ConnectionPreviewResult.description
+    get() = failure?.description ?: Res.string.connection_success
 
 private val ConnectionPreviewResult.label
     get() =

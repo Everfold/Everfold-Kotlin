@@ -70,33 +70,30 @@ import com.everfold.kotlin.feature.sessions.SessionsScreen
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.feature.settings.SettingsScreen
-import com.everfold.kotlin.mock.MockWorkspace
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.components.horizontalResizePointer
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.resize_sessions
-import everfold.shared.generated.resources.sample_reply
 import kotlinx.coroutines.launch
 
-/** 主界面组装入口连接页面与模拟工作区并协调宽屏侧栏窄屏抽屉和快捷键 */
+/** 主界面组装入口连接页面与工作区并协调宽屏侧栏窄屏抽屉和快捷键 */
 @Composable
-fun EverfoldApp(
-    workspace: MockWorkspace,
+internal fun EverfoldApp(
+    workspace: Workspace,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
+    onPreviewState: ((String, AgentRunState) -> Unit)? = null,
+    connectionOverviewExtra: @Composable (String) -> Unit = {},
 ) {
     var textSize by rememberSaveable { mutableStateOf(ConversationTextSize.System) }
     var shortcut by rememberSaveable { mutableStateOf(SendShortcut.ModifiedEnter) }
     var collapsePrompts by rememberSaveable { mutableStateOf(true) }
 
-    // 收到我们可以一起把这个想法继续展开
-    // 先明确你最希望得到的结果再把它拆成两三个小步骤你也可以补充背景约束或已有的材料
-    // 这是一段用于预览对话体验的示例回复尚未调用 Agent
-    val reply = localizedString(Res.string.sample_reply)
     var destination by rememberSaveable { mutableStateOf(AppDestination.Sessions) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -355,7 +352,7 @@ fun EverfoldApp(
                                                 textSize = textSize,
                                                 shortcut = shortcut,
                                                 collapsePrompts = collapsePrompts,
-                                                showPreviewMenu = selected != null,
+                                                showPreviewMenu = selected != null && onPreviewState != null,
                                                 inputFocusRequest = composerFocusRequest,
                                                 compactNavigation = !wide,
                                                 autoFocusInput = focusComposer,
@@ -376,13 +373,13 @@ fun EverfoldApp(
                                                 },
                                                 onSend = {
                                                     if (selected == null) {
-                                                        workspace.submitNewConversation(reply)?.let {
+                                                        workspace.submitNewConversation()?.let {
                                                             selectedId = it
                                                             sessionQuery = ""
                                                             focusComposer = true
                                                         }
                                                     } else {
-                                                        workspace.send(selected.id, reply)
+                                                        workspace.send(selected.id)
                                                     }
                                                 },
                                                 onStop = { selected?.let { workspace.stop(it.id) } },
@@ -402,12 +399,12 @@ fun EverfoldApp(
                                                         openSessionConnection,
                                                     )
                                                 },
-                                                onRetry = { selected?.let { workspace.retry(it.id, reply) } },
+                                                onRetry = { selected?.let { workspace.retry(it.id) } },
                                                 onPreviewState = {
                                                     if (selected != null && it == AgentRunState.Running) {
-                                                        workspace.retry(selected.id, reply)
+                                                        workspace.retry(selected.id)
                                                     } else if (selected != null) {
-                                                        workspace.previewRunState(selected.id, it)
+                                                        onPreviewState?.invoke(selected.id, it)
                                                     }
                                                 },
                                                 modifier = Modifier.weight(1f),
@@ -426,6 +423,7 @@ fun EverfoldApp(
                                                 openNewConversation()
                                             },
                                             onBack = navigateBack,
+                                            overviewExtra = connectionOverviewExtra,
                                         )
                                     }
                                 }

@@ -27,13 +27,15 @@ class SessionActionsTest {
                 val original = workspace.conversations
                 val homeId = workspace.newConversation.id
                 workspace.updateNewConversationDraft("  ")
-                assertNull(workspace.submitNewConversation("Reply"))
+                workspace.replyText = "Reply"
+                assertNull(workspace.submitNewConversation())
                 workspace.updateNewConversationDraft("  My first idea  ")
                 workspace.updateDraft("welcome", "Existing draft")
                 assertEquals(original.size, workspace.conversations.size)
                 assertEquals("  My first idea  ", workspace.newConversation.draft)
                 workspace.togglePinned("reading")
-                val id = assertNotNull(workspace.submitNewConversation("Reply"))
+                workspace.replyText = "Reply"
+                val id = assertNotNull(workspace.submitNewConversation())
                 assertEquals(original.size + 1, workspace.conversations.size)
                 assertEquals("reading", workspace.conversations.first().id)
                 val created = workspace.conversations.first { it.id == id }
@@ -42,7 +44,8 @@ class SessionActionsTest {
                 assertTrue(created.isResponding)
                 assertEquals("", workspace.newConversation.draft)
                 assertEquals(homeId, workspace.newConversation.id)
-                assertNull(workspace.submitNewConversation("Duplicate"))
+                workspace.replyText = "Duplicate"
+                assertNull(workspace.submitNewConversation())
                 assertEquals(original.size + 1, workspace.conversations.size)
                 assertEquals("Existing draft", workspace.conversations.first { it.id == "welcome" }.draft)
                 advanceUntilIdle()
@@ -56,7 +59,8 @@ class SessionActionsTest {
                 )
                 workspace.conversations.toList().forEach { workspace.deleteConversation(it.id) }
                 workspace.updateNewConversationDraft("Start again")
-                val next = assertNotNull(workspace.submitNewConversation("Another reply"))
+                workspace.replyText = "Another reply"
+                val next = assertNotNull(workspace.submitNewConversation())
                 assertTrue(next != id)
                 advanceUntilIdle()
                 assertEquals(1, workspace.conversations.size)
@@ -88,7 +92,8 @@ class SessionActionsTest {
             try {
                 val workspace = MockWorkspace()
                 workspace.updateDraft("welcome", "hello")
-                workspace.send("welcome", "A reply that continues in the archive")
+                workspace.replyText = "A reply that continues in the archive"
+                workspace.send("welcome")
                 advanceTimeBy(400)
                 workspace.toggleArchived("welcome")
                 advanceUntilIdle()
@@ -125,12 +130,15 @@ class SessionActionsTest {
             try {
                 val workspace = MockWorkspace()
                 workspace.updateNewConversationDraft("First message")
-                val named = assertNotNull(workspace.submitNewConversation("Reply"))
+                workspace.replyText = "Reply"
+                val named = assertNotNull(workspace.submitNewConversation())
                 workspace.renameConversation(named, "My title")
                 workspace.updateDraft("welcome", "hello")
                 workspace.updateDraft("week", "plan")
-                workspace.send("welcome", "A long reply that is still streaming")
-                workspace.send("week", "Other reply")
+                workspace.replyText = "A long reply that is still streaming"
+                workspace.send("welcome")
+                workspace.replyText = "Other reply"
+                workspace.send("week")
                 advanceTimeBy(400)
                 workspace.deleteConversation("welcome")
                 advanceUntilIdle()

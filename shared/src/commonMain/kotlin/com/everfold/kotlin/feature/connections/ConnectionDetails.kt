@@ -59,23 +59,23 @@ import everfold.shared.generated.resources.retry_connection
 @Composable
 internal fun ConnectionDetails(
     connection: Connection,
-    onConnect: (ConnectionPreviewResult) -> Unit,
+    onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onSave: (ConnectionDraft) -> Boolean,
     onRemove: () -> Unit,
     onNewConversation: () -> Unit,
     modifier: Modifier = Modifier,
+    overviewExtra: @Composable () -> Unit = {},
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var removing by rememberSaveable { mutableStateOf(false) }
-    var preview by rememberSaveable { mutableStateOf(ConnectionPreviewResult.Success) }
     val pages = rememberSaveableStateHolder()
     Column(modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(connection.profile.name.resolve(), style = MaterialTheme.typography.headlineSmall)
             ConnectionStatusLabel(connection.runtime.status)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ConnectionAction(connection.runtime.status, { onConnect(preview) }, onDisconnect)
+                ConnectionAction(connection.runtime.status, onConnect, onDisconnect)
                 OutlinedButton(onClick = onNewConversation, enabled = connection.isConnected) {
                     Text(localizedString(Res.string.connection_new_session))
                 }
@@ -89,7 +89,7 @@ internal fun ConnectionDetails(
         Box(Modifier.weight(1f)) {
             pages.SaveableStateProvider(tab) {
                 if (tab == 0) {
-                    ConnectionOverview(connection, preview, { preview = it }, onEdit = { tab = 1 }, onRemove = { removing = true })
+                    ConnectionOverview(connection, onEdit = { tab = 1 }, onRemove = { removing = true }, overviewExtra)
                 } else {
                     ConnectionEditor(connection.profile, onSave = { draft, _ -> onSave(draft) })
                 }
@@ -117,10 +117,9 @@ internal fun ConnectionDetails(
 @Composable
 private fun ConnectionOverview(
     connection: Connection,
-    preview: ConnectionPreviewResult,
-    onPreviewChange: (ConnectionPreviewResult) -> Unit,
     onEdit: () -> Unit,
     onRemove: () -> Unit,
+    extraContent: @Composable () -> Unit,
 ) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -162,7 +161,7 @@ private fun ConnectionOverview(
                 )
             }
             HorizontalDivider()
-            ConnectionPreviewOptions(preview, onPreviewChange)
+            extraContent()
             if (connection.profile.canRemove) {
                 TextButton(
                     onClick = onRemove,

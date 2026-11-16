@@ -17,8 +17,6 @@
   libXrender,
   libXtst,
   fontconfig,
-  makeFontsConf,
-  dejavu_fonts,
   gtk3,
 }:
 let
@@ -92,11 +90,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   gradleUpdateTask = "${finalAttrs.gradleBuildTask} ${finalAttrs.gradleCheckTask}";
 
   doCheck = true;
-
-  preCheck = ''
-    export LD_LIBRARY_PATH="${lib.makeLibraryPath runtimeLibraries}"
-    export FONTCONFIG_FILE="${makeFontsConf { fontDirectories = [ dejavu_fonts ]; }}"
-  '';
 
   desktopItems = [
     (makeDesktopItem {

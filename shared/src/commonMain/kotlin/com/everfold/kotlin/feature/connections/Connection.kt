@@ -7,6 +7,9 @@ import everfold.shared.generated.resources.connection_connecting
 import everfold.shared.generated.resources.connection_disconnected
 import everfold.shared.generated.resources.connection_disconnecting
 import everfold.shared.generated.resources.connection_failed
+import everfold.shared.generated.resources.failure_certificate_hint
+import everfold.shared.generated.resources.failure_credentials_hint
+import everfold.shared.generated.resources.failure_timeout_hint
 import kotlin.time.Instant
 
 const val BUILT_IN_CONNECTION_ID = "built-in"
@@ -34,10 +37,20 @@ internal val ConnectionStatus.label
             ConnectionStatus.Failed -> Res.string.connection_failed
         }
 
+internal enum class ConnectionFailure { Timeout, Credentials, Certificate }
+
+internal val ConnectionFailure.description
+    get() =
+        when (this) {
+            ConnectionFailure.Timeout -> Res.string.failure_timeout_hint
+            ConnectionFailure.Credentials -> Res.string.failure_credentials_hint
+            ConnectionFailure.Certificate -> Res.string.failure_certificate_hint
+        }
+
 /** 内核信息仅在成功连接后更新断开后保留最后一次快照 */
 internal data class ConnectionRuntimeState(
     val status: ConnectionStatus = ConnectionStatus.Disconnected,
-    val failure: ConnectionPreviewResult? = null,
+    val failure: ConnectionFailure? = null,
     val lastConnectedAt: Instant? = null,
     val kernelVersion: String? = null,
 )

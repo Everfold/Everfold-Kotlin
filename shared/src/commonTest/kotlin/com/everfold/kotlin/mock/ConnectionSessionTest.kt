@@ -64,7 +64,8 @@ class ConnectionSessionTest {
             advanceUntilIdle()
             workspace.selectNewConversationConnection(remote)
             workspace.updateNewConversationDraft("Remote question")
-            val id = assertNotNull(workspace.submitNewConversation("Reply"))
+            workspace.replyText = "Reply"
+            val id = assertNotNull(workspace.submitNewConversation())
             workspace.selectNewConversationConnection(BUILT_IN_CONNECTION_ID)
             assertEquals(remote, workspace.conversations.first { it.id == id }.connectionId)
             assertEquals(BUILT_IN_CONNECTION_ID, workspace.conversations.first { it.id == "welcome" }.connectionId)
@@ -78,9 +79,11 @@ class ConnectionSessionTest {
             workspace.selectNewConversationConnection(remote)
             workspace.updateNewConversationDraft("Keep this draft")
             val count = workspace.conversations.size
-            assertNull(workspace.submitNewConversation("Reply"))
+            workspace.replyText = "Reply"
+            assertNull(workspace.submitNewConversation())
             workspace.connections.remove(remote)
-            assertNull(workspace.submitNewConversation("Reply"))
+            workspace.replyText = "Reply"
+            assertNull(workspace.submitNewConversation())
             assertEquals(count, workspace.conversations.size)
             assertEquals(remote, workspace.newConversation.connectionId)
             assertEquals("Keep this draft", workspace.newConversation.draft)
@@ -94,9 +97,11 @@ class ConnectionSessionTest {
             advanceUntilIdle()
             workspace.selectNewConversationConnection(remote)
             workspace.updateNewConversationDraft("Remote question")
-            val remoteSession = assertNotNull(workspace.submitNewConversation("Remote reply is streaming"))
+            workspace.replyText = "Remote reply is streaming"
+            val remoteSession = assertNotNull(workspace.submitNewConversation())
             workspace.updateDraft("welcome", "Local question")
-            workspace.send("welcome", "Local reply continues")
+            workspace.replyText = "Local reply continues"
+            workspace.send("welcome")
             advanceTimeBy(400)
             workspace.updateDraft(remoteSession, "Next question")
             workspace.connections.disconnect(remote)
@@ -107,8 +112,10 @@ class ConnectionSessionTest {
             assertEquals(AgentRunState.Completed, workspace.conversations.first { it.id == "welcome" }.runState)
             workspace.connections.remove(remote)
             assertEquals(stopped, workspace.conversations.first { it.id == remoteSession })
-            workspace.retry(remoteSession, "Must not send")
-            workspace.send(remoteSession, "Must not send")
+            workspace.replyText = "Must not send"
+            workspace.retry(remoteSession)
+            workspace.replyText = "Must not send"
+            workspace.send(remoteSession)
             assertEquals(stopped, workspace.conversations.first { it.id == remoteSession })
         }
 

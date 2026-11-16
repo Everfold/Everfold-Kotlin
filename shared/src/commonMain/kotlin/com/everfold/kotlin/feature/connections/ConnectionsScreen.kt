@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.everfold.kotlin.mock.MockConnections
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
@@ -38,11 +37,12 @@ import everfold.shared.generated.resources.nav_connections
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConnectionsScreen(
-    connections: MockConnections,
+    connections: ConnectionManager,
     navigation: ConnectionNavigationState,
     onNewConversation: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    overviewExtra: @Composable (String) -> Unit = {},
 ) {
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
@@ -85,7 +85,7 @@ internal fun ConnectionsScreen(
                 }
                 if (wide || showingDetail) {
                     Box(Modifier.weight(1f).fillMaxSize()) {
-                        ConnectionPane(connections, navigation, pages, selected, onNewConversation)
+                        ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
                     }
                 }
             }
@@ -95,11 +95,12 @@ internal fun ConnectionsScreen(
 
 @Composable
 private fun ConnectionPane(
-    connections: MockConnections,
+    connections: ConnectionManager,
     navigation: ConnectionNavigationState,
     pages: SaveableStateHolder,
     selected: Connection?,
     onNewConversation: (String) -> Unit,
+    overviewExtra: @Composable (String) -> Unit,
 ) {
     when {
         navigation.adding -> {
@@ -124,7 +125,7 @@ private fun ConnectionPane(
             pages.SaveableStateProvider(selected.id) {
                 ConnectionDetails(
                     connection = selected,
-                    onConnect = { connections.connect(selected.id, it) },
+                    onConnect = { connections.connect(selected.id) },
                     onDisconnect = { connections.disconnect(selected.id) },
                     onSave = { draft -> connections.save(selected.id, draft.name, draft.setup, draft.autoConnect) },
                     onRemove = {
@@ -133,6 +134,7 @@ private fun ConnectionPane(
                         pages.removeState(selected.id)
                     },
                     onNewConversation = { onNewConversation(selected.id) },
+                    overviewExtra = { overviewExtra(selected.id) },
                 )
             }
         }

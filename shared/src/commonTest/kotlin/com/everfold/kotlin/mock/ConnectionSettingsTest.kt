@@ -4,6 +4,7 @@ import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.connections.ClusterAuth
 import com.everfold.kotlin.feature.connections.ClusterMethod
 import com.everfold.kotlin.feature.connections.ClusterSetup
+import com.everfold.kotlin.feature.connections.ConnectionFailure
 import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.ConnectionStatus
 import com.everfold.kotlin.ui.localization.UiText
@@ -69,7 +70,7 @@ class ConnectionSettingsTest {
             assertTrue(connections.find(first)?.isConnected == true)
             assertTrue(connections.find(BUILT_IN_CONNECTION_ID)?.isConnected == true)
             assertEquals(ConnectionStatus.Failed, connections.find(second)?.runtime?.status)
-            assertEquals(ConnectionPreviewResult.Credentials, connections.find(second)?.runtime?.failure)
+            assertEquals(ConnectionFailure.Credentials, connections.find(second)?.runtime?.failure)
             connections.connect(second)
             advanceUntilIdle()
             assertTrue(connections.connections.all { it.isConnected })
