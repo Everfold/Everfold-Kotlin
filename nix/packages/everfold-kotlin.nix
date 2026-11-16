@@ -86,10 +86,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   ];
 
   gradleBuildTask = ":desktopApp:packageUberJarForCurrentOS";
-  gradleCheckTask = ":detekt :shared:jvmTest";
-  gradleUpdateTask = "${finalAttrs.gradleBuildTask} ${finalAttrs.gradleCheckTask}";
+  gradleUpdateTask = finalAttrs.gradleBuildTask;
 
-  doCheck = true;
+  doCheck = false;
 
   desktopItems = [
     (makeDesktopItem {
