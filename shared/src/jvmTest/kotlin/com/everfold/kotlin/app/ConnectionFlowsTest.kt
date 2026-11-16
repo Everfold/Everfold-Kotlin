@@ -130,7 +130,8 @@ class ConnectionFlowsTest(
     fun offlineDraftCannotSendAndConnectedSessionKeepsItsBindingWhenDisconnected() =
         workspaceUiTest(width) { fixture ->
             val id = runOnIdle { assertNotNull(fixture.workspace.connections.add("Office", ClusterSetup())) }
-            onNodeWithText("本机 · 已连接").performClick()
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("连接") and hasText("本机 · 已连接") and hasClickAction()).performClick()
             onNodeWithText("Office · 未连接").performClick()
             onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Keep this question")
             onNodeWithContentDescription("发送").assertIsNotEnabled()

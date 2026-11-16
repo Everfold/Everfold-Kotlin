@@ -1,14 +1,10 @@
 package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,9 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.everfold.kotlin.ui.components.AppIcon
-import com.everfold.kotlin.ui.components.AppSymbol
-import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.agent_completed
@@ -39,7 +32,6 @@ import everfold.shared.generated.resources.agent_stopped
 import everfold.shared.generated.resources.agent_waiting
 import everfold.shared.generated.resources.agent_waiting_hint
 import everfold.shared.generated.resources.execution_details
-import everfold.shared.generated.resources.preview_agent_states
 
 /** 显示执行状态进度和演示步骤并在等待失败或停止时提供恢复入口 */
 @Composable
@@ -106,30 +98,6 @@ internal fun AgentStatusBar(
                 Modifier.padding(bottom = 12.dp),
                 style = MaterialTheme.typography.bodySmall,
             )
-        }
-    }
-}
-
-/** 预览用状态菜单手动切换模拟执行状态不控制真实 Agent */
-@Composable
-internal fun AgentPreviewMenu(onSelect: (AgentRunState) -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-    // 演示执行状态
-    val label = localizedString(Res.string.preview_agent_states)
-    Box {
-        AppTooltip(label) {
-            IconButton(onClick = { expanded = true }) { AppIcon(AppSymbol.More, description = label) }
-        }
-        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
-            AgentRunState.entries.forEach { state ->
-
-                // 状态见下方 AgentRunState.label 映射
-                DropdownMenuItem(text = { Text(localizedString(state.label)) }, onClick = {
-                    expanded = false
-                    onSelect(state)
-                })
-            }
         }
     }
 }

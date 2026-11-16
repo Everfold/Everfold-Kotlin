@@ -16,4 +16,8 @@
     <string name="attachment_remove">移除附件 %1$s</string>
     <string name="file_picker_failed">无法打开或读取所选文件，请重试。</string>
     <string name="dismiss_file_error">关闭文件提示</string>
+    <string name="conversation_menu">会话菜单</string>
+    <string name="menu_connection">连接</string>
+    <string name="menu_workspace">工作区</string>
+    <string name="connection_status_description">连接状态：%1$s</string>
 </resources>

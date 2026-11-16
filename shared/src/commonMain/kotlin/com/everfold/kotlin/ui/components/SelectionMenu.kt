@@ -69,6 +69,7 @@ private fun SelectionItems(
                     if (choice.detail.isNotEmpty()) Text(choice.detail, style = MaterialTheme.typography.bodySmall)
                 }
             },
+            enabled = choice.enabled,
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             trailingIcon = { if (choice.selected) AppIcon(AppSymbol.Check) },

@@ -1,17 +1,15 @@
 package com.everfold.kotlin.app
 
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.text.TextLayoutResult
 import com.everfold.kotlin.feature.connections.ClusterSetup
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.Test
@@ -19,54 +17,75 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalTestApi::class)
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 @RunWith(Parameterized::class)
 class ConversationHeaderTest(
     private val width: Int,
 ) {
     @Test
-    fun selectorsShareOneRowAndTypographyEvenWithLongNames() =
+    fun headerStaysOneRowAndShowsLiveConnectionStatus() =
         workspaceUiTest(width) { fixture ->
-            val connection = onNodeWithText("本机 · 已连接", useUnmergedTree = true).layout()
-            val workspace = onNodeWithText("默认工作区", useUnmergedTree = true).layout()
-            assertEquals(connection.layoutInput.style.fontSize, workspace.layoutInput.style.fontSize)
-            assertEquals(connection.layoutInput.style.fontWeight, workspace.layoutInput.style.fontWeight)
-            val longName = "Office connection with a very long name that should be truncated"
-            runOnIdle {
-                val id = assertNotNull(fixture.workspace.connections.add(longName, ClusterSetup()))
-                fixture.workspace.selectNewConversationConnection(id)
-            }
-            val left = onNodeWithContentDescription("选择连接").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-            val right = onNodeWithContentDescription("选择工作区").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-            assertEquals(left.center.y, right.center.y, absoluteTolerance = 1f)
-            assertTrue(left.right <= right.left)
-            assertTrue(right.right <= width)
-            assertEquals(1, onNodeWithText("$longName · 未连接", useUnmergedTree = true).layout().lineCount)
-            onNodeWithContentDescription("新建会话").assertIsDisplayed()
+            onNodeWithContentDescription("连接状态：已连接").assertIsDisplayed()
+            val longName = "Office connection with a very long name that belongs in the menu"
+            val id =
+                runOnIdle {
+                    assertNotNull(fixture.workspace.connections.add(longName, ClusterSetup())).also {
+                        fixture.workspace.selectNewConversationConnection(it)
+                    }
+                }
+            val indicator = onNodeWithContentDescription("连接状态：未连接").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            val create = onNodeWithContentDescription("新建会话").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            val menu = onNodeWithContentDescription("会话菜单").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            assertEquals(create.center.y, indicator.center.y, absoluteTolerance = 1f)
+            assertEquals(create.center.y, menu.center.y, absoluteTolerance = 1f)
+            assertTrue(menu.bottom <= 56f, "Header fits in a single 56 dp row")
+            assertTrue(indicator.right < create.left)
+            assertTrue(create.right <= menu.left)
+            onNodeWithText("$longName · 未连接").assertDoesNotExist()
+            onNodeWithText("默认工作区").assertDoesNotExist()
+            runOnIdle { fixture.workspace.connections.connect(id) }
+            onNodeWithContentDescription("连接状态：连接中").assertIsDisplayed()
+            runOnIdle { fixture.scheduler.advanceUntilIdle() }
+            onNodeWithContentDescription("连接状态：已连接").assertIsDisplayed()
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNodeWithText("$longName · 已连接").assertIsDisplayed()
+            onNodeWithText("默认工作区\n/workspace").assertIsDisplayed()
         }
 
     @Test
-    fun bottomSheetTitlesAndOptionTextHaveTheSameInset() =
-        workspaceUiTest(width) {
+    fun menuContainsContextAndAllowsReturningBetweenSelectors() =
+        workspaceUiTest(width) { fixture ->
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNodeWithText("本机 · 已连接").assertIsDisplayed()
             if (width < 600) {
-                onNodeWithContentDescription("选择连接").performClick()
-                val connectionTitle = onNodeWithText("选择连接", useUnmergedTree = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-                val manage = onNodeWithText("管理连接", useUnmergedTree = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-                assertEquals(connectionTitle.left, manage.left, absoluteTolerance = 1f)
-                onNode(hasText("本机 · 已连接") and !hasContentDescription("选择连接")).performClick()
-                onNodeWithContentDescription("选择工作区").performClick()
-                val workspaceTitle = onNodeWithText("选择工作区", useUnmergedTree = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-                val option = onNodeWithText("Notes", useUnmergedTree = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-                assertEquals(workspaceTitle.left, option.left, absoluteTolerance = 1f)
-                onNodeWithText("Notes").performClick()
+                val title = onNodeWithText("会话菜单", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+                val connection =
+                    onNode(
+                        hasText("连接") and hasAnySibling(hasText("本机 · 已连接")),
+                        useUnmergedTree = true,
+                    ).fetchSemanticsNode().boundsInRoot
+                assertEquals(title.left, connection.left, absoluteTolerance = 1f)
             }
+            onNode(hasText("连接") and hasText("本机 · 已连接") and hasClickAction()).performClick()
+            onNodeWithText("管理连接").assertIsDisplayed()
+            onNodeWithText("返回").performClick()
+            onNode(hasText("工作区") and hasClickAction()).performClick()
+            if (width < 600) {
+                val title = onNodeWithText("选择工作区", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+                val option = onNodeWithText("Notes", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+                assertEquals(title.left, option.left, absoluteTolerance = 1f)
+            }
+            onNodeWithText("Notes").performClick()
+            runOnIdle {
+                assertEquals(
+                    "/workspace/notes",
+                    fixture.workspace.newConversation.workspace
+                        ?.path,
+                )
+            }
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNodeWithText("Notes\n/workspace/notes").assertIsDisplayed()
         }
-
-    private fun SemanticsNodeInteraction.layout(): TextLayoutResult {
-        val results = mutableListOf<TextLayoutResult>()
-        performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
-        return results.single()
-    }
 
     companion object {
         @JvmStatic

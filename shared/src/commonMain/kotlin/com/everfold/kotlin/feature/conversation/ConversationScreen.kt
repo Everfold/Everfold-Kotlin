@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -97,16 +98,15 @@ fun ConversationScreen(
     onDraftChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
-    connectionContent: @Composable () -> Unit,
+    connectionIndicator: @Composable () -> Unit,
+    conversationMenu: @Composable () -> Unit,
     connectionNotice: @Composable () -> Unit,
     canSend: Boolean,
     onRetry: () -> Unit,
-    onPreviewState: (AgentRunState) -> Unit,
     autoFocusInput: Boolean,
     sessionsVisible: Boolean,
     onToggleSessions: () -> Unit,
     modifier: Modifier = Modifier,
-    showPreviewMenu: Boolean = true,
     inputFocusRequest: Int = 0,
     textSize: ConversationTextSize = ConversationTextSize.System,
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
@@ -143,7 +143,7 @@ fun ConversationScreen(
         onSend()
     }
     Column(modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             run {
                 val label =
                     localizedString(
@@ -164,22 +164,26 @@ fun ConversationScreen(
                     ) { AppIcon(if (compactNavigation) AppSymbol.Menu else AppSymbol.Sidebar, description = label) }
                 }
             }
-            Text(
-                state.title.resolve(),
+            Row(
                 Modifier.weight(1f).padding(horizontal = 12.dp),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                connectionIndicator()
+                Text(
+                    state.title.resolve(),
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             // 新建会话
             val newConversationLabel = localizedString(Res.string.new_session)
             AppTooltip(newConversationLabel) {
                 IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
             }
-            if (showPreviewMenu) key(state.id) { AgentPreviewMenu(onPreviewState) }
-        }
-        Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) {
-            connectionContent()
+            conversationMenu()
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         connectionNotice()

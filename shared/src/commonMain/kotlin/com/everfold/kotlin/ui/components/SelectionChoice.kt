@@ -5,4 +5,5 @@ internal data class SelectionChoice(
     val label: String,
     val detail: String = "",
     val selected: Boolean = false,
+    val enabled: Boolean = true,
 )

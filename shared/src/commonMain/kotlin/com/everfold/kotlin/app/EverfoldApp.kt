@@ -4,7 +4,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -63,17 +61,17 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.app.navigation.AppDestination
 import com.everfold.kotlin.feature.connections.ConnectionNavigationState
+import com.everfold.kotlin.feature.connections.ConnectionStatusIndicator
 import com.everfold.kotlin.feature.connections.ConnectionUnavailableNotice
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
-import com.everfold.kotlin.feature.connections.ConversationConnection
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentButton
 import com.everfold.kotlin.feature.conversation.AttachmentTarget
+import com.everfold.kotlin.feature.conversation.ConversationMenu
 import com.everfold.kotlin.feature.conversation.ConversationScreen
 import com.everfold.kotlin.feature.conversation.DraftAttachments
 import com.everfold.kotlin.feature.conversation.FilePickerError
 import com.everfold.kotlin.feature.conversation.ModelSelector
-import com.everfold.kotlin.feature.conversation.WorkspaceSelector
 import com.everfold.kotlin.feature.sessions.SessionsScreen
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.feature.settings.SendShortcut
@@ -366,7 +364,6 @@ internal fun EverfoldApp(
                                                 textSize = textSize,
                                                 shortcut = shortcut,
                                                 collapsePrompts = collapsePrompts,
-                                                showPreviewMenu = selected != null && onPreviewState != null,
                                                 inputFocusRequest = composerFocusRequest,
                                                 compactNavigation = !wide,
                                                 autoFocusInput = focusComposer,
@@ -398,23 +395,28 @@ internal fun EverfoldApp(
                                                 },
                                                 onStop = { selected?.let { workspace.stop(it.id) } },
                                                 canSend = sessionConnection?.isConnected == true,
-                                                connectionContent = {
-                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                        ConversationConnection(
-                                                            workspace.connections.connections,
-                                                            sessionConnectionId,
-                                                            canSelect = selected == null,
-                                                            onSelect = workspace::selectNewConversationConnection,
-                                                            onOpen = openSessionConnection,
-                                                            modifier = Modifier.weight(1f, fill = false),
-                                                        )
-                                                        WorkspaceSelector(
-                                                            session,
-                                                            options,
-                                                            canSelect = selected == null,
-                                                            modifier = Modifier.weight(1f, fill = false),
-                                                        )
-                                                    }
+                                                connectionIndicator = { ConnectionStatusIndicator(sessionConnection) },
+                                                conversationMenu = {
+                                                    ConversationMenu(
+                                                        session,
+                                                        workspace.connections.connections,
+                                                        options,
+                                                        canSelect = selected == null,
+                                                        onSelectConnection = workspace::selectNewConversationConnection,
+                                                        onOpenConnection = openSessionConnection,
+                                                        onPreviewState =
+                                                            if (selected != null && onPreviewState != null) {
+                                                                { state ->
+                                                                    if (state == AgentRunState.Running) {
+                                                                        workspace.retry(selected.id)
+                                                                    } else {
+                                                                        onPreviewState(selected.id, state)
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                null
+                                                            },
+                                                    )
                                                 },
                                                 composerTools = {
                                                     AttachmentButton(enabled = !session.isResponding && session.workspace != null) {
@@ -443,13 +445,6 @@ internal fun EverfoldApp(
                                                     )
                                                 },
                                                 onRetry = { selected?.let { workspace.retry(it.id) } },
-                                                onPreviewState = {
-                                                    if (selected != null && it == AgentRunState.Running) {
-                                                        workspace.retry(selected.id)
-                                                    } else if (selected != null) {
-                                                        onPreviewState?.invoke(selected.id, it)
-                                                    }
-                                                },
                                                 modifier = Modifier.weight(1f),
                                             )
                                         }

@@ -16,4 +16,8 @@
     <string name="attachment_remove">Remove attachment %1$s</string>
     <string name="file_picker_failed">Could not open or read the selected files. Please try again.</string>
     <string name="dismiss_file_error">Dismiss file notice</string>
+    <string name="conversation_menu">Conversation menu</string>
+    <string name="menu_connection">Connection</string>
+    <string name="menu_workspace">Workspace</string>
+    <string name="connection_status_description">Connection status: %1$s</string>
 </resources>

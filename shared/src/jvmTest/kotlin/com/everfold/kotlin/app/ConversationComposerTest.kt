@@ -29,7 +29,8 @@ class ConversationComposerTest(
     @Test
     fun selectorsAndAttachmentOnlySendingWorkAtBothWidths() =
         workspaceUiTest(width) { fixture ->
-            onNodeWithContentDescription("选择工作区").performClick()
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("工作区") and hasClickAction()).performClick()
             onNodeWithText("Notes").performClick()
             onNodeWithContentDescription("选择模型").performClick()
             onNodeWithText("推理模型").performClick()
@@ -59,9 +60,10 @@ class ConversationComposerTest(
             onNodeWithContentDescription("选择模型").assertIsEnabled()
             onNodeWithContentDescription("移除附件 brief.pdf").assertDoesNotExist()
             onNode(hasText("brief.pdf") and hasAnyAncestor(hasScrollAction()) and !hasClickAction()).assertIsDisplayed()
-            onNodeWithContentDescription("选择工作区").performClick()
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("工作区") and hasClickAction()).assertIsNotEnabled()
             onNodeWithText("默认工作区").assertDoesNotExist()
-            onNodeWithText("/workspace/notes").assertIsDisplayed()
+            onNodeWithText("Notes\n/workspace/notes").assertIsDisplayed()
         }
 
     @Test
@@ -70,7 +72,8 @@ class ConversationComposerTest(
             onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Keep my draft")
             runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
             onNodeWithContentDescription("上传文件").performClick()
-            onNodeWithContentDescription("选择工作区").performClick()
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("工作区") and hasClickAction()).performClick()
             onNodeWithText("Notes").performClick()
             onNodeWithText("draft.txt").assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("Keep my draft")).assertIsDisplayed()
