@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -25,13 +26,7 @@ internal fun ConnectionStatusIndicator(connection: Connection?) {
             Res.string.connection_status_description,
             localizedString(status?.label ?: Res.string.connection_removed),
         )
-    val color =
-        when (status) {
-            ConnectionStatus.Connected -> MaterialTheme.colorScheme.primary
-            ConnectionStatus.Failed -> MaterialTheme.colorScheme.error
-            ConnectionStatus.Connecting, ConnectionStatus.Disconnecting -> MaterialTheme.colorScheme.tertiary
-            ConnectionStatus.Disconnected, null -> MaterialTheme.colorScheme.outline
-        }
+    val color = if (connection?.isConnected == true) Color(0xFF43A047) else MaterialTheme.colorScheme.error
     AppTooltip(description) {
         Box(Modifier.size(8.dp).background(color, CircleShape).semantics { contentDescription = description })
     }
