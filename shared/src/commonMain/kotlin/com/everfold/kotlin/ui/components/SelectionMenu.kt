@@ -2,6 +2,8 @@ package com.everfold.kotlin.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -36,8 +38,15 @@ internal fun SelectionMenu(
     if (compact) {
         if (expanded) {
             ModalBottomSheet(onDismissRequest = onDismiss) {
-                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-                    Text(title, Modifier.padding(horizontal = 24.dp, vertical = 12.dp), style = MaterialTheme.typography.titleMedium)
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(
+                            max = 420.dp,
+                        ).verticalScroll(rememberScrollState())
+                        .padding(start = 12.dp, end = 12.dp, bottom = 24.dp),
+                ) {
+                    Text(title, Modifier.padding(horizontal = 12.dp, vertical = 12.dp), style = MaterialTheme.typography.titleMedium)
                     SelectionItems(choices, onSelect)
                 }
             }
@@ -60,6 +69,8 @@ private fun SelectionItems(
                     if (choice.detail.isNotEmpty()) Text(choice.detail, style = MaterialTheme.typography.bodySmall)
                 }
             },
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             trailingIcon = { if (choice.selected) AppIcon(AppSymbol.Check) },
             onClick = { onSelect(choice.id) },
         )
