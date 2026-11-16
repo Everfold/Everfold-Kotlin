@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -110,6 +111,8 @@ fun ConversationScreen(
     textSize: ConversationTextSize = ConversationTextSize.System,
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
     collapsePrompts: Boolean = true,
+    composerTools: @Composable RowScope.() -> Unit = {},
+    attachmentsContent: @Composable () -> Unit = {},
 ) {
     // 按会话保留编辑状态仅在外部草稿改变时同步避免打断光标和输入法组合
     var inputValue by remember(state.id) { mutableStateOf(TextFieldValue(state.draft, TextRange(state.draft.length))) }
@@ -202,7 +205,8 @@ fun ConversationScreen(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     border = BorderStroke(1.dp, inputBorderColor),
                 ) {
-                    Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.Bottom) {
+                    Column(Modifier.fillMaxWidth().padding(8.dp)) {
+                        attachmentsContent()
                         ConversationTextScale(textSize) {
                             TextField(
                                 value = inputValue,
@@ -212,9 +216,8 @@ fun ConversationScreen(
                                 },
                                 modifier =
                                     Modifier
-                                        .weight(
-                                            1f,
-                                        ).focusRequester(inputFocus)
+                                        .fillMaxWidth()
+                                        .focusRequester(inputFocus)
                                         .onFocusChanged { inputFocused = it.isFocused }
                                         .onPreviewKeyEvent {
                                             if (it.type == KeyEventType.KeyDown && it.key == Key.Enter &&
@@ -228,7 +231,7 @@ fun ConversationScreen(
                                                         inputValue.composition != null,
                                                 )
                                             ) {
-                                                if (canSend && !state.isResponding && state.draft.isNotBlank()) send()
+                                                if (canSend && !state.isResponding && state.hasSendableContent) send()
                                                 true
                                             } else {
                                                 false
@@ -246,36 +249,40 @@ fun ConversationScreen(
                                     ),
                             )
                         }
-                        AppTooltip(
-                            localizedString(
-                                when {
-                                    // 暂停
-                                    state.isResponding -> Res.string.stop_reply
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            composerTools()
+                            Spacer(Modifier.weight(1f))
+                            AppTooltip(
+                                localizedString(
+                                    when {
+                                        // 暂停
+                                        state.isResponding -> Res.string.stop_reply
 
-                                    // Enter 发送 · Shift + Enter 换行
-                                    desktopUi && shortcut == SendShortcut.Enter -> Res.string.send_shortcut_enter
+                                        // Enter 发送 · Shift + Enter 换行
+                                        desktopUi && shortcut == SendShortcut.Enter -> Res.string.send_shortcut_enter
 
-                                    // Ctrl/Cmd + Enter 发送 · Enter 换行
-                                    desktopUi -> Res.string.send_shortcut
+                                        // Ctrl/Cmd + Enter 发送 · Enter 换行
+                                        desktopUi -> Res.string.send_shortcut
 
-                                    // 发送
-                                    else -> Res.string.send_message
-                                },
-                            ),
-                        ) {
-                            FilledIconButton(
-                                onClick = if (state.isResponding) onStop else send,
-                                enabled = state.isResponding || (canSend && state.draft.isNotBlank()),
-                                modifier = Modifier.padding(bottom = 4.dp),
+                                        // 发送
+                                        else -> Res.string.send_message
+                                    },
+                                ),
                             ) {
-                                AppIcon(
-                                    if (state.isResponding) AppSymbol.Stop else AppSymbol.Send,
-                                    description =
-                                        localizedString(
-                                            // 暂停 / 发送
-                                            if (state.isResponding) Res.string.stop_reply else Res.string.send_message,
-                                        ),
-                                )
+                                FilledIconButton(
+                                    onClick = if (state.isResponding) onStop else send,
+                                    enabled = state.isResponding || (canSend && state.hasSendableContent),
+                                    modifier = Modifier.padding(bottom = 4.dp),
+                                ) {
+                                    AppIcon(
+                                        if (state.isResponding) AppSymbol.Stop else AppSymbol.Send,
+                                        description =
+                                            localizedString(
+                                                // 暂停 / 发送
+                                                if (state.isResponding) Res.string.stop_reply else Res.string.send_message,
+                                            ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -305,14 +312,20 @@ internal fun MessageItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        message.model?.let {
+            Text(it.name.resolve(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Spacer(Modifier.height(10.dp))
+        MessageAttachments(message.attachments)
         ConversationTextScale(textSize) {
             if (user) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                ) {
-                    UserPrompt(message, onPromptHeightChange, collapsePrompts)
+                if (message.text.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                    ) {
+                        UserPrompt(message, onPromptHeightChange, collapsePrompts)
+                    }
                 }
             } else {
                 SelectionContainer {
@@ -330,7 +343,7 @@ internal fun MessageItem(
         }
 
         // 复制消息
-        CopyTextButton(message.text, localizedString(Res.string.copy_message))
+        if (message.text.isNotEmpty()) CopyTextButton(message.text, localizedString(Res.string.copy_message))
     }
 }
 

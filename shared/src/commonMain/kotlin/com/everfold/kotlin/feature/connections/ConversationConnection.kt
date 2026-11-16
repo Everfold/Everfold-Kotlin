@@ -1,12 +1,14 @@
 package com.everfold.kotlin.feature.connections
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,9 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.ui.components.AppIcon
+import com.everfold.kotlin.ui.components.AppSymbol
+import com.everfold.kotlin.ui.components.SelectionChoice
+import com.everfold.kotlin.ui.components.SelectionMenu
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
+import everfold.shared.generated.resources.choose_connection
 import everfold.shared.generated.resources.connection_manage
 import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.connection_session_unavailable
@@ -42,22 +49,35 @@ internal fun ConversationConnection(
             ?: localizedString(Res.string.connection_removed)
     Box {
         TextButton(onClick = { if (canSelect) expanded = true else onOpen() }) {
-            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
-            connections.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text("${item.profile.name.resolve()} · ${localizedString(item.runtime.status.label)}") },
-                    onClick = {
-                        onSelect(item.id)
-                        expanded = false
-                    },
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(
+                    Modifier.size(8.dp).background(
+                        if (connection?.isConnected == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                        CircleShape,
+                    ),
                 )
+                Text(
+                    label,
+                    Modifier.widthIn(max = 220.dp).weight(1f, fill = false),
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (canSelect) AppIcon(AppSymbol.ChevronDown)
             }
-            DropdownMenuItem(text = { Text(localizedString(Res.string.connection_manage)) }, onClick = {
-                expanded = false
-                onOpen()
-            })
+        }
+        val choices =
+            connections.map {
+                SelectionChoice(
+                    it.id,
+                    "${it.profile.name.resolve()} · ${localizedString(it.runtime.status.label)}",
+                    selected =
+                        it.id == connectionId,
+                )
+            } + SelectionChoice("manage", localizedString(Res.string.connection_manage))
+        SelectionMenu(localizedString(Res.string.choose_connection), choices, expanded, { expanded = false }) {
+            expanded = false
+            if (it == "manage") onOpen() else onSelect(it)
         }
     }
 }

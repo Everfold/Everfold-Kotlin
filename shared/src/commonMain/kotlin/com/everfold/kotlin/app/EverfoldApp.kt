@@ -4,9 +4,11 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -65,7 +67,13 @@ import com.everfold.kotlin.feature.connections.ConnectionUnavailableNotice
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
 import com.everfold.kotlin.feature.connections.ConversationConnection
 import com.everfold.kotlin.feature.conversation.AgentRunState
+import com.everfold.kotlin.feature.conversation.AttachmentButton
+import com.everfold.kotlin.feature.conversation.AttachmentTarget
 import com.everfold.kotlin.feature.conversation.ConversationScreen
+import com.everfold.kotlin.feature.conversation.DraftAttachments
+import com.everfold.kotlin.feature.conversation.FilePickerError
+import com.everfold.kotlin.feature.conversation.ModelSelector
+import com.everfold.kotlin.feature.conversation.WorkspaceSelector
 import com.everfold.kotlin.feature.sessions.SessionsScreen
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.feature.settings.SendShortcut
@@ -73,6 +81,8 @@ import com.everfold.kotlin.feature.settings.SettingsScreen
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.components.horizontalResizePointer
+import com.everfold.kotlin.ui.files.FilePicker
+import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.workspace.Workspace
@@ -89,7 +99,9 @@ internal fun EverfoldApp(
     modifier: Modifier = Modifier,
     onPreviewState: ((String, AgentRunState) -> Unit)? = null,
     connectionOverviewExtra: @Composable (String) -> Unit = {},
+    filePicker: FilePicker = rememberFilePicker(),
 ) {
+    var fileErrorTarget by remember { mutableStateOf<AttachmentTarget?>(null) }
     var textSize by rememberSaveable { mutableStateOf(ConversationTextSize.System) }
     var shortcut by rememberSaveable { mutableStateOf(SendShortcut.ModifiedEnter) }
     var collapsePrompts by rememberSaveable { mutableStateOf(true) }
@@ -347,8 +359,10 @@ internal fun EverfoldApp(
                                         }
                                         // 按会话保存输入和滚动状态切换页面时避免相互覆盖
                                         conversationStates.SaveableStateProvider(selected?.id ?: workspace.newConversation.id) {
+                                            val session = selected ?: workspace.newConversation
+                                            val options = workspace.conversationOptions
                                             ConversationScreen(
-                                                state = selected ?: workspace.newConversation,
+                                                state = session,
                                                 textSize = textSize,
                                                 shortcut = shortcut,
                                                 collapsePrompts = collapsePrompts,
@@ -385,13 +399,36 @@ internal fun EverfoldApp(
                                                 onStop = { selected?.let { workspace.stop(it.id) } },
                                                 canSend = sessionConnection?.isConnected == true,
                                                 connectionContent = {
-                                                    ConversationConnection(
-                                                        workspace.connections.connections,
-                                                        sessionConnectionId,
-                                                        canSelect = selected == null,
-                                                        onSelect = workspace::selectNewConversationConnection,
-                                                        onOpen = openSessionConnection,
-                                                    )
+                                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                        ConversationConnection(
+                                                            workspace.connections.connections,
+                                                            sessionConnectionId,
+                                                            canSelect = selected == null,
+                                                            onSelect = workspace::selectNewConversationConnection,
+                                                            onOpen = openSessionConnection,
+                                                        )
+                                                        WorkspaceSelector(session, options, canSelect = selected == null)
+                                                    }
+                                                },
+                                                composerTools = {
+                                                    AttachmentButton(enabled = !session.isResponding && session.workspace != null) {
+                                                        val target = session.attachmentTarget
+                                                        fileErrorTarget = null
+                                                        filePicker.launch { result ->
+                                                            result
+                                                                .onSuccess { options.attach(target, it) }
+                                                                .onFailure { fileErrorTarget = target }
+                                                        }
+                                                    }
+                                                    ModelSelector(session, options, Modifier.weight(1f))
+                                                },
+                                                attachmentsContent = {
+                                                    DraftAttachments(session, options)
+                                                    if (fileErrorTarget ==
+                                                        session.attachmentTarget
+                                                    ) {
+                                                        FilePickerError { fileErrorTarget = null }
+                                                    }
                                                 },
                                                 connectionNotice = {
                                                     ConnectionUnavailableNotice(

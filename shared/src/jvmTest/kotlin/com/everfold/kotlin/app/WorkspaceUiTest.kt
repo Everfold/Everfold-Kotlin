@@ -7,8 +7,10 @@ import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.lifecycle.ViewModelStore
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.MockWorkspace
+import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
 import com.everfold.kotlin.ui.theme.EverfoldTheme
@@ -48,6 +50,7 @@ internal fun workspaceUiTest(
                             fixture.language,
                             { fixture.language = it },
                             onPreviewState = fixture.workspace::previewRunState,
+                            filePicker = FilePicker { it(fixture.fileResult) },
                             connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
                         )
                     }
@@ -68,4 +71,5 @@ internal class WorkspaceFixture(
     val scheduler: TestCoroutineScheduler,
 ) {
     var language by mutableStateOf(AppLanguage.Chinese)
+    var fileResult: Result<List<AttachmentSource>> = Result.success(emptyList())
 }
