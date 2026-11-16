@@ -168,12 +168,10 @@ fun ConversationScreen(
                 Text(state.title.resolve(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 connectionContent()
             }
-            if (compactNavigation) {
-                // 新建会话
-                val label = localizedString(Res.string.new_session)
-                AppTooltip(label) {
-                    IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = label) }
-                }
+            // 新建会话
+            val newConversationLabel = localizedString(Res.string.new_session)
+            AppTooltip(newConversationLabel) {
+                IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
             }
             if (showPreviewMenu) key(state.id) { AgentPreviewMenu(onPreviewState) }
         }
