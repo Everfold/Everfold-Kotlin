@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="connection_this_device">This device</string>
+    <string name="connection_disconnected">Disconnected</string>
+    <string name="connection_connecting">Connecting</string>
+    <string name="connection_disconnecting">Disconnecting</string>
+    <string name="connection_failed">Unable to connect</string>
+    <string name="connection_add">Add connection</string>
+    <string name="connection_back">Back</string>
+    <string name="connection_select_hint">Select a connection to view its information and configuration</string>
+    <string name="connection_count">%1$d connections · %2$d connected</string>
+    <string name="connection_search">Search connections</string>
+    <string name="connection_no_results">No matching connections</string>
+    <string name="connection_discovery">Discover nodes automatically</string>
+    <string name="connection_save">Save</string>
+    <string name="connection_save_connect">Save and connect</string>
+    <string name="connection_name">Connection name</string>
+    <string name="connection_name_required">Enter a connection name</string>
+    <string name="connection_auto_connect">Connect on startup</string>
+    <string name="connection_edit_hint">Saving changes to connection parameters requires reconnecting.</string>
+    <string name="connection_saved">Configuration saved</string>
+    <string name="connection_reset">Discard changes</string>
+    <string name="connection_new_session">New conversation here</string>
+    <string name="connection_overview">Overview</string>
+    <string name="connection_configuration">Configuration</string>
+    <string name="connection_remove_title">Remove “%1$s”?</string>
+    <string name="connection_remove_hint">This disconnects the connection and stops its running tasks. Conversation history and messages are kept, but sending through this connection will no longer be available.</string>
+    <string name="connection_remove">Remove connection</string>
+    <string name="connection_edit">Edit configuration</string>
+    <string name="connection_endpoint">Endpoint</string>
+    <string name="connection_kernel_version">Kernel version</string>
+    <string name="connection_info_unavailable">Available after connecting</string>
+    <string name="connection_last_connected">Last successful connection</string>
+    <string name="connection_never_connected">No successful connection yet</string>
+    <string name="connection_cached_info">Showing information from the last successful connection.</string>
+    <string name="connection_connect">Connect</string>
+    <string name="connection_disconnect">Disconnect</string>
+    <string name="connection_removed">Connection removed</string>
+    <string name="connection_manage">Manage connections</string>
+    <string name="connection_session_unavailable">The connection is unavailable. Messages and drafts are kept.</string>
+</resources>
