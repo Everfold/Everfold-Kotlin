@@ -274,9 +274,7 @@ internal fun OnboardingScreen(
                                             )
                                         }
 
-                                        ConnectionTest.Idle -> {
-                                            Unit
-                                        }
+                                        ConnectionTest.Idle -> {}
                                     }
                                 }
                             }
