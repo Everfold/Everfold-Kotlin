@@ -205,7 +205,7 @@ internal fun OnboardingScreen(
                     }
                     AnimatedContent(
                         targetState = step,
-                        modifier = Modifier.weight(1f, fill = !wide).fillMaxWidth(),
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
                         transitionSpec = {
                             val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
                             (slideInHorizontally(tween(240)) { direction * slideDistance } + fadeIn(tween(160, delayMillis = 40)))
