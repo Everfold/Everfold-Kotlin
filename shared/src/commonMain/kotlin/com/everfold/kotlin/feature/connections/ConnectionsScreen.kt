@@ -107,7 +107,7 @@ private fun ConnectionPane(
                 ConnectionEditor(
                     profile = null,
                     onSave = { draft, connect ->
-                        val id = connections.add(draft.name, draft.setup ?: ClusterSetup(), draft.autoConnect)
+                        val id = connections.add(draft.name.orEmpty(), draft.setup ?: ClusterSetup(), draft.autoConnect)
                         if (id != null) {
                             if (connect) connections.connect(id)
                             navigation.open(id)

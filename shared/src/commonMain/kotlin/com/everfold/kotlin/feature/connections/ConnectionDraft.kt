@@ -4,11 +4,12 @@ import androidx.compose.runtime.saveable.mapSaver
 
 /** 编辑草稿独立于已保存配置输入过程中不触发连接操作 */
 internal data class ConnectionDraft(
-    val name: String,
+    // null 表示沿用已保存的名称保留默认名称的资源引用
+    val name: String?,
     val setup: ClusterSetup?,
     val autoConnect: Boolean,
 ) {
-    val isValid: Boolean get() = name.isNotBlank() && setup?.isValid != false
+    val isValid: Boolean get() = name?.isBlank() != true && setup?.isValid != false
 
     companion object {
         val Saver =
@@ -31,7 +32,7 @@ internal data class ConnectionDraft(
                 },
                 restore = { values ->
                     ConnectionDraft(
-                        values["name"] as String,
+                        values["name"] as String?,
                         (values["method"] as String?)?.let { method ->
                             ClusterSetup(
                                 method = ClusterMethod.valueOf(method),

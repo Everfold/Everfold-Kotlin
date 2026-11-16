@@ -6,6 +6,7 @@ import com.everfold.kotlin.feature.connections.ClusterMethod
 import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.ConnectionStatus
+import com.everfold.kotlin.ui.localization.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -19,6 +20,27 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionSettingsTest {
+    @Test
+    fun savingSettingsPreservesTheDefaultNameUntilExplicitlyRenamed() =
+        runTest {
+            val unavailable = mutableListOf<String>()
+            val connections = MockConnections(this, unavailable::add)
+            val initial = assertNotNull(connections.find(BUILT_IN_CONNECTION_ID))
+
+            assertTrue(connections.save(initial.id, null, null, false))
+            val saved = assertNotNull(connections.find(initial.id))
+            assertEquals(initial.profile.name, saved.profile.name)
+            assertFalse(saved.profile.autoConnect)
+            assertEquals(initial.runtime, saved.runtime)
+
+            assertFalse(connections.save(initial.id, "  ", null, true))
+            assertEquals(saved, connections.find(initial.id))
+            assertTrue(connections.save(initial.id, "  My device  ", null, true))
+            assertTrue(connections.save(initial.id, null, null, false))
+            assertEquals(UiText.Literal("My device"), connections.find(initial.id)?.profile?.name)
+            assertTrue(unavailable.isEmpty())
+        }
+
     @Test
     fun savedConnectionsStayOfflineAndBuiltInConnectionStaysFirst() =
         runTest {

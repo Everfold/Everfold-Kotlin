@@ -50,7 +50,13 @@ internal fun ConnectionEditor(
 ) {
     val initialName = profile?.name?.resolve().orEmpty()
     var draft by rememberSaveable(stateSaver = ConnectionDraft.Saver) {
-        mutableStateOf(ConnectionDraft(initialName, if (profile == null) ClusterSetup() else profile.setup, profile?.autoConnect ?: false))
+        mutableStateOf(
+            ConnectionDraft(
+                name = if (profile == null) "" else null,
+                setup = if (profile == null) ClusterSetup() else profile.setup,
+                autoConnect = profile?.autoConnect ?: false,
+            ),
+        )
     }
     var showErrors by rememberSaveable { mutableStateOf(false) }
     var saved by rememberSaveable { mutableStateOf(false) }
@@ -72,7 +78,7 @@ internal fun ConnectionEditor(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             if (profile == null) Text(localizedString(Res.string.connection_add), style = MaterialTheme.typography.headlineSmall)
-            ConnectionFields(draft, update, showErrors)
+            ConnectionFields(draft, draft.name ?: initialName, update, showErrors)
             if (profile?.canEditEndpoint == true) {
                 Text(
                     localizedString(Res.string.connection_edit_hint),
@@ -87,7 +93,7 @@ internal fun ConnectionEditor(
                     OutlinedButton(onClick = { save(true) }) { Text(localizedString(Res.string.connection_save_connect)) }
                 } else {
                     TextButton(onClick = {
-                        update(ConnectionDraft(initialName, profile.setup, profile.autoConnect))
+                        update(ConnectionDraft(null, profile.setup, profile.autoConnect))
                         showErrors = false
                     }) { Text(localizedString(Res.string.connection_reset)) }
                 }
@@ -100,17 +106,18 @@ internal fun ConnectionEditor(
 @Composable
 private fun ConnectionFields(
     draft: ConnectionDraft,
+    name: String,
     onChange: (ConnectionDraft) -> Unit,
     showErrors: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         OutlinedTextField(
-            value = draft.name,
+            value = name,
             onValueChange = { onChange(draft.copy(name = it)) },
             label = { Text(localizedString(Res.string.connection_name)) },
             singleLine = true,
-            isError = showErrors && draft.name.isBlank(),
-            supportingText = { if (showErrors && draft.name.isBlank()) Text(localizedString(Res.string.connection_name_required)) },
+            isError = showErrors && name.isBlank(),
+            supportingText = { if (showErrors && name.isBlank()) Text(localizedString(Res.string.connection_name_required)) },
             modifier = Modifier.fillMaxWidth(),
         )
         if (draft.setup != null) {

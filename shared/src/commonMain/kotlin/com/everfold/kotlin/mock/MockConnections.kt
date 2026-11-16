@@ -59,20 +59,21 @@ internal class MockConnections(
 
     fun save(
         id: String,
-        name: String,
+        name: String?,
         setup: ClusterSetup?,
         autoConnect: Boolean,
     ): Boolean {
         val connection = find(id)
         val invalidEndpoint = connection?.profile?.canEditEndpoint == true && (setup == null || !setup.isValid)
-        if (connection == null || name.isBlank() || invalidEndpoint) return false
+        if (connection == null || name?.isBlank() == true || invalidEndpoint) return false
         val endpoint = if (connection.profile.canEditEndpoint) setup else null
         if (endpoint != connection.profile.setup) {
             cancelOperation(id)
             onUnavailable(id)
             update(id) { it.copy(runtime = ConnectionRuntimeState()) }
         }
-        update(id) { it.copy(profile = it.profile.copy(name = UiText.Literal(name.trim()), setup = endpoint, autoConnect = autoConnect)) }
+        val savedName = name?.let { UiText.Literal(it.trim()) } ?: connection.profile.name
+        update(id) { it.copy(profile = it.profile.copy(name = savedName, setup = endpoint, autoConnect = autoConnect)) }
         return true
     }
 
