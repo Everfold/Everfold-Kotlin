@@ -29,8 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.jump_to_latest
+import everfold.shared.generated.resources.model_unavailable
 import everfold.shared.generated.resources.stopped_hint
 import kotlinx.coroutines.launch
 
@@ -39,6 +41,7 @@ import kotlinx.coroutines.launch
 internal fun ConversationMessages(
     state: ConversationUiState,
     scrollRequest: Int,
+    connectionName: String,
     onJumpToLatest: () -> Unit,
     modifier: Modifier = Modifier,
     textSize: ConversationTextSize = ConversationTextSize.System,
@@ -84,7 +87,8 @@ internal fun ConversationMessages(
                 ) {
                     MessageItem(
                         message,
-                        Modifier.fillMaxWidth(messageWidthFraction),
+                        authorName = message.authorName(connectionName, state.model),
+                        modifier = Modifier.fillMaxWidth(messageWidthFraction),
                         textSize = textSize,
                         collapsePrompts = collapsePrompts,
                         onPromptHeightChange = { heightChange ->
@@ -124,6 +128,17 @@ internal fun ConversationMessages(
         }
     }
 }
+
+@Composable
+private fun ChatMessage.authorName(
+    connectionName: String,
+    fallbackModel: ConversationModel?,
+): String =
+    if (role == MessageRole.User) {
+        (model ?: fallbackModel)?.name?.resolve() ?: localizedString(Res.string.model_unavailable)
+    } else {
+        connectionName
+    }
 
 @Composable
 internal expect fun ConversationScrollbar(

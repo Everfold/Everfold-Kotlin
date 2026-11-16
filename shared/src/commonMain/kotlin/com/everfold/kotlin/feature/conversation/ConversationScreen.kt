@@ -86,13 +86,13 @@ import everfold.shared.generated.resources.suggestion_problem
 import everfold.shared.generated.resources.suggestion_week
 import everfold.shared.generated.resources.thinking
 import everfold.shared.generated.resources.welcome_title
-import everfold.shared.generated.resources.you
 import org.jetbrains.compose.resources.painterResource
 
 /** 会话页面组合导航执行状态消息与输入框具体动作交由外部回调处理 */
 @Composable
 fun ConversationScreen(
     state: ConversationUiState,
+    connectionName: String,
     compactNavigation: Boolean,
     onNewConversation: () -> Unit,
     onDraftChange: (String) -> Unit,
@@ -198,6 +198,7 @@ fun ConversationScreen(
                 ConversationMessages(
                     state,
                     scrollRequest,
+                    connectionName = connectionName,
                     textSize = textSize,
                     collapsePrompts = collapsePrompts,
                     onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
@@ -303,6 +304,7 @@ fun ConversationScreen(
 @Composable
 internal fun MessageItem(
     message: ChatMessage,
+    authorName: String,
     modifier: Modifier = Modifier,
     onPromptHeightChange: (Int) -> Unit = {},
     textSize: ConversationTextSize = ConversationTextSize.System,
@@ -313,13 +315,12 @@ internal fun MessageItem(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!user) AppIcon(AppSymbol.Spark, modifier = Modifier.size(18.dp))
             Text(
-                // 你
-                if (user) localizedString(Res.string.you) else "Everfold",
+                authorName,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        message.model?.let {
+        message.model?.takeIf { !user }?.let {
             Text(it.name.resolve(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(10.dp))

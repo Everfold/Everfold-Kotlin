@@ -83,8 +83,10 @@ import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
+import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.resize_sessions
 import kotlinx.coroutines.launch
 
@@ -361,6 +363,9 @@ internal fun EverfoldApp(
                                             val options = workspace.conversationOptions
                                             ConversationScreen(
                                                 state = session,
+                                                connectionName =
+                                                    sessionConnection?.profile?.name?.resolve()
+                                                        ?: localizedString(Res.string.connection_removed),
                                                 textSize = textSize,
                                                 shortcut = shortcut,
                                                 collapsePrompts = collapsePrompts,
