@@ -5,29 +5,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.interop.LocalUIViewController
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.Foundation.NSObject
 import platform.Foundation.NSURL
 import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIDocumentPickerViewController
 import platform.UIKit.UIViewController
 import platform.UniformTypeIdentifiers.UTTypeItem
+import platform.darwin.NSObject
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 internal actual fun rememberFilePicker(): FilePicker {
     val presenter = LocalUIViewController.current
-    return remember(presenter) { IosFilePicker(presenter) }
+    return remember(presenter) { FilePicker(IosFilePicker(presenter)::launch) }
 }
 
 @OptIn(ExperimentalForeignApi::class)
 private class IosFilePicker(
     private val presenter: UIViewController,
 ) : NSObject(),
-    FilePicker,
     UIDocumentPickerDelegateProtocol {
     private var callback: ((Result<List<AttachmentSource>>) -> Unit)? = null
 
-    override fun launch(onResult: (Result<List<AttachmentSource>>) -> Unit) {
+    fun launch(onResult: (Result<List<AttachmentSource>>) -> Unit) {
         if (callback != null) return
         callback = onResult
         val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeItem), asCopy = true)
