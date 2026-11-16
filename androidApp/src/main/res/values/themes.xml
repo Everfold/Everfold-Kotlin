@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Everfold.Base" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/startup_background</item>
+    </style>
+    <style name="Theme.Everfold" parent="Theme.Everfold.Base"/>
+</resources>
