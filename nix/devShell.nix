@@ -42,6 +42,7 @@ pkgs.mkShell rec {
   };
 
   shellHook = ''
+    export XDG_DATA_DIRS="${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
     export ANDROID_AVD_HOME="$HOME/.android/avd"
     mkdir -p "$ANDROID_AVD_HOME"
   '';

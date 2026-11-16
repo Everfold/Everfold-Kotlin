@@ -115,6 +115,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     makeWrapper "$out/lib/jre/bin/java" "$out/bin/everfold-kotlin" \
       --prefix LD_LIBRARY_PATH : "$out/lib/jre/lib:${lib.makeLibraryPath runtimeLibraries}" \
+      --prefix XDG_DATA_DIRS : "${gtk3}/share/gsettings-schemas/${gtk3.name}" \
       --add-flags "--enable-native-access=ALL-UNNAMED -jar $out/share/everfold-kotlin/everfold-kotlin.jar"
 
     runHook postInstall
