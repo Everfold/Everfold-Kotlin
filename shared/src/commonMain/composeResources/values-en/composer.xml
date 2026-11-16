@@ -1,0 +1,19 @@
+<resources>
+    <string name="choose_connection">Choose connection</string>
+    <string name="choose_workspace">Choose workspace</string>
+    <string name="workspace_default">Default workspace</string>
+    <string name="workspace_unavailable">Workspace unavailable</string>
+    <string name="choose_model">Choose model</string>
+    <string name="model_general">General model</string>
+    <string name="model_reasoning">Reasoning model</string>
+    <string name="model_fast">Fast model</string>
+    <string name="model_unavailable">Model unavailable</string>
+    <string name="attach_files">Upload files</string>
+    <string name="attachment_uploading">Uploading</string>
+    <string name="attachment_ready">Ready</string>
+    <string name="attachment_failed">Upload failed</string>
+    <string name="attachment_retry">Retry uploading %1$s</string>
+    <string name="attachment_remove">Remove attachment %1$s</string>
+    <string name="file_picker_failed">Could not open or read the selected files. Please try again.</string>
+    <string name="dismiss_file_error">Dismiss file notice</string>
+</resources>

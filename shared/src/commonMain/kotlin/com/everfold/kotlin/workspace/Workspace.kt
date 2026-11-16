@@ -1,6 +1,7 @@
 package com.everfold.kotlin.workspace
 
 import com.everfold.kotlin.feature.connections.ConnectionManager
+import com.everfold.kotlin.feature.conversation.ConversationOptions
 import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.ui.theme.AppearancePreferences
 
@@ -12,6 +13,7 @@ internal interface Workspace : AppearancePreferences {
     val connections: ConnectionManager
     val conversations: List<ConversationUiState>
     val newConversation: ConversationUiState
+    val conversationOptions: ConversationOptions
 
     fun updateNewConversationDraft(value: String)
 

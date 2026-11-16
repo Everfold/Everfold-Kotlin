@@ -1,0 +1,19 @@
+<resources>
+    <string name="choose_connection">选择连接</string>
+    <string name="choose_workspace">选择工作区</string>
+    <string name="workspace_default">默认工作区</string>
+    <string name="workspace_unavailable">工作区不可用</string>
+    <string name="choose_model">选择模型</string>
+    <string name="model_general">通用模型</string>
+    <string name="model_reasoning">推理模型</string>
+    <string name="model_fast">快速模型</string>
+    <string name="model_unavailable">模型不可用</string>
+    <string name="attach_files">上传文件</string>
+    <string name="attachment_uploading">上传中</string>
+    <string name="attachment_ready">已就绪</string>
+    <string name="attachment_failed">上传失败</string>
+    <string name="attachment_retry">重试上传 %1$s</string>
+    <string name="attachment_remove">移除附件 %1$s</string>
+    <string name="file_picker_failed">无法打开或读取所选文件，请重试。</string>
+    <string name="dismiss_file_error">关闭文件提示</string>
+</resources>

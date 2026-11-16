@@ -10,6 +10,7 @@ import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ChatMessage
 import com.everfold.kotlin.feature.conversation.ConversationUiState
+import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.feature.conversation.MessageRole
 import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.ui.theme.ThemeColorMode
@@ -47,7 +48,9 @@ internal class MockWorkspace :
         initialized = true
     }
 
-    override var conversations by mutableStateOf(sampleConversations())
+    override val conversationOptions = MockConversationOptions(viewModelScope, connections, ::read, ::update)
+
+    override var conversations by mutableStateOf(sampleConversations().map(MockConversationCatalog::initialize))
         private set
     override var themeMode by mutableStateOf(ThemeMode.System)
         private set
@@ -59,14 +62,16 @@ internal class MockWorkspace :
     private val replies = mutableMapOf<String, Job>()
 
     override var newConversation by mutableStateOf(
-        ConversationUiState(
-            id = "new-conversation",
-            // 新建会话
-            title = UiText.Resource(Res.string.new_session),
-            // 等待输入
-            preview = UiText.Resource(Res.string.new_conversation_hint),
-            // 刚刚
-            updatedLabel = UiText.Resource(Res.string.just_now),
+        MockConversationCatalog.initialize(
+            ConversationUiState(
+                id = DRAFT_CONVERSATION_ID,
+                // 新建会话
+                title = UiText.Resource(Res.string.new_session),
+                // 等待输入
+                preview = UiText.Resource(Res.string.new_conversation_hint),
+                // 刚刚
+                updatedLabel = UiText.Resource(Res.string.just_now),
+            ),
         ),
     )
         private set
@@ -78,11 +83,24 @@ internal class MockWorkspace :
     /** 首次发送时把草稿转为正式会话置顶会话仍排在列表前方 */
     override fun submitNewConversation(): String? {
         val input = newConversation.draft.trim()
-        if (input.isEmpty() || connections.find(newConversation.connectionId)?.isConnected != true) return null
+        if (!newConversation.hasSendableContent || connections.find(newConversation.connectionId)?.isConnected != true) return null
         val id = "new-${++nextId}"
-        val session = newConversation.copy(id = id, title = UiText.Literal(input.take(24)))
+        val session =
+            newConversation.copy(
+                id = id,
+                title =
+                    UiText.Literal(
+                        input
+                            .ifBlank {
+                                newConversation.attachments
+                                    .first()
+                                    .source.name
+                            }.take(24),
+                    ),
+            )
         conversations = (listOf(session) + conversations).sortedByDescending { it.isPinned }
-        newConversation = newConversation.copy(draft = "")
+        newConversation =
+            newConversation.copy(draft = "", attachments = emptyList(), attachmentRevision = newConversation.attachmentRevision + 1)
         send(id)
         return id
     }
@@ -106,6 +124,7 @@ internal class MockWorkspace :
     }
 
     override fun deleteConversation(id: String) {
+        conversationOptions.attachments.interrupt(id)
         replies.remove(id)?.cancel()
         conversations = conversations.filterNot { it.id == id }
     }
@@ -132,10 +151,24 @@ internal class MockWorkspace :
     }
 
     override fun selectNewConversationConnection(id: String) {
-        if (connections.find(id) != null) newConversation = newConversation.copy(connectionId = id)
+        if (connections.find(id) != null && id != newConversation.connectionId) {
+            conversationOptions.attachments.interrupt(newConversation.id)
+            newConversation =
+                MockConversationCatalog.initialize(
+                    newConversation.copy(
+                        connectionId = id,
+                        attachments = emptyList(),
+                        attachmentRevision =
+                            newConversation.attachmentRevision + 1,
+                    ),
+                )
+        }
     }
 
     private fun stopConnectionSessions(connectionId: String) {
+        (conversations + newConversation)
+            .filter { it.connectionId == connectionId }
+            .forEach { conversationOptions.attachments.interrupt(it.id) }
         conversations
             .filter { it.connectionId == connectionId && it.runState in listOf(AgentRunState.Running, AgentRunState.Waiting) }
             .forEach { stop(it.id) }
@@ -144,20 +177,29 @@ internal class MockWorkspace :
     override fun send(id: String) {
         val session = conversations.firstOrNull { it.id == id } ?: return
         val input = session.draft.trim()
-        if (input.isEmpty() || session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
+        if (!session.hasSendableContent || session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
         update(id) {
             it.copy(
-                preview = UiText.Literal(input),
+                preview =
+                    UiText.Literal(
+                        input.ifBlank {
+                            session.attachments
+                                .first()
+                                .source.name
+                        },
+                    ),
                 // 刚刚
                 updatedLabel = UiText.Resource(Res.string.just_now),
                 draft = "",
+                attachments = emptyList(),
+                attachmentRevision = it.attachmentRevision + 1,
                 runState = AgentRunState.Running,
                 messages =
                     it.messages +
                         listOf(
-                            ChatMessage("$messageId-user", MessageRole.User, input),
-                            ChatMessage(messageId, MessageRole.Assistant, ""),
+                            ChatMessage("$messageId-user", MessageRole.User, input, attachments = it.attachments, model = it.model),
+                            ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
                         ),
             )
         }
@@ -168,7 +210,13 @@ internal class MockWorkspace :
         val session = conversations.firstOrNull { it.id == id } ?: return
         if (session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
-        update(id) { it.copy(runState = AgentRunState.Running, messages = it.messages + ChatMessage(messageId, MessageRole.Assistant, "")) }
+        update(id) {
+            it.copy(
+                runState = AgentRunState.Running,
+                messages =
+                    it.messages + ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
+            )
+        }
         streamReply(id, messageId, replyText)
     }
 
@@ -225,10 +273,16 @@ internal class MockWorkspace :
         }
     }
 
+    private fun read(id: String) = if (id == newConversation.id) newConversation else conversations.find { it.id == id }
+
     private fun update(
         id: String,
         transform: (ConversationUiState) -> ConversationUiState,
     ) {
-        conversations = conversations.map { if (it.id == id) transform(it) else it }
+        if (id == newConversation.id) {
+            newConversation = transform(newConversation)
+        } else {
+            conversations = conversations.map { if (it.id == id) transform(it) else it }
+        }
     }
 }
