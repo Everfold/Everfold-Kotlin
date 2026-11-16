@@ -70,7 +70,6 @@ import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.copy_message
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.message_placeholder
@@ -349,9 +348,6 @@ internal fun MessageItem(
                 }
             }
         }
-
-        // 复制消息
-        if (message.text.isNotEmpty()) CopyTextButton(message.text, localizedString(Res.string.copy_message))
     }
 }
 
