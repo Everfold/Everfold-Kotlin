@@ -97,10 +97,12 @@ import everfold.shared.generated.resources.test_connection
 import everfold.shared.generated.resources.testing_connection
 import kotlinx.coroutines.delay
 
+/** 首次设置步骤欢迎偏好模式以及可选的集群配置 */
 private enum class SetupStep { Welcome, Preferences, Mode, Cluster }
 
 private enum class ConnectionTest { Idle, Testing, Success, Failure }
 
+/** 首次设置向导协调步骤偏好与模拟连接测试完成后回传配置 */
 @Composable
 internal fun OnboardingScreen(
     workspace: MockWorkspace,
@@ -118,6 +120,7 @@ internal fun OnboardingScreen(
     var test by remember { mutableStateOf(ConnectionTest.Idle) }
     var previewResult by remember { mutableStateOf(ConnectionPreviewResult.Success) }
     var showError by remember { mutableStateOf(false) }
+    // 连接测试只延迟演示所选结果不创建真实连接
     LaunchedEffect(test, form, previewResult, step) {
         if (test == ConnectionTest.Testing) {
             delay(900)
@@ -131,6 +134,7 @@ internal fun OnboardingScreen(
     }
     val back = { navigate(SetupStep.entries[(step.ordinal - 1).coerceAtLeast(0)]) }
     val finish = step == SetupStep.Cluster || (step == SetupStep.Mode && !cluster)
+    // 集群配置先校验并通过模拟测试再允许完成本地模式直接完成
     val advance = {
         when {
             step == SetupStep.Cluster && test != ConnectionTest.Success -> {
@@ -218,9 +222,16 @@ internal fun OnboardingScreen(
                         OnboardingScrollArea {
                             val title =
                                 when (displayedStep) {
+                                    // 下一步交给智能体
                                     SetupStep.Welcome -> Res.string.onboarding_welcome
+
+                                    // 个性化设置
                                     SetupStep.Preferences -> Res.string.setup_preferences
+
+                                    // 使用模式
                                     SetupStep.Mode -> Res.string.setup_mode
+
+                                    // 连接集群
                                     SetupStep.Cluster -> Res.string.setup_cluster
                                 }
                             Text(localizedString(title), style = MaterialTheme.typography.headlineMedium)
@@ -262,6 +273,7 @@ internal fun OnboardingScreen(
 
                                         ConnectionTest.Success -> {
                                             Text(
+                                                // 连接成功
                                                 localizedString(Res.string.connection_success),
                                                 color = MaterialTheme.colorScheme.primary,
                                             )
@@ -269,6 +281,7 @@ internal fun OnboardingScreen(
 
                                         ConnectionTest.Failure -> {
                                             Text(
+                                                // 提示见 ConnectionPreviewResult.description
                                                 localizedString(previewResult.description),
                                                 color = MaterialTheme.colorScheme.error,
                                             )
@@ -286,20 +299,35 @@ internal fun OnboardingScreen(
                         horizontalArrangement = if (wide) Arrangement.spacedBy(12.dp, Alignment.End) else Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        // 上一步 · Alt + ← / 上一步
                         AppTooltip(localizedString(if (desktopUi) Res.string.previous_step_shortcut else Res.string.previous_step)) {
                             TextButton(
                                 onClick = back,
                                 enabled = step != SetupStep.Welcome,
-                            ) { Text(localizedString(Res.string.previous_step)) }
+                            ) {
+                                // 上一步
+                                Text(localizedString(Res.string.previous_step))
+                            }
                         }
                         val actionLabel =
                             when {
+                                // 正在测试连接
                                 step == SetupStep.Cluster && test == ConnectionTest.Testing -> Res.string.testing_connection
+
+                                // 重试连接
                                 step == SetupStep.Cluster && test == ConnectionTest.Failure -> Res.string.retry_connection
+
+                                // 测试连接
                                 step == SetupStep.Cluster && test != ConnectionTest.Success -> Res.string.test_connection
+
+                                // 进入主页
                                 finish -> Res.string.enter_home
+
+                                // 下一步
                                 else -> Res.string.next_step
                             }
+
+                        // 继续 · Ctrl + Enter
                         AppTooltip(localizedString(if (desktopUi) Res.string.continue_setup_shortcut else actionLabel)) {
                             Button(onClick = advance, enabled = test != ConnectionTest.Testing) {
                                 Text(localizedString(actionLabel))
@@ -329,11 +357,19 @@ private fun SetupSidebar(
             SetupStep.entries.take(if (cluster) 4 else 3).forEach { destination ->
                 val label =
                     when (destination) {
+                        // 欢迎
                         SetupStep.Welcome -> Res.string.setup_nav_welcome
+
+                        // 语言与外观
                         SetupStep.Preferences -> Res.string.setup_nav_preferences
+
+                        // 使用模式
                         SetupStep.Mode -> Res.string.setup_mode
+
+                        // 连接集群
                         SetupStep.Cluster -> Res.string.setup_cluster
                     }
+                // 侧栏仅允许返回已到达的步骤避免绕过配置流程
                 val enabled = destination.ordinal <= furthestStep
                 NavigationDrawerItem(
                     label = { Text(localizedString(label)) },

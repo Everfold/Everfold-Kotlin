@@ -25,20 +25,27 @@ import everfold.shared.generated.resources.language
 import everfold.shared.generated.resources.language_chinese
 import everfold.shared.generated.resources.language_english
 
+/** 语言选择跟随系统简体中文或 English实际切换由上层回调处理 */
 @Composable
 internal fun LanguageSettings(
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 语言
         Text(localizedString(Res.string.language), style = MaterialTheme.typography.titleMedium)
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.fillMaxWidth().selectableGroup().padding(vertical = 8.dp)) {
                 AppLanguage.entries.forEach { option ->
                     val label =
                         when (option) {
+                            // 跟随系统
                             AppLanguage.System -> Res.string.follow_system
+
+                            // 简体中文
                             AppLanguage.Chinese -> Res.string.language_chinese
+
+                            // English
                             AppLanguage.English -> Res.string.language_english
                         }
                     Row(

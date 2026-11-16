@@ -13,8 +13,13 @@ import org.jetbrains.compose.resources.StringResource
 enum class ThemeMode(
     val label: StringResource,
 ) {
+    // 跟随系统
     System(Res.string.follow_system),
+
+    // 浅色
     Light(Res.string.theme_light),
+
+    // 深色
     Dark(Res.string.theme_dark),
 }
 

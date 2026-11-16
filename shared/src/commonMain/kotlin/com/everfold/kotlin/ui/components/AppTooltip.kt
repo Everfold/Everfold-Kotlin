@@ -9,6 +9,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 
+/** 共享文字提示封装标签由调用处本地化后传入 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AppTooltip(

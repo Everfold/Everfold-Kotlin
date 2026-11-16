@@ -43,6 +43,7 @@ import everfold.shared.generated.resources.mode_offline
 import everfold.shared.generated.resources.offline_hint
 import everfold.shared.generated.resources.onboarding_intro
 
+/** 首次设置的共享滚动容器滚动条由各平台实现 */
 @Composable
 internal fun OnboardingScrollArea(
     modifier: Modifier = Modifier,
@@ -65,19 +66,25 @@ internal expect fun OnboardingScrollbar(
     modifier: Modifier = Modifier,
 )
 
+/** 欢迎介绍与功能卡片随可用宽度切换一列或两列 */
 @Composable
 internal fun WelcomeFeatures(wide: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
         Text(
+            // 欢迎使用 Everfold一款具有无限可能的智能体
             localizedString(Res.string.onboarding_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         val features =
             listOf(
+                // 随你成长的工作空间 / 连接你的设备工具与计算资源让更多力量参与工作
                 Triple(AppSymbol.Connection, Res.string.feature_workspace, Res.string.feature_workspace_detail),
+                // 由你组织的 AI 团队 / 自由安排 Agent 的分工协作与运行位置让 AI 按你的方式配合
                 Triple(AppSymbol.Chat, Res.string.feature_topology, Res.string.feature_topology_detail),
+                // 让每一次运行接续下去 / 核查执行过程接续可恢复的任务带着已有成果探索新的方向
                 Triple(AppSymbol.Spark, Res.string.feature_continuity, Res.string.feature_continuity_detail),
+                // 构建适合你的 AI / 从模型工具到运行环境自由选择与组合打造自己的工作方式
                 Triple(AppSymbol.Settings, Res.string.feature_customization, Res.string.feature_customization_detail),
             )
         FlowRow(
@@ -106,6 +113,7 @@ internal fun WelcomeFeatures(wide: Boolean) {
     }
 }
 
+/** 选择本地或集群模式本地模式跳过后续连接配置 */
 @Composable
 internal fun ModeSelection(
     cluster: Boolean,
@@ -142,10 +150,12 @@ internal fun ModeSelection(
                         RadioButton(selected, onClick = null)
                     }
                     Text(
+                        // 集群 / 本地
                         localizedString(if (option) Res.string.mode_cluster else Res.string.mode_offline),
                         style = MaterialTheme.typography.headlineSmall,
                     )
                     Text(
+                        // 连接局域网中心节点或云服务商 / 仅在本机上使用无需连接集群
                         localizedString(if (option) Res.string.cluster_hint else Res.string.offline_hint),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

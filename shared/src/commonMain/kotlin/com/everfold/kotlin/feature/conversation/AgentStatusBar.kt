@@ -41,6 +41,7 @@ import everfold.shared.generated.resources.agent_waiting_hint
 import everfold.shared.generated.resources.execution_details
 import everfold.shared.generated.resources.preview_agent_states
 
+/** 显示执行状态进度和演示步骤并在等待失败或停止时提供恢复入口 */
 @Composable
 internal fun AgentStatusBar(
     state: AgentRunState,
@@ -52,11 +53,14 @@ internal fun AgentStatusBar(
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
+                // 状态见下方 AgentRunState.label 映射
                 localizedString(state.label),
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (state == AgentRunState.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            // 执行详情
             TextButton(onClick = { expanded = !expanded }) { Text(localizedString(Res.string.execution_details)) }
         }
         if (state == AgentRunState.Running) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -66,8 +70,10 @@ internal fun AgentStatusBar(
                     if (state ==
                         AgentRunState.Waiting
                     ) {
+                        // 请补充要求或确认继续执行
                         Res.string.agent_waiting_hint
                     } else {
+                        // 任务执行失败请重试
                         Res.string.agent_failed_hint
                     },
                 ),
@@ -81,8 +87,10 @@ internal fun AgentStatusBar(
                         if (state ==
                             AgentRunState.Waiting || state == AgentRunState.Stopped
                         ) {
+                            // 继续执行
                             Res.string.agent_continue
                         } else {
+                            // 重试
                             Res.string.agent_retry
                         },
                     ),
@@ -90,8 +98,10 @@ internal fun AgentStatusBar(
             }
         }
         if (expanded) {
+            // 整理输入
             Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
             Text(
+                // 生成回复中文状态见下方 AgentRunState.label 映射
                 "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
                 Modifier.padding(bottom = 12.dp),
                 style = MaterialTheme.typography.bodySmall,
@@ -100,9 +110,12 @@ internal fun AgentStatusBar(
     }
 }
 
+/** 预览用状态菜单手动切换模拟执行状态不控制真实 Agent */
 @Composable
 internal fun AgentPreviewMenu(onSelect: (AgentRunState) -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
+
+    // 演示执行状态
     val label = localizedString(Res.string.preview_agent_states)
     Box {
         AppTooltip(label) {
@@ -110,6 +123,8 @@ internal fun AgentPreviewMenu(onSelect: (AgentRunState) -> Unit) {
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
             AgentRunState.entries.forEach { state ->
+
+                // 状态见下方 AgentRunState.label 映射
                 DropdownMenuItem(text = { Text(localizedString(state.label)) }, onClick = {
                     expanded = false
                     onSelect(state)
@@ -119,13 +134,26 @@ internal fun AgentPreviewMenu(onSelect: (AgentRunState) -> Unit) {
     }
 }
 
+/** 会话列表状态栏和预览菜单共用的中文状态资源映射 */
 internal val AgentRunState.label
     get() =
         when (this) {
+
+            // 就绪
             AgentRunState.Idle -> Res.string.agent_idle
+
+            // 执行中
             AgentRunState.Running -> Res.string.agent_running
+
+            // 等待回复
             AgentRunState.Waiting -> Res.string.agent_waiting
+
+            // 已完成
             AgentRunState.Completed -> Res.string.agent_completed
+
+            // 已停止
             AgentRunState.Stopped -> Res.string.agent_stopped
+
+            // 执行失败
             AgentRunState.Failed -> Res.string.agent_failed
         }

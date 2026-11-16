@@ -51,6 +51,7 @@ import everfold.shared.generated.resources.red_channel
 import everfold.shared.generated.resources.start_chat
 import kotlin.math.roundToInt
 
+/** 自定义主题色HEX 输入与 RGB 滑块联动同时预览浅色和深色配色 */
 @Composable
 internal fun CustomColorDialog(
     initialColor: Color,
@@ -58,13 +59,14 @@ internal fun CustomColorDialog(
     onApply: (Color) -> Unit,
 ) {
     var hex by rememberSaveable { mutableStateOf(initialColor.toHexColor()) }
-    // Keep the last valid preview while the user is midway through editing the HEX value.
+    // HEX 尚未输入完整时保留上一次有效预览避免颜色跳变
     var previewArgb by rememberSaveable { mutableStateOf(initialColor.toArgb()) }
     val parsed = parseHexColor(hex)
     val preview = Color(previewArgb)
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        // 自定义主题色
         title = { Text(localizedString(Res.string.custom_color_title)) },
         text = {
             Column(
@@ -82,6 +84,7 @@ internal fun CustomColorDialog(
                         parseHexColor(value)?.let { previewArgb = it.toArgb() }
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    // HEX 颜色
                     label = { Text(localizedString(Res.string.hex_color)) },
                     placeholder = { Text("#673AB7") },
                     singleLine = true,
@@ -97,16 +100,21 @@ internal fun CustomColorDialog(
                             if (parsed ==
                                 null
                             ) {
+                                // 请输入 6 位十六进制颜色如 #673AB7
                                 localizedString(Res.string.hex_error)
                             } else {
+                                // 支持 RRGGBB 或 #RRGGBB
                                 localizedString(Res.string.hex_help)
                             },
                         )
                     },
                 )
                 listOf(
+                    // 红色 R
                     localizedString(Res.string.red_channel) to 16,
+                    // 绿色 G
                     localizedString(Res.string.green_channel) to 8,
+                    // 蓝色 B
                     localizedString(Res.string.blue_channel) to 0,
                 ).forEach { (label, shift) ->
                     val channel = (previewArgb ushr shift) and 0xFF
@@ -129,8 +137,10 @@ internal fun CustomColorDialog(
             }
         },
         confirmButton = {
+            // 应用颜色
             TextButton(enabled = parsed != null, onClick = { parsed?.let(onApply) }) { Text(localizedString(Res.string.apply_color)) }
         },
+        // 取消
         dismissButton = { TextButton(onClick = onDismiss) { Text(localizedString(Res.string.cancel)) } },
     )
 }
@@ -146,11 +156,13 @@ private fun PalettePreview(
         Surface(modifier = modifier, shape = RoundedCornerShape(12.dp), color = colors.surfaceContainer) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
+                    // 深色预览 / 浅色预览
                     if (dark) localizedString(Res.string.dark_preview) else localizedString(Res.string.light_preview),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Surface(shape = RoundedCornerShape(12.dp), color = colors.primary, contentColor = colors.onPrimary) {
                     Text(
+                        // 开始对话
                         localizedString(Res.string.start_chat),
                         Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,

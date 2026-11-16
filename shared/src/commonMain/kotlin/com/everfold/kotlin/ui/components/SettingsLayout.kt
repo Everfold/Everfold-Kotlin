@@ -25,6 +25,7 @@ import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.back_to_conversation
 
+/** 连接与设置页共用布局页头铺满宽度页签与滚动正文居中并限制宽度 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsLayout(
@@ -47,6 +48,7 @@ fun SettingsLayout(
             navigationIcon = {
                 if (onBack != null) {
                     IconButton(onClick = onBack) {
+                        // 返回会话
                         AppIcon(AppSymbol.Back, description = localizedString(Res.string.back_to_conversation))
                     }
                 }

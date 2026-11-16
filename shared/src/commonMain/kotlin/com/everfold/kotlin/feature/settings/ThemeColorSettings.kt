@@ -41,6 +41,7 @@ import everfold.shared.generated.resources.custom_color
 import everfold.shared.generated.resources.follow_system
 import everfold.shared.generated.resources.theme_color
 
+/** 主题色选择系统配色预设种子色与自定义颜色共用选择状态 */
 @Composable
 internal fun ThemeColorSettings(
     selection: ThemeColorSelection,
@@ -50,6 +51,7 @@ internal fun ThemeColorSettings(
 ) {
     var showCustomDialog by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 主题色
         Text(localizedString(Res.string.theme_color), style = MaterialTheme.typography.titleMedium)
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -64,6 +66,7 @@ internal fun ThemeColorSettings(
                 ) {
                     RadioButton(selection.mode == ThemeColorMode.System, onClick = null)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // 跟随系统
                         Text(localizedString(Res.string.follow_system), style = MaterialTheme.typography.titleSmall)
                     }
                 }
@@ -83,6 +86,8 @@ internal fun ThemeColorSettings(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 ColorSwatch(preset.seed, selected)
+
+                                // 标签见 ThemePreset
                                 Text(localizedString(preset.label), style = MaterialTheme.typography.labelLarge)
                             }
                         }
@@ -100,6 +105,7 @@ internal fun ThemeColorSettings(
                 ) {
                     ColorSwatch(selection.customSeed, selection.mode == ThemeColorMode.Custom)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // 自定义颜色
                         Text(localizedString(Res.string.custom_color), style = MaterialTheme.typography.titleSmall)
                         Text(
                             selection.customSeed.toHexColor(),
@@ -108,6 +114,7 @@ internal fun ThemeColorSettings(
                         )
                     }
                     Text(
+                        // 调整
                         localizedString(Res.string.adjust),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,

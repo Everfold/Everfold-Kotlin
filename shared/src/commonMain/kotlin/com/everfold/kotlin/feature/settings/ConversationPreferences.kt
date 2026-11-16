@@ -5,7 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 
-// Multipliers preserve the user's system accessibility font scale.
+// 在系统无障碍字体缩放之上乘倍率而非覆盖系统设置
 enum class ConversationTextSize(
     val scale: Float,
 ) {
@@ -15,6 +15,7 @@ enum class ConversationTextSize(
     ExtraLarge(1.25f),
 }
 
+/** 发送快捷键规则输入法组合Shift 或 Alt 按下时不触发发送 */
 enum class SendShortcut {
     ModifiedEnter,
     Enter,
@@ -36,6 +37,7 @@ enum class SendShortcut {
     }
 }
 
+/** 局部缩放会话正文和输入框保留系统字体缩放不影响其他界面 */
 @Composable
 internal fun ConversationTextScale(
     size: ConversationTextSize,

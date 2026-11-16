@@ -27,7 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** In-memory UI fixtures. This class never creates an Agent or opens a connection. */
+/** 内存模拟工作区驱动界面演示不创建 Agent连接网络或持久化数据 */
 class MockWorkspace : ViewModel() {
     var initialized by mutableStateOf(false)
         private set
@@ -58,8 +58,11 @@ class MockWorkspace : ViewModel() {
     var newConversation by mutableStateOf(
         ConversationUiState(
             id = "new-conversation",
+            // 新建会话
             title = UiText.Resource(Res.string.new_session),
+            // 等待输入
             preview = UiText.Resource(Res.string.new_conversation_hint),
+            // 刚刚
             updatedLabel = UiText.Resource(Res.string.just_now),
         ),
     )
@@ -69,6 +72,7 @@ class MockWorkspace : ViewModel() {
         newConversation = newConversation.copy(draft = value)
     }
 
+    /** 首次发送时把草稿转为正式会话置顶会话仍排在列表前方 */
     fun submitNewConversation(reply: String): String? {
         val input = newConversation.draft.trim()
         if (input.isEmpty()) return null
@@ -93,6 +97,7 @@ class MockWorkspace : ViewModel() {
         conversations = conversations.sortedByDescending { it.isPinned }
     }
 
+    /** 保留归档状态切换能力当前界面不提供归档入口 */
     fun toggleArchived(id: String) {
         update(id) { it.copy(isArchived = !it.isArchived) }
     }
@@ -148,6 +153,7 @@ class MockWorkspace : ViewModel() {
         update(id) {
             it.copy(
                 preview = UiText.Literal(input),
+                // 刚刚
                 updatedLabel = UiText.Resource(Res.string.just_now),
                 draft = "",
                 runState = AgentRunState.Running,
@@ -173,6 +179,7 @@ class MockWorkspace : ViewModel() {
         streamReply(id, messageId, reply)
     }
 
+    /** 切换演示状态前取消模拟回复并移除尚无内容的助手占位消息 */
     fun previewRunState(
         id: String,
         state: AgentRunState,
@@ -190,6 +197,7 @@ class MockWorkspace : ViewModel() {
         }
     }
 
+    /** 用协程逐段追加示例回复完成后更新状态任务可被停止或删除取消 */
     private fun streamReply(
         id: String,
         messageId: String,
@@ -205,6 +213,8 @@ class MockWorkspace : ViewModel() {
                     }
                     delay(45)
                 }
+
+                // 已完成
                 update(id) { it.copy(runState = AgentRunState.Completed, preview = UiText.Resource(Res.string.reply_complete)) }
                 replies.remove(id)
             }
@@ -215,6 +225,7 @@ class MockWorkspace : ViewModel() {
         update(id) {
             it.copy(
                 runState = AgentRunState.Stopped,
+                // 已停止
                 preview = UiText.Resource(Res.string.reply_stopped),
                 messages = it.messages.filterNot { message -> message.role == MessageRole.Assistant && message.text.isEmpty() },
             )

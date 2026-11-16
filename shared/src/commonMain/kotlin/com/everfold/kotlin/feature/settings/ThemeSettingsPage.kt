@@ -13,6 +13,7 @@ import com.everfold.kotlin.ui.theme.ThemeColorSelection
 import com.everfold.kotlin.ui.theme.ThemeMode
 import com.everfold.kotlin.ui.theme.ThemePreset
 
+/** 主题设置页组合外观模式和主题色选择并按字体缩放决定布局 */
 @Composable
 internal fun ThemeSettingsPage(
     themeMode: ThemeMode,

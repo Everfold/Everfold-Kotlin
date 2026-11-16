@@ -21,6 +21,7 @@ import everfold.shared.generated.resources.text_size_large
 import everfold.shared.generated.resources.text_size_preview
 import everfold.shared.generated.resources.text_size_small
 
+/** 显示设置调整会话文字大小并实时预览复用语言选择组件 */
 @Composable
 internal fun DisplaySettingsPage(
     language: AppLanguage,
@@ -29,6 +30,7 @@ internal fun DisplaySettingsPage(
     onTextSizeChange: (ConversationTextSize) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        // 会话文字大小
         Text(localizedString(Res.string.conversation_text_size), style = MaterialTheme.typography.titleMedium)
         SettingsChoices(
             options = ConversationTextSize.entries,
@@ -37,9 +39,16 @@ internal fun DisplaySettingsPage(
             label = {
                 localizedString(
                     when (it) {
+                        // 跟随系统
                         ConversationTextSize.System -> Res.string.follow_system
+
+                        // 较小
                         ConversationTextSize.Small -> Res.string.text_size_small
+
+                        // 较大
                         ConversationTextSize.Large -> Res.string.text_size_large
+
+                        // 特大
                         ConversationTextSize.ExtraLarge -> Res.string.text_size_extra_large
                     },
                 )
@@ -48,6 +57,7 @@ internal fun DisplaySettingsPage(
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             ConversationTextScale(textSize) {
                 Text(
+                    // 让每一个想法清晰呈现\n这里预览会话正文和输入框的文字大小
                     localizedString(Res.string.text_size_preview),
                     Modifier.fillMaxWidth().padding(20.dp),
                     style = MaterialTheme.typography.bodyLarge,

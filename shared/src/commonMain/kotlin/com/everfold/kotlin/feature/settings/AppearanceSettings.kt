@@ -23,6 +23,7 @@ import com.everfold.kotlin.ui.theme.ThemeMode
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.appearance
 
+/** 外观模式选择按空间使用分段按钮或纵向单选列表 */
 @Composable
 internal fun AppearanceSettings(
     selected: ThemeMode,
@@ -30,6 +31,7 @@ internal fun AppearanceSettings(
     horizontal: Boolean = false,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 外观
         Text(localizedString(Res.string.appearance), style = MaterialTheme.typography.titleMedium)
         if (horizontal) {
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -39,6 +41,7 @@ internal fun AppearanceSettings(
                         onClick = { onSelect(mode) },
                         shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
                     ) {
+                        // 标签见 ThemeMode
                         Text(localizedString(mode.label))
                     }
                 }
@@ -58,6 +61,8 @@ internal fun AppearanceSettings(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         RadioButton(selected == mode, onClick = null)
+
+                        // 标签见 ThemeMode
                         Text(localizedString(mode.label))
                     }
                 }

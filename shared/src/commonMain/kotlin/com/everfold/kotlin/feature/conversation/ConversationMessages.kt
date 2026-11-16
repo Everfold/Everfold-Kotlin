@@ -34,6 +34,7 @@ import everfold.shared.generated.resources.jump_to_latest
 import everfold.shared.generated.resources.stopped_hint
 import kotlinx.coroutines.launch
 
+/** 倒序消息列表按用户意愿跟随最新回复并保留长消息折叠时的位置 */
 @Composable
 internal fun ConversationMessages(
     state: ConversationUiState,
@@ -47,7 +48,7 @@ internal fun ConversationMessages(
     val scope = rememberCoroutineScope()
     var followLatest by rememberSaveable { mutableStateOf(true) }
     val atLatest by remember { derivedStateOf { list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 } }
-    // Only user scrolling changes follow mode. Layout changes while streaming must not opt the reader back in.
+    // 仅用户滚动改变跟随模式流式回复引起的布局变化不能强制读者回到最新消息
     LaunchedEffect(list) {
         snapshotFlow { if (list.isScrollInProgress) list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 else null }
             .collect { atBottom -> if (atBottom != null) followLatest = atBottom }
@@ -72,6 +73,7 @@ internal fun ConversationMessages(
         ) {
             if (state.responseStopped) {
                 item(key = "stopped") {
+                    // 已停止工作你可以发送消息或继续运行
                     Text(localizedString(Res.string.stopped_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -90,8 +92,7 @@ internal fun ConversationMessages(
                             val info = list.layoutInfo
                             val item = info.visibleItemsInfo.firstOrNull { it.key == message.id }
                             if (item != null) {
-                                // Reverse layout anchors items from the bottom. Preserve the prompt's top
-                                // edge, or bring it into view when collapsing from below a long prompt.
+                                // 倒序列表从底部定位折叠时保留消息顶部或将其带回可视区域
                                 val top =
                                     (info.viewportEndOffset - item.offset - item.size)
                                         .coerceAtLeast(info.beforeContentPadding)
@@ -116,7 +117,10 @@ internal fun ConversationMessages(
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp),
-            ) { Text(localizedString(Res.string.jump_to_latest)) }
+            ) {
+                // 回到最新消息
+                Text(localizedString(Res.string.jump_to_latest))
+            }
         }
     }
 }

@@ -87,6 +87,7 @@ import everfold.shared.generated.resources.welcome_title
 import everfold.shared.generated.resources.you
 import org.jetbrains.compose.resources.painterResource
 
+/** 会话页面组合导航执行状态消息与输入框具体动作交由外部回调处理 */
 @Composable
 fun ConversationScreen(
     state: ConversationUiState,
@@ -108,6 +109,7 @@ fun ConversationScreen(
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
     collapsePrompts: Boolean = true,
 ) {
+    // 按会话保留编辑状态仅在外部草稿改变时同步避免打断光标和输入法组合
     var inputValue by remember(state.id) { mutableStateOf(TextFieldValue(state.draft, TextRange(state.draft.length))) }
     LaunchedEffect(state.draft) {
         if (inputValue.text != state.draft) inputValue = TextFieldValue(state.draft, TextRange(state.draft.length))
@@ -141,10 +143,13 @@ fun ConversationScreen(
                 val label =
                     localizedString(
                         if (compactNavigation) {
+                            // 打开工作台
                             Res.string.open_workspace
                         } else if (sessionsVisible) {
+                            // 折叠会话列表 · Ctrl + B
                             Res.string.hide_sessions
                         } else {
+                            // 展开会话列表 · Ctrl + B
                             Res.string.show_sessions
                         },
                     )
@@ -163,6 +168,7 @@ fun ConversationScreen(
                 )
             }
             if (compactNavigation) {
+                // 新建会话
                 val label = localizedString(Res.string.new_session)
                 AppTooltip(label) {
                     IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = label) }
@@ -229,6 +235,7 @@ fun ConversationScreen(
                                                 false
                                             }
                                         },
+                                // 在思考什么问题呢
                                 placeholder = { Text(localizedString(Res.string.message_placeholder)) },
                                 maxLines = 5,
                                 colors =
@@ -243,9 +250,16 @@ fun ConversationScreen(
                         AppTooltip(
                             localizedString(
                                 when {
+                                    // 暂停
                                     state.isResponding -> Res.string.stop_reply
+
+                                    // Enter 发送 · Shift + Enter 换行
                                     desktopUi && shortcut == SendShortcut.Enter -> Res.string.send_shortcut_enter
+
+                                    // Ctrl/Cmd + Enter 发送 · Enter 换行
                                     desktopUi -> Res.string.send_shortcut
+
+                                    // 发送
                                     else -> Res.string.send_message
                                 },
                             ),
@@ -259,6 +273,7 @@ fun ConversationScreen(
                                     if (state.isResponding) AppSymbol.Stop else AppSymbol.Send,
                                     description =
                                         localizedString(
+                                            // 暂停 / 发送
                                             if (state.isResponding) Res.string.stop_reply else Res.string.send_message,
                                         ),
                                 )
@@ -271,6 +286,7 @@ fun ConversationScreen(
     }
 }
 
+/** 按角色展示消息用户提示可折叠助手回复支持 Markdown选择与复制 */
 @Composable
 internal fun MessageItem(
     message: ChatMessage,
@@ -284,6 +300,7 @@ internal fun MessageItem(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!user) AppIcon(AppSymbol.Spark, modifier = Modifier.size(18.dp))
             Text(
+                // 你
                 if (user) localizedString(Res.string.you) else "Everfold",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -302,6 +319,7 @@ internal fun MessageItem(
                 SelectionContainer {
                     if (message.text.isEmpty()) {
                         Text(
+                            // 思考中
                             localizedString(Res.string.thinking),
                             style = MaterialTheme.typography.bodyLarge,
                         )
@@ -311,10 +329,13 @@ internal fun MessageItem(
                 }
             }
         }
+
+        // 复制消息
         CopyTextButton(message.text, localizedString(Res.string.copy_message))
     }
 }
 
+/** 空会话欢迎页点击建议只填入草稿不自动发送 */
 @Composable
 private fun WelcomeContent(
     onSuggestion: (String) -> Unit,
@@ -322,8 +343,11 @@ private fun WelcomeContent(
 ) {
     val suggestions =
         listOf(
+            // 帮我整理今天的想法
             localizedString(Res.string.suggestion_ideas),
+            // 一起制定这周的计划
             localizedString(Res.string.suggestion_week),
+            // 把一个复杂问题拆成小步骤
             localizedString(Res.string.suggestion_problem),
         )
     LazyColumn(
@@ -342,6 +366,7 @@ private fun WelcomeContent(
         }
         item {
             Text(
+                // 千里之行 始于足下
                 localizedString(Res.string.welcome_title),
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,

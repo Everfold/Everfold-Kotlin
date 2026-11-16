@@ -15,6 +15,7 @@ internal fun sampleConversations() =
             id = "welcome",
             title = UiText.Literal("一起整理今天的想法"),
             preview = UiText.Literal("把想法变成清晰、可以执行的下一步。"),
+            // 刚刚
             updatedLabel = UiText.Resource(Res.string.just_now),
             messages =
                 listOf(
@@ -33,6 +34,7 @@ internal fun sampleConversations() =
             id = "week",
             title = UiText.Literal("这周的工作安排"),
             preview = UiText.Literal("留出专注时间，也给变化留一点空间。"),
+            // 今天
             updatedLabel = UiText.Resource(Res.string.today),
             messages =
                 listOf(
@@ -50,6 +52,7 @@ internal fun sampleConversations() =
             id = "reading",
             title = UiText.Literal("阅读笔记与灵感"),
             preview = UiText.Literal("从记录到理解，让每次阅读留下点什么。"),
+            // 昨天
             updatedLabel = UiText.Resource(Res.string.yesterday),
             messages =
                 listOf(

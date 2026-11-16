@@ -33,6 +33,7 @@ import everfold.shared.generated.resources.open_source_license
 import everfold.shared.generated.resources.preview_notice
 import org.jetbrains.compose.resources.painterResource
 
+/** 关于页展示品牌可用版本信息以及官网源码和许可链接 */
 @Composable
 internal fun AboutSettingsPage() {
     val version = appVersion()
@@ -50,6 +51,7 @@ internal fun AboutSettingsPage() {
             Text("Everfold", style = MaterialTheme.typography.headlineSmall)
             if (version != null) Text("v$version", style = MaterialTheme.typography.labelLarge)
             Text(
+                // 写点什么呢
                 localizedString(Res.string.preview_notice),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -59,18 +61,21 @@ internal fun AboutSettingsPage() {
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column {
                 AboutLink(
+                    // 官方网站
                     title = localizedString(Res.string.official_website),
                     detail = "everfold.org",
                     url = "https://everfold.org/",
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 AboutLink(
+                    // GitHub 仓库
                     title = localizedString(Res.string.github_repository),
                     detail = "github.com/Everfold/Everfold-Kotlin",
                     url = "https://github.com/Everfold/Everfold-Kotlin",
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 AboutLink(
+                    // 开源许可
                     title = localizedString(Res.string.open_source_license),
                     detail = "Apache License, Version 2.0",
                     url = "https://www.apache.org/licenses/LICENSE-2.0",
@@ -94,6 +99,7 @@ private fun AboutLink(
         modifier =
             Modifier.clickable(
                 role = Role.Button,
+                // 在浏览器中打开
                 onClickLabel = localizedString(Res.string.open_in_browser),
                 onClick = { uriHandler.openUri(url) },
             ),

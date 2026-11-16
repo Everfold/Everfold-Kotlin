@@ -1,4 +1,3 @@
-// Locale is an application-wide resource dependency, like MaterialTheme.
 @file:Suppress("ktlint:compose:compositionlocal-allowlist")
 
 package com.everfold.kotlin.ui.localization
@@ -10,6 +9,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
+/** 应用语言选项跟随系统时英文使用 en其他系统语言回退到中文 */
 enum class AppLanguage { System, Chinese, English }
 
 internal fun AppLanguage.resolve(systemTag: String): AppLanguage {
@@ -20,6 +20,7 @@ internal fun AppLanguage.resolve(systemTag: String): AppLanguage {
 
 private val LocalAppLanguage = staticCompositionLocalOf { AppLanguage.Chinese }
 
+/** 将解析后的语言应用于资源环境并向下提供当前语言 */
 @Composable
 internal fun AppLanguageEnvironment(
     language: AppLanguage,
@@ -30,7 +31,7 @@ internal fun AppLanguageEnvironment(
     CompositionLocalProvider(LocalAppLanguage provides resolved, content = content)
 }
 
-// Key only the resource lookup: the surrounding UI, drafts and navigation retain their state.
+// 仅重建资源查询切换语言时保留外围界面草稿和导航状态
 @Composable
 fun localizedString(
     resource: StringResource,

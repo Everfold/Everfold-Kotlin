@@ -43,6 +43,7 @@ import everfold.shared.generated.resources.copy_code
 import everfold.shared.generated.resources.expand_prompt
 import kotlinx.coroutines.delay
 
+/** 长用户消息超过八行时可折叠为六行切换前回报高度差以维持列表位置 */
 @Composable
 internal fun UserPrompt(
     message: ChatMessage,
@@ -81,6 +82,7 @@ internal fun UserPrompt(
                     }
                     expanded = !expanded
                 }) {
+                    // 收起 / 展开全文
                     Text(localizedString(if (expanded) Res.string.collapse_prompt else Res.string.expand_prompt))
                 }
             }
@@ -88,6 +90,7 @@ internal fun UserPrompt(
     }
 }
 
+/** 渲染 Markdown 并定制代码块解析中或失败时退回原文显示 */
 @Composable
 internal fun MessageMarkdown(content: String) {
     val state = rememberMarkdownState(content, retainState = true)
@@ -113,10 +116,13 @@ private fun CodeSnippet(
         Column(Modifier.fillMaxWidth().padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
+                    // 代码
                     language?.takeIf { it.isNotBlank() } ?: localizedString(Res.string.code_block),
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.labelMedium,
                 )
+
+                // 复制代码
                 CopyTextButton(code, localizedString(Res.string.copy_code))
             }
             Text(
@@ -129,6 +135,7 @@ private fun CodeSnippet(
     }
 }
 
+/** 复制非空文本到剪贴板并短暂显示已复制反馈 */
 @Composable
 internal fun CopyTextButton(
     text: String,
@@ -147,6 +154,7 @@ internal fun CopyTextButton(
         clipboard.setText(AnnotatedString(text))
         copied = true
     }, enabled = text.isNotEmpty()) {
+        // 已复制
         Text(if (copied) localizedString(Res.string.copied) else label)
     }
 }

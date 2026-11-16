@@ -38,6 +38,7 @@ import everfold.shared.generated.resources.test_connection
 import everfold.shared.generated.resources.testing_connection
 import kotlinx.coroutines.delay
 
+/** 连接管理页切换本地或集群模式校验表单并演示测试结果 */
 @Composable
 fun ConnectionsScreen(
     mode: ConnectionMode,
@@ -54,6 +55,7 @@ fun ConnectionsScreen(
     var showError by remember(mode, setup.method, setup.auth) { mutableStateOf(false) }
     var previewResult by remember { mutableStateOf(ConnectionPreviewResult.Success) }
     val updateConnection by rememberUpdatedState(onConnectionChange)
+    // 延迟模拟测试参数变化时取消旧效果避免旧结果覆盖新配置
     LaunchedEffect(testing, mode, setup, previewResult) {
         if (testing) {
             delay(900)
@@ -62,7 +64,10 @@ fun ConnectionsScreen(
             updateConnection(previewResult == ConnectionPreviewResult.Success)
         }
     }
+
+    // 连接
     SettingsLayout(localizedString(Res.string.nav_connections), modifier, onBack) {
+        // 运行方式
         Text(localizedString(Res.string.connection_mode), style = MaterialTheme.typography.titleMedium)
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ConnectionMode.entries.forEach { item ->
@@ -89,6 +94,8 @@ fun ConnectionsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         RadioButton(selected = mode == item, onClick = null)
+
+                        // 标签见 ConnectionMode
                         Text(localizedString(item.label), style = MaterialTheme.typography.titleMedium)
                     }
                 }
@@ -110,8 +117,10 @@ fun ConnectionsScreen(
                     if (failed) {
                         previewResult.description
                     } else if (previewConnected) {
+                        // 已连接
                         Res.string.connected_preview
                     } else {
+                        // 尚未连接
                         Res.string.not_connected
                     },
                 ),
@@ -128,10 +137,13 @@ fun ConnectionsScreen(
                 Text(
                     localizedString(
                         if (testing) {
+                            // 正在测试连接
                             Res.string.testing_connection
                         } else if (failed) {
+                            // 重试连接
                             Res.string.retry_connection
                         } else {
+                            // 测试连接
                             Res.string.test_connection
                         },
                     ),

@@ -1,9 +1,11 @@
 package com.everfold.kotlin.feature.connections
 
+/** 集群接入方式局域网发现中心节点或云服务 */
 enum class ClusterMethod { Lan, Central, Cloud }
 
 enum class ClusterAuth { None, Password, Certificate, Mtls }
 
+/** 连接表单数据及校验规则局域网地址可同时留空其余必填项随接入方式变化 */
 data class ClusterSetup(
     val method: ClusterMethod = ClusterMethod.Lan,
     val ip: String = "",
@@ -41,6 +43,7 @@ data class ClusterSetup(
 
 enum class ClusterField { Ip, Port, Account, Password, ServerCertificate, CaCertificate, ClientPublicKey, ClientPrivateKey }
 
+/** 仅校验 IPv4 或 IPv6 地址格式不解析主机名或测试网络可达性 */
 internal fun validIp(value: String): Boolean {
     if (':' !in value) {
         val parts = value.split('.')
@@ -49,6 +52,7 @@ internal fun validIp(value: String): Boolean {
     return validIpv6(value)
 }
 
+/** 校验十六进制分组与一次 :: 压缩不支持 IPv4 嵌入或区域标识 */
 private fun validIpv6(value: String): Boolean {
     val halves = value.split("::")
     val groups = halves.flatMap { if (it.isEmpty()) emptyList() else it.split(':') }

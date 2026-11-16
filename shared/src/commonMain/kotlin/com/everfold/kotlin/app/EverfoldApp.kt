@@ -82,7 +82,7 @@ import everfold.shared.generated.resources.resize_sessions
 import everfold.shared.generated.resources.sample_reply
 import kotlinx.coroutines.launch
 
-/** UI composition root. Only this layer knows that the data source is a mock. */
+/** 主界面组装入口连接页面与模拟工作区并协调宽屏侧栏窄屏抽屉和快捷键 */
 @Composable
 fun EverfoldApp(
     workspace: MockWorkspace,
@@ -93,6 +93,10 @@ fun EverfoldApp(
     var textSize by rememberSaveable { mutableStateOf(ConversationTextSize.System) }
     var shortcut by rememberSaveable { mutableStateOf(SendShortcut.ModifiedEnter) }
     var collapsePrompts by rememberSaveable { mutableStateOf(true) }
+
+    // 收到我们可以一起把这个想法继续展开
+    // 先明确你最希望得到的结果再把它拆成两三个小步骤你也可以补充背景约束或已有的材料
+    // 这是一段用于预览对话体验的示例回复尚未调用 Agent
     val reply = localizedString(Res.string.sample_reply)
     var destination by rememberSaveable { mutableStateOf(AppDestination.Sessions) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -115,6 +119,7 @@ fun EverfoldApp(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .imePadding(),
         ) {
+            // 宽屏使用固定侧栏窄屏复用同一会话列表作为抽屉内容
             val wide = maxWidth >= 900.dp
             val drawerState = remember(wide) { DrawerState(DrawerValue.Closed) }
             val drawerClosed = drawerState.isClosed && drawerState.targetValue == DrawerValue.Closed
@@ -132,6 +137,7 @@ fun EverfoldApp(
                 focusManager.clearFocus()
                 scope.launch { drawerState.open() }
             }
+            // 新建入口先展示独立草稿首次发送时才加入会话列表
             val openNewConversation: () -> Unit = {
                 focusComposer = true
                 destination = AppDestination.Sessions
@@ -143,6 +149,8 @@ fun EverfoldApp(
 
             val maxSessionWidth = (maxWidth.value - 520f).coerceIn(260f, 440f)
             val density = LocalDensity.current.density
+
+            // 拖动调整宽度
             val resizeLabel = localizedString(Res.string.resize_sessions)
             val selected = workspace.conversations.firstOrNull { it.id == selectedId }
             val sessions: @Composable (Modifier) -> Unit = { listModifier ->
@@ -230,6 +238,7 @@ fun EverfoldApp(
                         }
                     },
                 drawerState = drawerState,
+                // 只在抽屉打开后允许手势避免与消息区域的滑动冲突
                 gesturesEnabled = !wide && drawerState.isOpen,
                 drawerContent = {
                     if (!wide) {
@@ -244,6 +253,7 @@ fun EverfoldApp(
                             HorizontalDivider()
                             listOf(AppDestination.Connections, AppDestination.Settings).forEach { item ->
                                 NavigationDrawerItem(
+                                    // 标签见 AppDestination
                                     label = { Text(localizedString(item.label)) },
                                     icon = { AppIcon(item.icon) },
                                     selected = destination == item,
@@ -266,6 +276,7 @@ fun EverfoldApp(
                                     selected = destination == item,
                                     onClick = { destination = item },
                                     icon = { AppIcon(item.icon) },
+                                    // 标签见 AppDestination
                                     label = { Text(localizedString(item.label)) },
                                     modifier = Modifier.padding(bottom = 12.dp),
                                 )
@@ -325,6 +336,7 @@ fun EverfoldApp(
                                                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                             }
                                         }
+                                        // 按会话保存输入和滚动状态切换页面时避免相互覆盖
                                         conversationStates.SaveableStateProvider(selected?.id ?: workspace.newConversation.id) {
                                             ConversationScreen(
                                                 state = selected ?: workspace.newConversation,
@@ -365,8 +377,13 @@ fun EverfoldApp(
                                                 connectionLabel =
                                                     localizedString(
                                                         when {
+                                                            // 本地
                                                             workspace.connectionMode == ConnectionMode.Local -> Res.string.connection_local
+
+                                                            // 已连接
                                                             workspace.connectionPreview -> Res.string.connected_preview
+
+                                                            // 尚未连接
                                                             else -> Res.string.not_connected
                                                         },
                                                     ),

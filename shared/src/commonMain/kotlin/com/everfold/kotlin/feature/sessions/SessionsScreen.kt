@@ -68,6 +68,7 @@ import everfold.shared.generated.resources.session_actions
 import everfold.shared.generated.resources.session_name
 import everfold.shared.generated.resources.unpin_session
 
+/** 会话侧栏常驻标题搜索两行列表项以及重命名置顶和删除操作 */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SessionsScreen(
@@ -85,6 +86,7 @@ fun SessionsScreen(
 ) {
     val searchFocus = remember { FocusRequester() }
     var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
+    // 等布局完成后响应新的搜索焦点请求避免切换布局时重复抢焦点
     LaunchedEffect(searchRequest) {
         if (searchRequest > handledSearchRequest) {
             withFrameNanos { }
@@ -97,6 +99,7 @@ fun SessionsScreen(
     var name by rememberSaveable { mutableStateOf("") }
     var menuId by remember { mutableStateOf<String?>(null) }
     val titles = sessions.map { it.title.resolve() }
+    // 按当前语言解析后的标题搜索保留已归档会话的可见性
     val filtered =
         sessions.filterIndexed { index, _ ->
             titles[index].contains(query, ignoreCase = true)
@@ -106,13 +109,17 @@ fun SessionsScreen(
             value = query,
             onValueChange = onQueryChange,
             singleLine = true,
+            // 搜索
             placeholder = { Text(localizedString(Res.string.search_sessions)) },
             leadingIcon = { AppIcon(AppSymbol.Search) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     TextButton(
                         onClick = { onQueryChange("") },
-                    ) { Text(localizedString(Res.string.clear_search)) }
+                    ) {
+                        // 清空搜索
+                        Text(localizedString(Res.string.clear_search))
+                    }
                 }
             },
             shape = RoundedCornerShape(16.dp),
@@ -145,6 +152,7 @@ fun SessionsScreen(
                             MaterialTheme.colorScheme.surfaceContainerLow
                         },
                 ) {
+                    // 第一行标题与菜单第二行状态与时间文字边缘按图标内留白对称对齐
                     val menuButtonSize = 32.dp
                     val menuIconSize = 20.dp
                     val textEdgeInset = (menuButtonSize - menuIconSize) / 2
@@ -165,7 +173,7 @@ fun SessionsScreen(
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Box {
-                                // Reserve compact layout space; Compose expands the touch target independently.
+                                // 只预留紧凑视觉空间Compose 可在布局外扩展触摸目标
                                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides menuButtonSize) {
                                     IconButton(
                                         onClick = { menuId = session.id },
@@ -174,11 +182,13 @@ fun SessionsScreen(
                                         AppIcon(
                                             AppSymbol.More,
                                             modifier = Modifier.size(menuIconSize),
+                                            // 会话操作
                                             description = localizedString(Res.string.session_actions),
                                         )
                                     }
                                 }
                                 DropdownMenu(menuId == session.id, onDismissRequest = { menuId = null }) {
+                                    // 重命名
                                     DropdownMenuItem(text = { Text(localizedString(Res.string.rename_session)) }, onClick = {
                                         name = titles[sessions.indexOf(session)]
                                         renaming = session.id
@@ -187,6 +197,7 @@ fun SessionsScreen(
                                     DropdownMenuItem(
                                         text = {
                                             Text(
+                                                // 取消置顶 / 置顶
                                                 localizedString(if (session.isPinned) Res.string.unpin_session else Res.string.pin_session),
                                             )
                                         },
@@ -198,6 +209,7 @@ fun SessionsScreen(
                                     DropdownMenuItem(
                                         text = {
                                             Text(
+                                                // 删除
                                                 localizedString(Res.string.delete_session),
                                                 color = MaterialTheme.colorScheme.error,
                                             )
@@ -215,8 +227,10 @@ fun SessionsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            // 状态见 AgentRunState.label
                             val status = localizedString(session.runState.label)
                             Text(
+                                // 已置顶
                                 if (session.isPinned) "${localizedString(Res.string.pinned_session)} · $status" else status,
                                 Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.labelSmall,
@@ -245,12 +259,14 @@ fun SessionsScreen(
                 item {
                     Text(
                         localizedString(
+                            // 没有找到会话试试其他关键词 / 还没有会话要做点什么呢
                             if (query.isNotBlank()) Res.string.no_sessions else Res.string.empty_sessions,
                         ),
                         Modifier.padding(vertical = 24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     TextButton(onClick = { if (query.isBlank()) onCreate() else onQueryChange("") }) {
+                        // 新建会话 / 清空搜索
                         Text(localizedString(if (query.isBlank()) Res.string.new_session else Res.string.clear_search))
                     }
                 }
@@ -260,12 +276,14 @@ fun SessionsScreen(
     renaming?.let { id ->
         AlertDialog(
             onDismissRequest = { renaming = null },
+            // 重命名
             title = { Text(localizedString(Res.string.rename_session)) },
             text = {
                 OutlinedTextField(
                     name,
                     onValueChange = { name = it },
                     singleLine = true,
+                    // 会话名称
                     label = { Text(localizedString(Res.string.session_name)) },
                 )
             },
@@ -273,22 +291,32 @@ fun SessionsScreen(
                 TextButton(onClick = {
                     onRename(id, name)
                     renaming = null
-                }, enabled = name.isNotBlank()) { Text(localizedString(Res.string.save_session)) }
+                }, enabled = name.isNotBlank()) {
+                    // 保存
+                    Text(localizedString(Res.string.save_session))
+                }
             },
+            // 取消
             dismissButton = { TextButton(onClick = { renaming = null }) { Text(localizedString(Res.string.cancel)) } },
         )
     }
     deleting?.let { id ->
         AlertDialog(
             onDismissRequest = { deleting = null },
+            // 删除
             title = { Text(localizedString(Res.string.delete_session)) },
+            // 删除后本次运行中的会话内容将被移除
             text = { Text(localizedString(Res.string.delete_session_notice)) },
             confirmButton = {
                 TextButton(onClick = {
                     onDelete(id)
                     deleting = null
-                }) { Text(localizedString(Res.string.delete_session), color = MaterialTheme.colorScheme.error) }
+                }) {
+                    // 删除
+                    Text(localizedString(Res.string.delete_session), color = MaterialTheme.colorScheme.error)
+                }
             },
+            // 取消
             dismissButton = { TextButton(onClick = { deleting = null }) { Text(localizedString(Res.string.cancel)) } },
         )
     }

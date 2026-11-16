@@ -25,6 +25,7 @@ import everfold.shared.generated.resources.send_shortcut
 import everfold.shared.generated.resources.send_shortcut_enter
 import everfold.shared.generated.resources.send_shortcut_setting
 
+/** 会话偏好页桌面发送快捷键与长用户消息自动折叠开关 */
 @Composable
 internal fun ConversationSettingsPage(
     shortcut: SendShortcut,
@@ -34,11 +35,13 @@ internal fun ConversationSettingsPage(
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         if (desktopUi) {
+            // 发送快捷键
             Text(localizedString(Res.string.send_shortcut_setting), style = MaterialTheme.typography.titleMedium)
             SettingsChoices(
                 options = SendShortcut.entries,
                 selected = shortcut,
                 onSelect = onShortcutChange,
+                // Enter 发送 · Shift + Enter 换行 / Ctrl/Cmd + Enter 发送 · Enter 换行
                 label = { localizedString(if (it == SendShortcut.Enter) Res.string.send_shortcut_enter else Res.string.send_shortcut) },
             )
         }
@@ -47,12 +50,14 @@ internal fun ConversationSettingsPage(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            // 自动折叠较长的用户消息
             Text(localizedString(Res.string.collapse_long_prompts), Modifier.weight(1f))
             Switch(checked = collapsePrompts, onCheckedChange = null)
         }
     }
 }
 
+/** 通用单选列表整行负责选择避免单选按钮产生重复点击事件 */
 @Composable
 internal fun <T> SettingsChoices(
     options: List<T>,
