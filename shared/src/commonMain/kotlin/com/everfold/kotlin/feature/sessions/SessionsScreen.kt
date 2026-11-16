@@ -16,10 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -45,8 +42,6 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.conversation.AgentRunState
@@ -54,30 +49,19 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.label
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
-import com.everfold.kotlin.ui.components.AppTooltip
-import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.archive_session
-import everfold.shared.generated.resources.archived_sessions
-import everfold.shared.generated.resources.archived_sessions_count
 import everfold.shared.generated.resources.cancel
 import everfold.shared.generated.resources.clear_search
-import everfold.shared.generated.resources.collapse_search
 import everfold.shared.generated.resources.delete_session
 import everfold.shared.generated.resources.delete_session_notice
-import everfold.shared.generated.resources.empty_archived_sessions
 import everfold.shared.generated.resources.empty_sessions
-import everfold.shared.generated.resources.nav_sessions
 import everfold.shared.generated.resources.new_session
-import everfold.shared.generated.resources.new_session_shortcut
 import everfold.shared.generated.resources.no_sessions
 import everfold.shared.generated.resources.pin_session
 import everfold.shared.generated.resources.pinned_session
-import everfold.shared.generated.resources.recent_sessions
 import everfold.shared.generated.resources.rename_session
-import everfold.shared.generated.resources.restore_session
 import everfold.shared.generated.resources.save_session
 import everfold.shared.generated.resources.search_sessions
 import everfold.shared.generated.resources.session_actions
@@ -94,31 +78,18 @@ fun SessionsScreen(
     onRename: (String, String) -> Unit,
     onDelete: (String) -> Unit,
     onTogglePin: (String) -> Unit,
-    onToggleArchive: (String) -> Unit,
-    showArchived: Boolean,
-    onShowArchivedChange: (Boolean) -> Unit,
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     searchRequest: Int = 0,
 ) {
     val searchFocus = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-    var searchExpanded by rememberSaveable { mutableStateOf(false) }
     var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
-    var requestSearchFocus by remember { mutableStateOf(false) }
     LaunchedEffect(searchRequest) {
         if (searchRequest > handledSearchRequest) {
-            handledSearchRequest = searchRequest
-            searchExpanded = true
-            requestSearchFocus = true
-        }
-    }
-    LaunchedEffect(searchExpanded, requestSearchFocus) {
-        if (searchExpanded && requestSearchFocus) {
             withFrameNanos { }
             searchFocus.requestFocus()
-            requestSearchFocus = false
+            handledSearchRequest = searchRequest
         }
     }
     var renaming by remember { mutableStateOf<String?>(null) }
@@ -127,66 +98,26 @@ fun SessionsScreen(
     var menuId by remember { mutableStateOf<String?>(null) }
     val titles = sessions.map { it.title.resolve() }
     val filtered =
-        sessions.filterIndexed { index, session ->
-            session.isArchived == showArchived && titles[index].contains(query, ignoreCase = true)
+        sessions.filterIndexed { index, _ ->
+            titles[index].contains(query, ignoreCase = true)
         }
     Column(modifier.padding(horizontal = 16.dp)) {
-        Row(Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                localizedString(Res.string.nav_sessions),
-                Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            val searchLabel = localizedString(if (searchExpanded) Res.string.collapse_search else Res.string.search_sessions)
-            AppTooltip(searchLabel) {
-                IconToggleButton(
-                    checked = searchExpanded,
-                    onCheckedChange = { expanded ->
-                        searchExpanded = expanded
-                        requestSearchFocus = expanded
-                        if (!expanded) {
-                            focusManager.clearFocus()
-                            onQueryChange("")
-                        }
-                    },
-                ) { AppIcon(AppSymbol.Search, description = searchLabel) }
-            }
-            AppTooltip(localizedString(if (desktopUi) Res.string.new_session_shortcut else Res.string.new_session)) {
-                FilledTonalIconButton(onClick = onCreate) { AppIcon(AppSymbol.Plus, description = localizedString(Res.string.new_session)) }
-            }
-        }
-        if (searchExpanded) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                singleLine = true,
-                placeholder = { Text(localizedString(Res.string.search_sessions)) },
-                leadingIcon = { AppIcon(AppSymbol.Search) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        TextButton(
-                            onClick = { onQueryChange("") },
-                        ) { Text(localizedString(Res.string.clear_search)) }
-                    }
-                },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().focusRequester(searchFocus),
-            )
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                localizedString(if (showArchived) Res.string.archived_sessions_count else Res.string.recent_sessions, filtered.size),
-                Modifier.weight(1f),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            FilterChip(
-                selected = showArchived,
-                onClick = { onShowArchivedChange(!showArchived) },
-                label = { Text(localizedString(Res.string.archived_sessions)) },
-            )
-        }
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            placeholder = { Text(localizedString(Res.string.search_sessions)) },
+            leadingIcon = { AppIcon(AppSymbol.Search) },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    TextButton(
+                        onClick = { onQueryChange("") },
+                    ) { Text(localizedString(Res.string.clear_search)) }
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).focusRequester(searchFocus),
+        )
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(filtered, key = { it.id }) { session ->
                 Surface(
@@ -267,19 +198,6 @@ fun SessionsScreen(
                                     DropdownMenuItem(
                                         text = {
                                             Text(
-                                                localizedString(
-                                                    if (session.isArchived) Res.string.restore_session else Res.string.archive_session,
-                                                ),
-                                            )
-                                        },
-                                        onClick = {
-                                            onToggleArchive(session.id)
-                                            menuId = null
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
                                                 localizedString(Res.string.delete_session),
                                                 color = MaterialTheme.colorScheme.error,
                                             )
@@ -327,11 +245,7 @@ fun SessionsScreen(
                 item {
                     Text(
                         localizedString(
-                            when {
-                                query.isNotBlank() -> Res.string.no_sessions
-                                showArchived -> Res.string.empty_archived_sessions
-                                else -> Res.string.empty_sessions
-                            },
+                            if (query.isNotBlank()) Res.string.no_sessions else Res.string.empty_sessions,
                         ),
                         Modifier.padding(vertical = 24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

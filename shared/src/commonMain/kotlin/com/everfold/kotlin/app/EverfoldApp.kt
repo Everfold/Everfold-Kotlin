@@ -95,7 +95,6 @@ fun EverfoldApp(
     var collapsePrompts by rememberSaveable { mutableStateOf(true) }
     val reply = localizedString(Res.string.sample_reply)
     var destination by rememberSaveable { mutableStateOf(AppDestination.Sessions) }
-    var showArchived by rememberSaveable { mutableStateOf(false) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -137,7 +136,6 @@ fun EverfoldApp(
                 focusComposer = true
                 destination = AppDestination.Sessions
                 sessionQuery = ""
-                showArchived = false
                 selectedId = null
                 closeDrawer()
                 composerFocusRequest++
@@ -152,9 +150,6 @@ fun EverfoldApp(
                     SessionsScreen(
                         sessions = workspace.conversations,
                         selectedId = selected?.id,
-                        showArchived = showArchived,
-                        onShowArchivedChange = { showArchived = it },
-                        onToggleArchive = workspace::toggleArchived,
                         searchRequest = searchRequest,
                         query = sessionQuery,
                         onQueryChange = { sessionQuery = it },
@@ -359,7 +354,6 @@ fun EverfoldApp(
                                                     if (selected == null) {
                                                         workspace.submitNewConversation(reply)?.let {
                                                             selectedId = it
-                                                            showArchived = false
                                                             sessionQuery = ""
                                                             focusComposer = true
                                                         }
