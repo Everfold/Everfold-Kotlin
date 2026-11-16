@@ -49,12 +49,12 @@
     <ID>MagicNumber:ThemeColor.kt:0xFFFFFF</ID>
     <ID>MagicNumber:ThemeColor.kt:16</ID>
     <ID>MagicNumber:ThemeColor.kt:6</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Blue$0xFF2196F3</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Green$0xFF4CAF50</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Orange$0xFFFF9800</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Pink$0xFFE91E63</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Purple$0xFF673AB7</ID>
-    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Teal$0xFF009688</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Blue$0xFF0B57D0</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Green$0xFF00FF80</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Orange$0xFF803F00</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Pink$0xFFFF1E80</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Purple$0xFF6750A4</ID>
+    <ID>MagicNumber:ThemeColor.kt:ThemePreset.Teal$0xFF008080</ID>
     <ID>MagicNumber:ThemeColorSettings.kt:3</ID>
     <ID>MatchingDeclarationName:AppIcon.kt:AppSymbol</ID>
     <ID>MatchingDeclarationName:ConnectionPreviewOptions.kt:ConnectionPreviewResult</ID>
