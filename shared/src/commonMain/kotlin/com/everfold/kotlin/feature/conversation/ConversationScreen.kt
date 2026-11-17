@@ -83,7 +83,6 @@ import everfold.shared.generated.resources.stop_reply
 import everfold.shared.generated.resources.suggestion_ideas
 import everfold.shared.generated.resources.suggestion_problem
 import everfold.shared.generated.resources.suggestion_week
-import everfold.shared.generated.resources.thinking
 import everfold.shared.generated.resources.welcome_title
 import org.jetbrains.compose.resources.painterResource
 
@@ -186,7 +185,6 @@ fun ConversationScreen(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         connectionNotice()
-        key(state.id) { AgentStatusBar(state.runState, onRetry) }
         if (state.messages.isEmpty()) {
             WelcomeContent({
                 onDraftChange(it)
@@ -198,6 +196,8 @@ fun ConversationScreen(
                     state,
                     scrollRequest,
                     connectionName = connectionName,
+                    onRetry = onRetry,
+                    canRetry = canSend && state.workspace != null && state.model != null,
                     textSize = textSize,
                     collapsePrompts = collapsePrompts,
                     onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
@@ -207,7 +207,7 @@ fun ConversationScreen(
         }
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(Modifier.widthIn(max = 840.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            Column(Modifier.widthIn(max = ConversationContentMaxWidth).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -308,20 +308,29 @@ internal fun MessageItem(
     onPromptHeightChange: (Int) -> Unit = {},
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
+    runState: AgentRunState = AgentRunState.Idle,
+    onRetry: () -> Unit = {},
+    canRetry: Boolean = true,
 ) {
     val user = message.role == MessageRole.User
+    val status = if (user) AgentRunState.Idle else runState
+    val modelName =
+        message.model
+            ?.takeIf { !user }
+            ?.name
+            ?.resolve()
     Column(modifier, horizontalAlignment = if (user) Alignment.End else Alignment.Start) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!user) AppIcon(AppSymbol.Spark, modifier = Modifier.size(18.dp))
             Text(
-                authorName,
+                if (modelName == null) authorName else "$authorName · $modelName",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        message.model?.takeIf { !user }?.let {
-            Text(it.name.resolve(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        if (status == AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
         Spacer(Modifier.height(10.dp))
         MessageAttachments(message.attachments)
         ConversationTextScale(textSize) {
@@ -334,20 +343,11 @@ internal fun MessageItem(
                         UserPrompt(message, onPromptHeightChange, collapsePrompts)
                     }
                 }
-            } else {
-                SelectionContainer {
-                    if (message.text.isEmpty()) {
-                        Text(
-                            // 思考中
-                            localizedString(Res.string.thinking),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    } else {
-                        MessageMarkdown(message.text)
-                    }
-                }
+            } else if (message.text.isNotEmpty()) {
+                SelectionContainer { MessageMarkdown(message.text) }
             }
         }
+        if (status != AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
     }
 }
 

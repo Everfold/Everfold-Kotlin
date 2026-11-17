@@ -2,17 +2,17 @@ package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +33,6 @@ import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.jump_to_latest
 import everfold.shared.generated.resources.model_unavailable
-import everfold.shared.generated.resources.stopped_hint
 import kotlinx.coroutines.launch
 
 /** 倒序消息列表按用户意愿跟随最新回复并保留长消息折叠时的位置 */
@@ -43,6 +42,8 @@ internal fun ConversationMessages(
     scrollRequest: Int,
     connectionName: String,
     onJumpToLatest: () -> Unit,
+    onRetry: () -> Unit,
+    canRetry: Boolean,
     modifier: Modifier = Modifier,
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
@@ -62,35 +63,34 @@ internal fun ConversationMessages(
             list.scrollToItem(0)
         }
     }
-    LaunchedEffect(state.messages.lastOrNull(), state.responseStopped) {
+    LaunchedEffect(state.messages.lastOrNull(), state.runState) {
         if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
     }
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val messageWidthFraction = if (maxWidth >= 600.dp) 0.85f else 1f
+    val latest = state.messages.lastOrNull()
+    Box(modifier.fillMaxWidth()) {
         LazyColumn(
             state = list,
             reverseLayout = true,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+            contentPadding = PaddingValues(vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            if (state.responseStopped) {
-                item(key = "stopped") {
-                    // 已停止工作你可以发送消息或继续运行
-                    Text(localizedString(Res.string.stopped_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (latest?.role != MessageRole.Assistant && state.runState != AgentRunState.Idle) {
+                item(key = "run-status") {
+                    MessageColumn { AgentStatusBar(state.runState, onRetry, canRetry = canRetry) }
                 }
             }
             items(state.messages.asReversed(), key = { it.id }) { message ->
-                Box(
-                    Modifier.fillMaxWidth(),
-                    contentAlignment = if (message.role == MessageRole.User) Alignment.TopEnd else Alignment.TopStart,
-                ) {
+                MessageColumn {
                     MessageItem(
                         message,
                         authorName = message.authorName(connectionName, state.model),
-                        modifier = Modifier.fillMaxWidth(messageWidthFraction),
+                        modifier = Modifier.fillMaxWidth(),
                         textSize = textSize,
                         collapsePrompts = collapsePrompts,
+                        runState = if (message.id == latest?.id) state.runState else AgentRunState.Idle,
+                        onRetry = onRetry,
+                        canRetry = canRetry,
                         onPromptHeightChange = { heightChange ->
                             followLatest = false
                             val info = list.layoutInfo
@@ -125,6 +125,18 @@ internal fun ConversationMessages(
                 // 回到最新消息
                 Text(localizedString(Res.string.jump_to_latest))
             }
+        }
+    }
+}
+
+/** 与输入区共用最大宽度，滚动条仍保留在窗口边缘。 */
+internal val ConversationContentMaxWidth = 840.dp
+
+@Composable
+private fun MessageColumn(content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Column(Modifier.widthIn(max = ConversationContentMaxWidth).fillMaxWidth().padding(horizontal = 24.dp)) {
+            content()
         }
     }
 }
