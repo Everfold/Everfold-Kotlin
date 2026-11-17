@@ -45,6 +45,8 @@ fun SettingsScreen(
     onShortcutChange: (SendShortcut) -> Unit,
     collapsePrompts: Boolean,
     onCollapsePromptsChange: (Boolean) -> Unit,
+    sideMargins: Boolean,
+    onSideMarginsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
@@ -112,7 +114,14 @@ fun SettingsScreen(
             }
 
             SettingsPage.Conversation -> {
-                ConversationSettingsPage(shortcut, onShortcutChange, collapsePrompts, onCollapsePromptsChange)
+                ConversationSettingsPage(
+                    shortcut,
+                    onShortcutChange,
+                    collapsePrompts,
+                    onCollapsePromptsChange,
+                    sideMargins,
+                    onSideMarginsChange,
+                )
             }
 
             SettingsPage.About -> {

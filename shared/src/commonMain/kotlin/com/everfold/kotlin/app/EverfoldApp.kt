@@ -106,6 +106,7 @@ internal fun EverfoldApp(
     var textSize by rememberSaveable { mutableStateOf(ConversationTextSize.System) }
     var shortcut by rememberSaveable { mutableStateOf(SendShortcut.ModifiedEnter) }
     var collapsePrompts by rememberSaveable { mutableStateOf(true) }
+    var sideMargins by rememberSaveable { mutableStateOf(true) }
 
     var destination by rememberSaveable { mutableStateOf(AppDestination.Sessions) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -370,6 +371,7 @@ internal fun EverfoldApp(
                                                 textSize = textSize,
                                                 shortcut = shortcut,
                                                 collapsePrompts = collapsePrompts,
+                                                sideMargins = sideMargins,
                                                 inputFocusRequest = composerFocusRequest,
                                                 compactNavigation = !wide,
                                                 autoFocusInput = focusComposer,
@@ -487,6 +489,8 @@ internal fun EverfoldApp(
                                         onShortcutChange = { shortcut = it },
                                         collapsePrompts = collapsePrompts,
                                         onCollapsePromptsChange = { collapsePrompts = it },
+                                        sideMargins = sideMargins,
+                                        onSideMarginsChange = { sideMargins = it },
                                         language = language,
                                         onLanguageChange = onLanguageChange,
                                         themeMode = workspace.themeMode,

@@ -21,17 +21,21 @@ import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.collapse_long_prompts
+import everfold.shared.generated.resources.conversation_side_margins
+import everfold.shared.generated.resources.conversation_side_margins_hint
 import everfold.shared.generated.resources.send_shortcut
 import everfold.shared.generated.resources.send_shortcut_enter
 import everfold.shared.generated.resources.send_shortcut_setting
 
-/** 会话偏好页桌面发送快捷键与长用户消息自动折叠开关 */
+/** 会话偏好页：发送快捷键、长消息折叠与正文宽度。 */
 @Composable
 internal fun ConversationSettingsPage(
     shortcut: SendShortcut,
     onShortcutChange: (SendShortcut) -> Unit,
     collapsePrompts: Boolean,
     onCollapsePromptsChange: (Boolean) -> Unit,
+    sideMargins: Boolean,
+    onSideMarginsChange: (Boolean) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         if (desktopUi) {
@@ -44,6 +48,21 @@ internal fun ConversationSettingsPage(
                 // Enter 发送 · Shift + Enter 换行 / Ctrl/Cmd + Enter 发送 · Enter 换行
                 label = { localizedString(if (it == SendShortcut.Enter) Res.string.send_shortcut_enter else Res.string.send_shortcut) },
             )
+        }
+        Row(
+            Modifier.fillMaxWidth().toggleable(sideMargins, role = Role.Switch, onValueChange = onSideMarginsChange).padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(localizedString(Res.string.conversation_side_margins))
+                Text(
+                    localizedString(Res.string.conversation_side_margins_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = sideMargins, onCheckedChange = null)
         }
         Row(
             Modifier.fillMaxWidth().toggleable(collapsePrompts, role = Role.Switch, onValueChange = onCollapsePromptsChange).padding(12.dp),

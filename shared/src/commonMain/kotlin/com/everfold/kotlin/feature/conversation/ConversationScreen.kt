@@ -109,6 +109,7 @@ fun ConversationScreen(
     textSize: ConversationTextSize = ConversationTextSize.System,
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
     collapsePrompts: Boolean = true,
+    sideMargins: Boolean = true,
     composerTools: @Composable RowScope.() -> Unit = {},
     attachmentsContent: @Composable () -> Unit = {},
 ) {
@@ -199,6 +200,7 @@ fun ConversationScreen(
                     canRetry = canSend && state.workspace != null && state.model != null,
                     textSize = textSize,
                     collapsePrompts = collapsePrompts,
+                    sideMargins = sideMargins,
                     onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
                     modifier = Modifier.weight(1f),
                 )
@@ -206,7 +208,7 @@ fun ConversationScreen(
         }
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(Modifier.widthIn(max = ConversationContentMaxWidth).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            Column(Modifier.conversationContentWidth(sideMargins).padding(horizontal = 20.dp, vertical = 12.dp)) {
                 composerFeedback()
                 Surface(
                     shape = RoundedCornerShape(24.dp),

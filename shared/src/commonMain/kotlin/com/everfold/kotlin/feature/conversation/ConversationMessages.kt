@@ -47,6 +47,7 @@ internal fun ConversationMessages(
     modifier: Modifier = Modifier,
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
+    sideMargins: Boolean = true,
 ) {
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -77,11 +78,11 @@ internal fun ConversationMessages(
         ) {
             if (latest?.role != MessageRole.Assistant && state.runState != AgentRunState.Idle) {
                 item(key = "run-status") {
-                    MessageColumn { AgentStatusBar(state.runState, onRetry, canRetry = canRetry) }
+                    MessageColumn(sideMargins) { AgentStatusBar(state.runState, onRetry, canRetry = canRetry) }
                 }
             }
             items(state.messages.asReversed(), key = { it.id }) { message ->
-                MessageColumn {
+                MessageColumn(sideMargins) {
                     MessageItem(
                         message,
                         authorName = message.authorName(connectionName, state.model),
@@ -130,12 +131,18 @@ internal fun ConversationMessages(
 }
 
 /** 与输入区共用最大宽度，滚动条仍保留在窗口边缘。 */
-internal val ConversationContentMaxWidth = 840.dp
+private val ConversationContentMaxWidth = 840.dp
+
+internal fun Modifier.conversationContentWidth(sideMargins: Boolean): Modifier =
+    (if (sideMargins) widthIn(max = ConversationContentMaxWidth) else this).fillMaxWidth()
 
 @Composable
-private fun MessageColumn(content: @Composable () -> Unit) {
+private fun MessageColumn(
+    sideMargins: Boolean,
+    content: @Composable () -> Unit,
+) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = ConversationContentMaxWidth).fillMaxWidth().padding(horizontal = 24.dp)) {
+        Column(Modifier.conversationContentWidth(sideMargins).padding(horizontal = 24.dp)) {
             content()
         }
     }

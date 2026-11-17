@@ -34,4 +34,6 @@
     <string name="send_shortcut_enter">Enter 发送 · Shift + Enter 换行</string>
     <string name="collapse_long_prompts">自动折叠较长的用户消息</string>
 
+    <string name="conversation_side_margins">两侧留白</string>
+    <string name="conversation_side_margins_hint">限制消息和输入区宽度，便于阅读。关闭后使用页面可用宽度，显示更多内容。</string>
 </resources>
