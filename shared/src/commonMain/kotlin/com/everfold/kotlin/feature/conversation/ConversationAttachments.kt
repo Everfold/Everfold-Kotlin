@@ -2,10 +2,12 @@ package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,10 +58,15 @@ private fun AttachmentCard(
     onRemove: () -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-        Column(Modifier.width(240.dp).padding(8.dp)) {
+        Column(Modifier.widthIn(max = 280.dp).width(IntrinsicSize.Max).padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(file.source.name, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        file.source.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.MiddleEllipsis,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                     val label =
                         when (file.status) {
                             AttachmentStatus.Uploading -> Res.string.attachment_uploading

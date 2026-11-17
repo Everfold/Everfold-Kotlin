@@ -38,6 +38,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -60,6 +61,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.feature.settings.ConversationTextScale
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.feature.settings.SendShortcut
@@ -70,6 +74,8 @@ import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
+import everfold.shared.generated.resources.collapse_composer
+import everfold.shared.generated.resources.expand_composer
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.message_placeholder
@@ -85,6 +91,9 @@ import everfold.shared.generated.resources.suggestion_problem
 import everfold.shared.generated.resources.suggestion_week
 import everfold.shared.generated.resources.welcome_title
 import org.jetbrains.compose.resources.painterResource
+
+private const val EXPAND_EDITOR_LENGTH = 240
+private const val EXPAND_EDITOR_LINES = 3
 
 /** 会话页面组合导航执行状态消息与输入框具体动作交由外部回调处理 */
 @Composable
@@ -114,6 +123,7 @@ fun ConversationScreen(
     attachmentsContent: @Composable () -> Unit = {},
 ) {
     // 按会话保留编辑状态仅在外部草稿改变时同步避免打断光标和输入法组合
+    var expandedEditor by rememberSaveable(state.id) { mutableStateOf(false) }
     var inputValue by remember(state.id) { mutableStateOf(TextFieldValue(state.draft, TextRange(state.draft.length))) }
     LaunchedEffect(state.draft) {
         if (inputValue.text != state.draft) inputValue = TextFieldValue(state.draft, TextRange(state.draft.length))
@@ -136,12 +146,27 @@ fun ConversationScreen(
             inputFocus.requestFocus()
         }
     }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = expandedEditor,
+        onBackCompleted = { expandedEditor = false },
+    )
     var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
     val send = {
         scrollRequest++
+        expandedEditor = false
         onSend()
     }
-    Column(modifier.fillMaxSize()) {
+    Column(
+        modifier.fillMaxSize().onPreviewKeyEvent {
+            if (expandedEditor && it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
+                expandedEditor = false
+                true
+            } else {
+                false
+            }
+        },
+    ) {
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             run {
                 val label =
@@ -185,32 +210,39 @@ fun ConversationScreen(
             conversationMenu()
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        if (state.messages.isEmpty()) {
-            WelcomeContent({
-                onDraftChange(it)
-                inputFocus.requestFocus()
-            }, Modifier.weight(1f))
-        } else {
-            key(state.id) {
-                ConversationMessages(
-                    state,
-                    scrollRequest,
-                    connectionName = connectionName,
-                    onRetry = onRetry,
-                    canRetry = canSend && state.workspace != null && state.model != null,
-                    textSize = textSize,
-                    collapsePrompts = collapsePrompts,
-                    sideMargins = sideMargins,
-                    onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
-                    modifier = Modifier.weight(1f),
-                )
+        if (!expandedEditor) {
+            if (state.messages.isEmpty()) {
+                WelcomeContent({
+                    onDraftChange(it)
+                    inputFocus.requestFocus()
+                }, Modifier.weight(1f))
+            } else {
+                key(state.id) {
+                    ConversationMessages(
+                        state,
+                        scrollRequest,
+                        connectionName = connectionName,
+                        onRetry = onRetry,
+                        canRetry = canSend && state.workspace != null && state.model != null,
+                        textSize = textSize,
+                        collapsePrompts = collapsePrompts,
+                        sideMargins = sideMargins,
+                        onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
-
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(Modifier.conversationContentWidth(sideMargins).padding(horizontal = 20.dp, vertical = 12.dp)) {
+        Box(if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(
+                Modifier
+                    .conversationContentWidth(sideMargins)
+                    .then(if (expandedEditor) Modifier.fillMaxSize() else Modifier)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
                 composerFeedback()
                 Surface(
+                    modifier = if (expandedEditor) Modifier.weight(1f) else Modifier,
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     border = BorderStroke(1.dp, inputBorderColor),
@@ -227,6 +259,7 @@ fun ConversationScreen(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
+                                        .then(if (expandedEditor) Modifier.weight(1f) else Modifier)
                                         .focusRequester(inputFocus)
                                         .onFocusChanged { inputFocused = it.isFocused }
                                         .onPreviewKeyEvent {
@@ -249,7 +282,7 @@ fun ConversationScreen(
                                         },
                                 // 输入消息
                                 placeholder = { Text(localizedString(Res.string.message_placeholder)) },
-                                maxLines = 5,
+                                maxLines = if (expandedEditor) Int.MAX_VALUE else 5,
                                 colors =
                                     TextFieldDefaults.colors(
                                         focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -261,6 +294,22 @@ fun ConversationScreen(
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             composerTools()
+                            if (inputValue.text.length > EXPAND_EDITOR_LENGTH || inputValue.text.count {
+                                    it == '\n'
+                                } >= EXPAND_EDITOR_LINES ||
+                                expandedEditor
+                            ) {
+                                val editorLabel =
+                                    localizedString(if (expandedEditor) Res.string.collapse_composer else Res.string.expand_composer)
+                                AppTooltip(editorLabel) {
+                                    IconButton(onClick = {
+                                        expandedEditor = !expandedEditor
+                                        inputFocus.requestFocus()
+                                    }) {
+                                        AppIcon(if (expandedEditor) AppSymbol.Collapse else AppSymbol.Expand, description = editorLabel)
+                                    }
+                                }
+                            }
                             AppTooltip(
                                 localizedString(
                                     when {

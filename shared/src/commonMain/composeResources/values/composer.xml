@@ -32,4 +32,6 @@
     <string name="selection_search">搜索选项</string>
     <string name="selection_empty">没有匹配的选项</string>
     <string name="copy_path">复制路径</string>
+    <string name="expand_composer">展开编辑</string>
+    <string name="collapse_composer">收起编辑</string>
 </resources>

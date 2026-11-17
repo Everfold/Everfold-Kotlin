@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
@@ -83,6 +84,34 @@ class ConversationComposerTest(
             onNodeWithText("无法打开或读取所选文件，请重试。").assertIsDisplayed()
             onNodeWithContentDescription("关闭文件提示").performClick()
             onNodeWithText("无法打开或读取所选文件，请重试。").assertDoesNotExist()
+        }
+
+    @Test
+    fun expandedEditorKeepsTheDraftAndGivesLongTextMoreRoom() =
+        workspaceUiTest(width) { fixture ->
+            val draft = (1..12).joinToString("\n") { "Draft line $it" }
+            onNodeWithContentDescription("展开编辑").assertDoesNotExist()
+            onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement(draft)
+            val compact = onNode(hasSetTextAction() and hasText(draft)).fetchSemanticsNode().boundsInRoot
+            onNodeWithContentDescription("展开编辑").performClick()
+            val expanded = onNode(hasSetTextAction() and hasText(draft)).fetchSemanticsNode().boundsInRoot
+            assertTrue(expanded.height > compact.height * 2)
+            onNodeWithContentDescription("收起编辑").performClick()
+            onNode(hasSetTextAction() and hasText(draft)).assertTextContains(draft)
+            runOnIdle { assertEquals(draft, fixture.workspace.newConversation.draft) }
+            onNodeWithContentDescription("展开编辑").performClick()
+            onNodeWithContentDescription("发送").performClick()
+            onNodeWithContentDescription("收起编辑").assertDoesNotExist()
+            runOnIdle {
+                assertEquals(
+                    draft,
+                    fixture.workspace.conversations
+                        .first()
+                        .messages
+                        .first()
+                        .text,
+                )
+            }
         }
 
     companion object {
