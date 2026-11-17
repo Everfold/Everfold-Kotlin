@@ -74,9 +74,8 @@ import com.everfold.kotlin.feature.conversation.DraftAttachments
 import com.everfold.kotlin.feature.conversation.FilePickerError
 import com.everfold.kotlin.feature.conversation.ModelSelector
 import com.everfold.kotlin.feature.sessions.SessionsScreen
-import com.everfold.kotlin.feature.settings.ConversationTextSize
-import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.feature.settings.SettingsScreen
+import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.components.horizontalResizePointer
@@ -101,12 +100,13 @@ internal fun EverfoldApp(
     onPreviewState: ((String, AgentRunState) -> Unit)? = null,
     connectionOverviewExtra: @Composable (String) -> Unit = {},
     filePicker: FilePicker = rememberFilePicker(),
+    preferences: UserPreferencesState = remember { UserPreferencesState() },
 ) {
     var fileErrorTarget by remember { mutableStateOf<AttachmentTarget?>(null) }
-    var textSize by rememberSaveable { mutableStateOf(ConversationTextSize.System) }
-    var shortcut by rememberSaveable { mutableStateOf(SendShortcut.ModifiedEnter) }
-    var collapsePrompts by rememberSaveable { mutableStateOf(true) }
-    var sideMargins by rememberSaveable { mutableStateOf(true) }
+    val textSize = preferences.value.textSize
+    val shortcut = preferences.value.shortcut
+    val collapsePrompts = preferences.value.collapsePrompts
+    val sideMargins = preferences.value.sideMargins
 
     var destination by rememberSaveable { mutableStateOf(AppDestination.Sessions) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -485,13 +485,13 @@ internal fun EverfoldApp(
                                 AppDestination.Settings -> {
                                     SettingsScreen(
                                         textSize = textSize,
-                                        onTextSizeChange = { textSize = it },
+                                        onTextSizeChange = { value -> preferences.update { it.copy(textSize = value) } },
                                         shortcut = shortcut,
-                                        onShortcutChange = { shortcut = it },
+                                        onShortcutChange = { value -> preferences.update { it.copy(shortcut = value) } },
                                         collapsePrompts = collapsePrompts,
-                                        onCollapsePromptsChange = { collapsePrompts = it },
+                                        onCollapsePromptsChange = { value -> preferences.update { it.copy(collapsePrompts = value) } },
                                         sideMargins = sideMargins,
-                                        onSideMarginsChange = { sideMargins = it },
+                                        onSideMarginsChange = { value -> preferences.update { it.copy(sideMargins = value) } },
                                         language = language,
                                         onLanguageChange = onLanguageChange,
                                         themeMode = workspace.themeMode,

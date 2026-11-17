@@ -10,6 +10,8 @@ import androidx.lifecycle.ViewModelStore
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.MockWorkspace
+import com.everfold.kotlin.preferences.MemoryPreferenceStore
+import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
@@ -49,6 +51,7 @@ internal fun workspaceUiTest(
                             fixture.workspace,
                             fixture.language,
                             { fixture.language = it },
+                            preferences = fixture.preferences,
                             onPreviewState = fixture.workspace::previewRunState,
                             filePicker = FilePicker { it(fixture.fileResult) },
                             connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
@@ -70,6 +73,8 @@ internal class WorkspaceFixture(
     val workspace: MockWorkspace,
     val scheduler: TestCoroutineScheduler,
 ) {
+    val preferenceStore = MemoryPreferenceStore()
+    var preferences by mutableStateOf(UserPreferencesState(preferenceStore))
     var language by mutableStateOf(AppLanguage.Chinese)
     var fileResult: Result<List<AttachmentSource>> = Result.success(emptyList())
 }
