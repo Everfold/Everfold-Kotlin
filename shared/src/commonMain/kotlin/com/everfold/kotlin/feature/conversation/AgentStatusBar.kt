@@ -33,7 +33,6 @@ import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.agent_completed
 import everfold.shared.generated.resources.agent_continue
 import everfold.shared.generated.resources.agent_failed
-import everfold.shared.generated.resources.agent_failed_hint
 import everfold.shared.generated.resources.agent_idle
 import everfold.shared.generated.resources.agent_retry
 import everfold.shared.generated.resources.agent_running
@@ -66,19 +65,9 @@ internal fun AgentStatusBar(
                 }
             }
         }
-        if (state == AgentRunState.Waiting || state == AgentRunState.Failed) {
+        if (state == AgentRunState.Waiting) {
             Text(
-                localizedString(
-                    if (state ==
-                        AgentRunState.Waiting
-                    ) {
-                        // 请补充要求或确认继续执行
-                        Res.string.agent_waiting_hint
-                    } else {
-                        // 任务执行失败请重试
-                        Res.string.agent_failed_hint
-                    },
-                ),
+                localizedString(Res.string.agent_waiting_hint),
                 style = MaterialTheme.typography.bodySmall,
             )
         }

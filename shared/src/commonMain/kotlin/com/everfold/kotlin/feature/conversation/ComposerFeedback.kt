@@ -26,7 +26,6 @@ import everfold.shared.generated.resources.composer_model_missing
 import everfold.shared.generated.resources.composer_reconnect
 import everfold.shared.generated.resources.composer_removed
 import everfold.shared.generated.resources.composer_retry_uploads
-import everfold.shared.generated.resources.composer_uploading
 import everfold.shared.generated.resources.composer_workspace_missing
 import everfold.shared.generated.resources.connection_manage
 import everfold.shared.generated.resources.retry_connection
@@ -68,10 +67,6 @@ internal fun ComposerFeedback(
                 localizedString(Res.string.composer_retry_uploads),
                 onRetryUploads,
             )
-        }
-
-        state.attachments.any { it.status == AttachmentStatus.Uploading } -> {
-            ComposerNotice(localizedString(Res.string.composer_uploading))
         }
     }
 }

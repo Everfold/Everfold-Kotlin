@@ -39,7 +39,7 @@ class ConversationComposerTest(
             onNodeWithText("brief.pdf").assertIsDisplayed()
             onNodeWithText("上传中").assertIsDisplayed()
             onNodeWithContentDescription("发送").assertIsNotEnabled()
-            val inputBounds = onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).fetchSemanticsNode().boundsInRoot
+            val inputBounds = onNode(hasSetTextAction() and hasText("输入消息…")).fetchSemanticsNode().boundsInRoot
             val sendBounds = onNodeWithContentDescription("发送").fetchSemanticsNode().boundsInRoot
             assertTrue(sendBounds.right >= inputBounds.right - sendBounds.width, "Send stays at the right edge of the composer")
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
@@ -69,7 +69,7 @@ class ConversationComposerTest(
     @Test
     fun changingWorkspaceClearsFilesAndPickerFailureCanBeDismissed() =
         workspaceUiTest(width) { fixture ->
-            onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Keep my draft")
+            onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Keep my draft")
             runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
             onNodeWithContentDescription("上传文件").performClick()
             onNodeWithContentDescription("会话菜单").performClick()

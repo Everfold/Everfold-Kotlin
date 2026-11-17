@@ -37,7 +37,6 @@
     <string name="connection_success">Connected successfully</string>
     <string name="connection_failure">Simulated connection failed. Check your settings and retry.</string>
     <string name="simulate_failure">Simulate connection failure</string>
-    <string name="invalid_connection">Enter a valid IP, a port from 1 to 65535, and the required authentication details.</string>
 
     <!-- 表单校验与模拟结果 -->
     <string name="error_ip">Enter a valid IPv4 or IPv6 address.</string>
@@ -55,7 +54,7 @@
     <string name="preview_credentials">Invalid credentials</string>
     <string name="preview_certificate">Invalid certificate</string>
     <string name="failure_timeout_hint">Connection timed out. Check the IP, port and node availability, then retry.</string>
-    <string name="failure_credentials_hint">Authentication failed. Check your username and password, then retry.</string>
+    <string name="failure_credentials_hint">Authentication failed. Check your username or password.</string>
     <string name="failure_certificate_hint">Certificate verification failed. Check that the required certificates and keys match, then import them again.</string>
     <string name="retry_connection">Retry connection</string>
 

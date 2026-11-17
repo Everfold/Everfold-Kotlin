@@ -63,7 +63,7 @@ class ConnectionFlowsTest(
             }
             nameField().performTextReplacement("Renamed")
             onNodeWithText("保存").performScrollTo().performClick()
-            onNodeWithText("配置已保存").assertIsDisplayed()
+            onNodeWithText("已保存").assertIsDisplayed()
             nameField().performTextReplacement("Discard this")
             onNodeWithText("还原修改").performScrollTo().performClick()
             nameField().assertTextContains("Renamed")
@@ -82,6 +82,32 @@ class ConnectionFlowsTest(
                         .id,
                 )
             }
+        }
+
+    @Test
+    fun connectionHintsFollowParameterChangesAndSaveNoticesExpire() =
+        workspaceUiTest(width) {
+            openConnections()
+            addConnection("Office")
+            onNodeWithText("配置").performClick()
+            onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
+            nameField().performTextReplacement("Renamed")
+            onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
+            onNode(hasSetTextAction() and hasText("IP 地址")).performTextReplacement("127.0.0.1")
+            onNodeWithText("修改接入参数后需重新连接").performScrollTo().assertIsDisplayed()
+            onNodeWithText("还原修改").performScrollTo().performClick()
+            onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
+            onNode(hasSetTextAction() and hasText("IP 地址")).performTextReplacement("127.0.0.1")
+            onNode(hasSetTextAction() and hasText("端口")).performTextReplacement("8080")
+            onNodeWithText("保存").performScrollTo().performClick()
+            onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
+            onNodeWithText("已保存").assertIsDisplayed()
+            mainClock.advanceTimeBy(1_000)
+            onNodeWithText("保存").performClick()
+            mainClock.advanceTimeBy(1_100)
+            onNodeWithText("已保存").assertIsDisplayed()
+            mainClock.advanceTimeBy(1_000)
+            onNodeWithText("已保存").assertDoesNotExist()
         }
 
     @Test
@@ -133,10 +159,10 @@ class ConnectionFlowsTest(
             onNodeWithContentDescription("会话菜单").performClick()
             onNode(hasText("连接") and hasText("本机 · 已连接") and hasClickAction()).performClick()
             onNodeWithText("Office · 未连接").performClick()
-            onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Keep this question")
+            onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Keep this question")
             onNodeWithContentDescription("发送").assertIsNotEnabled()
             onNodeWithText("重新连接").performClick()
-            onNodeWithText("正在连接，连接后即可发送。").assertIsDisplayed()
+            onNodeWithText("正在连接…").assertIsDisplayed()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             onNode(hasSetTextAction() and hasText("Keep this question")).assertIsDisplayed()
             onNodeWithContentDescription("发送").assertIsEnabled().performClick()
@@ -145,8 +171,8 @@ class ConnectionFlowsTest(
                 fixture.workspace.connections.disconnect(id)
                 fixture.scheduler.advanceUntilIdle()
             }
-            onNodeWithText("连接已断开，草稿已保留。").assertIsDisplayed()
-            onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Next question")
+            onNodeWithText("连接已断开").assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Next question")
             onNodeWithContentDescription("发送").assertIsNotEnabled()
             runOnIdle {
                 val stopped = fixture.workspace.conversations.first { it.id == session.id }

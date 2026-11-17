@@ -6,7 +6,7 @@
     <string name="search_sessions">Search</string>
     <string name="collapse_search">Collapse search</string>
     <string name="replying">Running......</string>
-    <string name="no_sessions">No sessions found. Try another search.</string>
+    <string name="no_sessions">No matching conversations</string>
 
     <!-- 新会话 -->
     <string name="new_conversation">Empty session</string>

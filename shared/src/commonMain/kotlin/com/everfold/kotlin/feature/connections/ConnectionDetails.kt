@@ -139,6 +139,13 @@ private fun ConnectionOverview(
                 TextButton(onClick = onEdit) { Text(localizedString(Res.string.connection_edit)) }
             }
             ConnectionInfo(localizedString(Res.string.connection_endpoint), connection.profile.endpointSummary())
+            if (!connection.isConnected && runtime.lastConnectedAt != null) {
+                Text(
+                    localizedString(Res.string.connection_cached_info),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             ConnectionInfo(
                 localizedString(Res.string.connection_kernel_version),
                 runtime.kernelVersion ?: localizedString(Res.string.connection_info_unavailable),
@@ -153,13 +160,6 @@ private fun ConnectionOverview(
                     ?.plus(" UTC")
                     ?: localizedString(Res.string.connection_never_connected),
             )
-            if (!connection.isConnected && runtime.lastConnectedAt != null) {
-                Text(
-                    localizedString(Res.string.connection_cached_info),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             HorizontalDivider()
             extraContent()
             if (connection.profile.canRemove) {

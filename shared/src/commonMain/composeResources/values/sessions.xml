@@ -6,7 +6,7 @@
     <string name="search_sessions">搜索</string>
     <string name="collapse_search">收起搜索</string>
     <string name="replying">运行中......</string>
-    <string name="no_sessions">没有找到会话，试试其他关键词。</string>
+    <string name="no_sessions">没有匹配的会话</string>
 
     <!-- 新会话 -->
     <string name="new_conversation">空会话</string>

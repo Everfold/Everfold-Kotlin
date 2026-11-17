@@ -10,7 +10,6 @@
     <string name="model_unavailable">模型不可用</string>
     <string name="attach_files">上传文件</string>
     <string name="attachment_uploading">上传中</string>
-    <string name="attachment_ready">已就绪</string>
     <string name="attachment_failed">上传失败</string>
     <string name="attachment_retry">重试上传 %1$s</string>
     <string name="attachment_remove">移除附件 %1$s</string>
@@ -20,15 +19,14 @@
     <string name="menu_connection">连接</string>
     <string name="menu_workspace">工作区</string>
     <string name="connection_status_description">连接状态：%1$s</string>
-    <string name="composer_connecting">正在连接，连接后即可发送。</string>
-    <string name="composer_disconnected">连接已断开，草稿已保留。</string>
-    <string name="composer_disconnecting">正在断开连接，草稿已保留。</string>
-    <string name="composer_removed">此会话的连接已移除，无法继续发送。</string>
+    <string name="composer_connecting">正在连接…</string>
+    <string name="composer_disconnected">连接已断开</string>
+    <string name="composer_disconnecting">正在断开…</string>
+    <string name="composer_removed">连接已移除，无法发送</string>
     <string name="composer_reconnect">重新连接</string>
-    <string name="composer_workspace_missing">工作区不可用，请检查此会话的连接。</string>
-    <string name="composer_model_missing">模型不可用，请检查此会话的连接。</string>
-    <string name="composer_failed_uploads">附件上传失败，重试或移除后才能发送。</string>
+    <string name="composer_workspace_missing">工作区不可用</string>
+    <string name="composer_model_missing">模型不可用</string>
+    <string name="composer_failed_uploads">附件上传失败</string>
     <string name="composer_retry_uploads">重试上传</string>
-    <string name="composer_uploading">附件正在上传，完成后即可发送。</string>
-    <string name="composer_connection_failed">连接失败，暂时无法发送。</string>
+    <string name="composer_connection_failed">连接失败</string>
 </resources>

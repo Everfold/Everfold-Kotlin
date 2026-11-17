@@ -26,7 +26,6 @@ import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.attach_files
 import everfold.shared.generated.resources.attachment_failed
-import everfold.shared.generated.resources.attachment_ready
 import everfold.shared.generated.resources.attachment_remove
 import everfold.shared.generated.resources.attachment_retry
 import everfold.shared.generated.resources.attachment_uploading
@@ -64,21 +63,23 @@ private fun AttachmentCard(
                     val label =
                         when (file.status) {
                             AttachmentStatus.Uploading -> Res.string.attachment_uploading
-                            AttachmentStatus.Ready -> Res.string.attachment_ready
+                            AttachmentStatus.Ready -> null
                             AttachmentStatus.Failed -> Res.string.attachment_failed
                         }
-                    Text(
-                        localizedString(label),
-                        style = MaterialTheme.typography.labelSmall,
-                        color =
-                            if (file.status ==
-                                AttachmentStatus.Failed
-                            ) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
+                    if (label != null) {
+                        Text(
+                            localizedString(label),
+                            style = MaterialTheme.typography.labelSmall,
+                            color =
+                                if (file.status ==
+                                    AttachmentStatus.Failed
+                                ) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                        )
+                    }
                 }
                 if (file.status == AttachmentStatus.Failed) {
                     IconButton(

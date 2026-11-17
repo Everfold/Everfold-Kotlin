@@ -247,7 +247,7 @@ fun ConversationScreen(
                                                 false
                                             }
                                         },
-                                // 在思考什么问题呢
+                                // 输入消息
                                 placeholder = { Text(localizedString(Res.string.message_placeholder)) },
                                 maxLines = 5,
                                 colors =

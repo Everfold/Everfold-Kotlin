@@ -88,21 +88,25 @@ class ConversationExperienceTest(
             runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
             onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Keep this draft")
             onNodeWithContentDescription("上传文件").performClick()
-            onNodeWithText("附件正在上传，完成后即可发送。").assertIsDisplayed()
+            onNodeWithText("上传中").assertIsDisplayed()
+            onNodeWithText("附件正在上传，完成后即可发送。").assertDoesNotExist()
             onNodeWithContentDescription("发送").assertIsNotEnabled()
             runOnIdle {
                 fixture.workspace.connections.disconnect(BUILT_IN_CONNECTION_ID)
                 fixture.scheduler.advanceUntilIdle()
             }
-            val notice = onNodeWithText("连接已断开，草稿已保留。").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            val notice = onNodeWithText("连接已断开").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
             val attachment = onNodeWithText("draft.txt").fetchSemanticsNode().boundsInRoot
             assertTrue(notice.bottom <= attachment.top && attachment.top - notice.bottom < 100f)
             onNodeWithText("重新连接").performClick()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
-            onNodeWithText("附件上传失败，重试或移除后才能发送。").assertIsDisplayed()
+            onNodeWithText("附件上传失败").assertIsDisplayed()
             onNodeWithText("重试上传").performClick()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             onNodeWithContentDescription("发送").assertIsEnabled()
+            onNodeWithText("draft.txt").assertIsDisplayed()
+            onNodeWithText("已就绪").assertDoesNotExist()
+            onNodeWithText("上传中").assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("Keep this draft")).assertIsDisplayed()
             runOnIdle {
                 assertTrue(

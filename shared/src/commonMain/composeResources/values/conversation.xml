@@ -7,12 +7,9 @@
     <string name="open_workspace">打开工作台</string>
 
     <!-- 消息输入与生成状态 -->
-    <string name="stopped_hint">已停止工作，你可以发送消息或继续运行。</string>
-    <string name="message_placeholder">在思考什么问题呢......</string>
+    <string name="message_placeholder">输入消息…</string>
     <string name="stop_reply">暂停</string>
     <string name="send_message">发送</string>
-    <string name="you">你</string>
-    <string name="thinking">思考中......</string>
 
     <!-- 空会话引导 -->
     <string name="welcome_title">千里之行 始于足下</string>
@@ -37,11 +34,9 @@
     <string name="agent_continue">继续执行</string>
     <string name="agent_retry">重试</string>
     <string name="agent_waiting_hint">请补充要求，或确认继续执行。</string>
-    <string name="agent_failed_hint">任务执行失败，请重试。</string>
     <string name="agent_step_prepare">整理输入</string>
     <string name="agent_step_reply">生成回复</string>
 
-    <string name="copy_message">复制消息</string>
     <string name="copy_code">复制代码</string>
     <string name="copied">已复制</string>
     <string name="code_block">代码</string>

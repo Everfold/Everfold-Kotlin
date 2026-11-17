@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -31,7 +30,6 @@ import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.official_website
 import everfold.shared.generated.resources.open_in_browser
 import everfold.shared.generated.resources.open_source_license
-import everfold.shared.generated.resources.preview_notice
 import org.jetbrains.compose.resources.painterResource
 
 /** 关于页展示品牌可用版本信息以及官网源码和许可链接 */
@@ -51,13 +49,6 @@ internal fun AboutSettingsPage() {
             )
             Text("Everfold", style = MaterialTheme.typography.headlineSmall)
             if (version != null) Text("v$version", style = MaterialTheme.typography.labelLarge)
-            Text(
-                // 写点什么呢
-                localizedString(Res.string.preview_notice),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
         }
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column {

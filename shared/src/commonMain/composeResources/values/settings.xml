@@ -9,7 +9,6 @@
     <!-- 设置与关于 -->
     <string name="display_settings">显示</string>
     <string name="about">关于</string>
-    <string name="preview_notice">写点什么呢？</string>
 
     <string name="official_website">官方网站</string>
     <string name="github_repository">应用 GitHub 仓库</string>
@@ -32,8 +31,8 @@
     <string name="text_size_preview">让每一个想法清晰呈现。\n这里预览会话正文和输入框的文字大小。</string>
     <string name="send_shortcut_setting">发送快捷键</string>
     <string name="send_shortcut_enter">Enter 发送 · Shift + Enter 换行</string>
-    <string name="collapse_long_prompts">自动折叠较长的用户消息</string>
+    <string name="collapse_long_prompts">自动折叠长消息</string>
 
     <string name="conversation_side_margins">两侧留白</string>
-    <string name="conversation_side_margins_hint">限制消息和输入区宽度，便于阅读。关闭后使用页面可用宽度，显示更多内容。</string>
+    <string name="conversation_side_margins_hint">关闭后，消息与输入框铺满可用宽度。</string>
 </resources>

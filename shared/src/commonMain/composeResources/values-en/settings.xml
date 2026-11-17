@@ -9,7 +9,6 @@
     <!-- 设置与关于 -->
     <string name="display_settings">Display</string>
     <string name="about">About</string>
-    <string name="preview_notice">What should we write here?</string>
 
     <string name="official_website">Official website</string>
     <string name="github_repository">App GitHub repository</string>
@@ -32,8 +31,8 @@
     <string name="text_size_preview">Give every idea room to grow.\nPreview the text size used in messages and the composer.</string>
     <string name="send_shortcut_setting">Send shortcut</string>
     <string name="send_shortcut_enter">Enter to send · Shift + Enter for a new line</string>
-    <string name="collapse_long_prompts">Automatically collapse long user messages</string>
+    <string name="collapse_long_prompts">Auto-collapse long messages</string>
 
     <string name="conversation_side_margins">Side margins</string>
-    <string name="conversation_side_margins_hint">Limit message and composer width for comfortable reading. Turn off to use the available page width and show more content.</string>
+    <string name="conversation_side_margins_hint">Turn off to fill the available width with messages and the input box.</string>
 </resources>

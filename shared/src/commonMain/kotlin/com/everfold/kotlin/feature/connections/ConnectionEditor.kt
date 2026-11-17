@@ -20,8 +20,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +43,9 @@ import everfold.shared.generated.resources.connection_reset
 import everfold.shared.generated.resources.connection_save
 import everfold.shared.generated.resources.connection_save_connect
 import everfold.shared.generated.resources.connection_saved
+import kotlinx.coroutines.delay
+
+private const val SAVE_NOTICE_DURATION_MILLIS = 2_000L
 
 @Composable
 internal fun ConnectionEditor(
@@ -59,14 +65,14 @@ internal fun ConnectionEditor(
         )
     }
     var showErrors by rememberSaveable { mutableStateOf(false) }
-    var saved by rememberSaveable { mutableStateOf(false) }
+    var saveRevision by remember { mutableIntStateOf(0) }
     val update: (ConnectionDraft) -> Unit = {
         draft = it
-        saved = false
+        saveRevision = 0
     }
     val save: (Boolean) -> Unit = { connect ->
         showErrors = !draft.isValid
-        if (draft.isValid) saved = onSave(draft, connect)
+        if (draft.isValid) saveRevision = if (onSave(draft, connect)) saveRevision + 1 else 0
     }
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -79,14 +85,14 @@ internal fun ConnectionEditor(
         ) {
             if (profile == null) Text(localizedString(Res.string.connection_add), style = MaterialTheme.typography.headlineSmall)
             ConnectionFields(draft, draft.name ?: initialName, update, showErrors)
-            if (profile?.canEditEndpoint == true) {
+            if (profile?.canEditEndpoint == true && draft.setup != profile.setup) {
                 Text(
                     localizedString(Res.string.connection_edit_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (saved) Text(localizedString(Res.string.connection_saved), color = MaterialTheme.colorScheme.primary)
+            ConnectionSaveNotice(saveRevision)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { save(false) }) { Text(localizedString(Res.string.connection_save)) }
                 if (profile == null) {
@@ -101,6 +107,17 @@ internal fun ConnectionEditor(
             }
         }
     }
+}
+
+@Composable
+private fun ConnectionSaveNotice(revision: Int) {
+    if (revision == 0) return
+    var visible by remember(revision) { mutableStateOf(true) }
+    LaunchedEffect(revision) {
+        delay(SAVE_NOTICE_DURATION_MILLIS)
+        visible = false
+    }
+    if (visible) Text(localizedString(Res.string.connection_saved), color = MaterialTheme.colorScheme.primary)
 }
 
 @Composable
