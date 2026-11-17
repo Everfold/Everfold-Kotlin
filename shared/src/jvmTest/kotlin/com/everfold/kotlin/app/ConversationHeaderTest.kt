@@ -91,15 +91,14 @@ class ConversationHeaderTest(
         }
 
     @Test
-    fun boundWorkspaceIsReadableAndItsPathCanBeCopied() =
+    fun boundWorkspaceIsReadableWithoutACopyButton() =
         workspaceUiTest(width) { fixture ->
             onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Workspace details")
             onNodeWithContentDescription("发送").performClick()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             onNodeWithContentDescription("会话菜单").performClick()
             onNodeWithText("默认工作区\n/workspace").assertIsDisplayed().assertIsEnabled()
-            onNodeWithText("复制路径").performClick()
-            onNodeWithText("已复制").assertIsDisplayed()
+            onNodeWithText("复制路径").assertDoesNotExist()
         }
 
     @Test

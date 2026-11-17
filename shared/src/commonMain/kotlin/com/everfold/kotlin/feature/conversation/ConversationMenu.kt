@@ -161,7 +161,6 @@ private fun overviewChoices(
                 localizedString(Res.string.menu_workspace),
                 state.workspace?.let { "${it.name.resolve()}\n${it.path}" } ?: localizedString(Res.string.workspace_unavailable),
                 readOnly = !canSelect || state.workspace == null,
-                copyValue = state.workspace?.path.takeIf { !canSelect },
             ),
         )
         if (preview) add(SelectionChoice("preview", localizedString(Res.string.preview_agent_states)))

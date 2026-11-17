@@ -63,7 +63,7 @@ class ConversationComposerTest(
             onNode(hasText("brief.pdf") and hasAnyAncestor(hasScrollAction()) and !hasClickAction()).assertIsDisplayed()
             onNodeWithContentDescription("会话菜单").performClick()
             onNode(hasText("工作区") and hasClickAction()).assertDoesNotExist()
-            onNodeWithText("复制路径").assertIsDisplayed()
+            onNodeWithText("复制路径").assertDoesNotExist()
             onNodeWithText("默认工作区").assertDoesNotExist()
             onNodeWithText("Notes\n/workspace/notes").assertIsDisplayed()
         }

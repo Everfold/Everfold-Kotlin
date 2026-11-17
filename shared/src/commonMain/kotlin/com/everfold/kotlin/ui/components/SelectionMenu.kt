@@ -3,7 +3,6 @@ package com.everfold.kotlin.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,23 +16,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.copied
-import everfold.shared.generated.resources.copy_path
 import everfold.shared.generated.resources.selection_empty
 import everfold.shared.generated.resources.selection_search
 
@@ -121,22 +114,10 @@ private fun SelectionItems(
 
 @Composable
 private fun SelectionInformation(choice: SelectionChoice) {
-    val clipboard = LocalClipboardManager.current
-    var copied by remember(choice.copyValue) { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        SelectionContainer(Modifier.weight(1f)) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(choice.label)
-                Text(choice.detail, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        choice.copyValue?.let { value ->
-            TextButton(onClick = {
-                clipboard.setText(AnnotatedString(value))
-                copied = true
-            }) {
-                Text(localizedString(if (copied) Res.string.copied else Res.string.copy_path))
-            }
+    SelectionContainer(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(choice.label)
+            Text(choice.detail, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

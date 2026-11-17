@@ -31,7 +31,6 @@
     <string name="composer_connection_failed">Connection failed</string>
     <string name="selection_search">Search options</string>
     <string name="selection_empty">No matching options</string>
-    <string name="copy_path">Copy path</string>
     <string name="expand_composer">Expand editor</string>
     <string name="collapse_composer">Collapse editor</string>
 </resources>

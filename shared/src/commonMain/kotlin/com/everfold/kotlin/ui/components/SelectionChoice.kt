@@ -7,6 +7,5 @@ internal data class SelectionChoice(
     val selected: Boolean = false,
     val enabled: Boolean = true,
     val readOnly: Boolean = false,
-    val copyValue: String? = null,
     val searchable: Boolean = true,
 )
