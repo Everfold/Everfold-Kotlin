@@ -115,7 +115,7 @@ private fun menuChoices(
                         "${it.profile.name.resolve()} · ${localizedString(it.runtime.status.label)}",
                         selected = it.id == state.connectionId,
                     )
-                } + SelectionChoice("manage", localizedString(Res.string.connection_manage))
+                } + SelectionChoice("manage", localizedString(Res.string.connection_manage), searchable = false)
             }
 
             MenuPage.Workspaces -> {
@@ -135,7 +135,7 @@ private fun menuChoices(
     ) {
         choices
     } else {
-        listOf(SelectionChoice("back", localizedString(Res.string.connection_back))) + choices
+        listOf(SelectionChoice("back", localizedString(Res.string.connection_back), searchable = false)) + choices
     }
 }
 
@@ -160,7 +160,8 @@ private fun overviewChoices(
                 "workspace",
                 localizedString(Res.string.menu_workspace),
                 state.workspace?.let { "${it.name.resolve()}\n${it.path}" } ?: localizedString(Res.string.workspace_unavailable),
-                enabled = canSelect && state.workspace != null,
+                readOnly = !canSelect || state.workspace == null,
+                copyValue = state.workspace?.path.takeIf { !canSelect },
             ),
         )
         if (preview) add(SelectionChoice("preview", localizedString(Res.string.preview_agent_states)))

@@ -133,7 +133,7 @@ class ConnectionFlowsTest(
     fun defaultNameFollowsLanguageAfterSavingWhileCustomNamesStayLiteral() =
         workspaceUiTest(width) { fixture ->
             openConnections()
-            onNode(hasText("本机") and hasClickAction()).performClick()
+            onNode(hasText("本机") and hasText("Beamlet") and hasClickAction()).performClick()
             onNodeWithText("配置").performClick()
             onNodeWithText("保存").assertIsNotEnabled()
             runOnIdle { fixture.language = AppLanguage.English }
@@ -229,7 +229,7 @@ class ConnectionFlowsTest(
                         .map { it.id },
                 )
             }
-            onNode(hasText("本机") and hasClickAction()).assertIsDisplayed()
+            onNode(hasText("本机") and hasText("Beamlet") and hasClickAction()).assertIsDisplayed()
         }
 
     private fun DesktopComposeUiTest.openConnections() {

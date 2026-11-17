@@ -29,4 +29,7 @@
     <string name="composer_failed_uploads">附件上传失败</string>
     <string name="composer_retry_uploads">重试上传</string>
     <string name="composer_connection_failed">连接失败</string>
+    <string name="selection_search">搜索选项</string>
+    <string name="selection_empty">没有匹配的选项</string>
+    <string name="copy_path">复制路径</string>
 </resources>

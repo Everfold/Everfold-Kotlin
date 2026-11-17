@@ -29,4 +29,7 @@
     <string name="composer_failed_uploads">Attachment upload failed</string>
     <string name="composer_retry_uploads">Retry uploads</string>
     <string name="composer_connection_failed">Connection failed</string>
+    <string name="selection_search">Search options</string>
+    <string name="selection_empty">No matching options</string>
+    <string name="copy_path">Copy path</string>
 </resources>

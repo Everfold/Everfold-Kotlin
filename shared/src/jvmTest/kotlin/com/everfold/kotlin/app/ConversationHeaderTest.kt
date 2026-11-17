@@ -2,12 +2,15 @@ package com.everfold.kotlin.app
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import com.everfold.kotlin.feature.connections.ClusterSetup
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
@@ -85,6 +88,39 @@ class ConversationHeaderTest(
             }
             onNodeWithContentDescription("会话菜单").performClick()
             onNodeWithText("Notes\n/workspace/notes").assertIsDisplayed()
+        }
+
+    @Test
+    fun boundWorkspaceIsReadableAndItsPathCanBeCopied() =
+        workspaceUiTest(width) { fixture ->
+            onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Workspace details")
+            onNodeWithContentDescription("发送").performClick()
+            runOnIdle { fixture.scheduler.advanceUntilIdle() }
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNodeWithText("默认工作区\n/workspace").assertIsDisplayed().assertIsEnabled()
+            onNodeWithText("复制路径").performClick()
+            onNodeWithText("已复制").assertIsDisplayed()
+        }
+
+    @Test
+    fun longConnectionListsCanBeSearchedWithoutHidingNavigation() =
+        workspaceUiTest(width) { fixture ->
+            val target =
+                runOnIdle {
+                    (1..10).map { assertNotNull(fixture.workspace.connections.add("Office $it", ClusterSetup())) }.last()
+                }
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("连接") and hasText("已连接", substring = true) and hasClickAction()).performClick()
+            onNode(hasSetTextAction() and hasText("搜索选项")).performTextReplacement("missing")
+            onNodeWithText("没有匹配的选项").assertIsDisplayed()
+            onNodeWithText("返回").assertExists()
+            onNodeWithText("管理连接").assertExists()
+            onNode(hasSetTextAction() and hasText("missing")).performTextReplacement("Office 10")
+            onNodeWithText("Office 10 · 未连接").performClick()
+            runOnIdle { assertEquals(target, fixture.workspace.newConversation.connectionId) }
+            onNodeWithContentDescription("会话菜单").performClick()
+            onNode(hasText("连接") and hasText("Office 10 · 未连接") and hasClickAction()).performClick()
+            onNodeWithText("本机 · 已连接").assertExists()
         }
 
     companion object {

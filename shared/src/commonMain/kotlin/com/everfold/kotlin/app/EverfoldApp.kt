@@ -169,6 +169,7 @@ internal fun EverfoldApp(
                 sessionListState.SaveableStateProvider("sessions") {
                     SessionsScreen(
                         sessions = workspace.conversations,
+                        connectionNames = workspace.connections.connections.associate { it.id to it.profile.name },
                         selectedId = selected?.id,
                         searchRequest = searchRequest,
                         query = sessionQuery,

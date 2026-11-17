@@ -49,11 +49,13 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.label
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
+import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.cancel
 import everfold.shared.generated.resources.clear_search
+import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.delete_session
 import everfold.shared.generated.resources.delete_session_notice
 import everfold.shared.generated.resources.empty_sessions
@@ -83,6 +85,7 @@ fun SessionsScreen(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     searchRequest: Int = 0,
+    connectionNames: Map<String, UiText> = emptyMap(),
 ) {
     val searchFocus = remember { FocusRequester() }
     var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
@@ -99,10 +102,12 @@ fun SessionsScreen(
     var name by rememberSaveable { mutableStateOf("") }
     var menuId by remember { mutableStateOf<String?>(null) }
     val titles = sessions.map { it.title.resolve() }
-    // 按当前语言解析后的标题搜索保留已归档会话的可见性
+    val names = connectionNames.mapValues { it.value.resolve() }
+    // 同时按标题和连接名称搜索
     val filtered =
         sessions.filterIndexed { index, _ ->
-            titles[index].contains(query, ignoreCase = true)
+            titles[index].contains(query, ignoreCase = true) ||
+                names[sessions[index].connectionId]?.contains(query, ignoreCase = true) == true
         }
     Column(modifier.padding(horizontal = 16.dp)) {
         OutlinedTextField(
@@ -231,7 +236,11 @@ fun SessionsScreen(
                             val status = localizedString(session.runState.label)
                             Text(
                                 // 已置顶
-                                if (session.isPinned) "${localizedString(Res.string.pinned_session)} · $status" else status,
+                                listOfNotNull(
+                                    if (session.isPinned) localizedString(Res.string.pinned_session) else null,
+                                    names[session.connectionId] ?: localizedString(Res.string.connection_removed),
+                                    status.takeIf { session.runState !in listOf(AgentRunState.Idle, AgentRunState.Completed) },
+                                ).joinToString(" · "),
                                 Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
