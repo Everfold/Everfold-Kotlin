@@ -98,7 +98,7 @@ fun ConversationScreen(
     onStop: () -> Unit,
     connectionIndicator: @Composable () -> Unit,
     conversationMenu: @Composable () -> Unit,
-    connectionNotice: @Composable () -> Unit,
+    composerFeedback: @Composable () -> Unit,
     canSend: Boolean,
     onRetry: () -> Unit,
     autoFocusInput: Boolean,
@@ -184,7 +184,6 @@ fun ConversationScreen(
             conversationMenu()
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        connectionNotice()
         if (state.messages.isEmpty()) {
             WelcomeContent({
                 onDraftChange(it)
@@ -208,6 +207,7 @@ fun ConversationScreen(
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Column(Modifier.widthIn(max = ConversationContentMaxWidth).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+                composerFeedback()
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surfaceContainer,

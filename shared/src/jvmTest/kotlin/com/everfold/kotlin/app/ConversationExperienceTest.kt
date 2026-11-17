@@ -4,6 +4,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
@@ -13,6 +15,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -76,6 +80,36 @@ class ConversationExperienceTest(
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             onNodeWithText("Preview reply").assertIsDisplayed()
             onNodeWithContentDescription("执行详情").assertIsDisplayed()
+        }
+
+    @Test
+    fun uploadFailuresCanBeRecoveredWithoutLeavingTheDraft() =
+        workspaceUiTest(width) { fixture ->
+            runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
+            onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Keep this draft")
+            onNodeWithContentDescription("上传文件").performClick()
+            onNodeWithText("附件正在上传，完成后即可发送。").assertIsDisplayed()
+            onNodeWithContentDescription("发送").assertIsNotEnabled()
+            runOnIdle {
+                fixture.workspace.connections.disconnect(BUILT_IN_CONNECTION_ID)
+                fixture.scheduler.advanceUntilIdle()
+            }
+            val notice = onNodeWithText("连接已断开，草稿已保留。").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            val attachment = onNodeWithText("draft.txt").fetchSemanticsNode().boundsInRoot
+            assertTrue(notice.bottom <= attachment.top && attachment.top - notice.bottom < 100f)
+            onNodeWithText("重新连接").performClick()
+            runOnIdle { fixture.scheduler.advanceUntilIdle() }
+            onNodeWithText("附件上传失败，重试或移除后才能发送。").assertIsDisplayed()
+            onNodeWithText("重试上传").performClick()
+            runOnIdle { fixture.scheduler.advanceUntilIdle() }
+            onNodeWithContentDescription("发送").assertIsEnabled()
+            onNode(hasSetTextAction() and hasText("Keep this draft")).assertIsDisplayed()
+            runOnIdle {
+                assertTrue(
+                    fixture.workspace.newConversation.messages
+                        .isEmpty(),
+                )
+            }
         }
 
     companion object {

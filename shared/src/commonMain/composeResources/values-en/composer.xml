@@ -20,4 +20,15 @@
     <string name="menu_connection">Connection</string>
     <string name="menu_workspace">Workspace</string>
     <string name="connection_status_description">Connection status: %1$s</string>
+    <string name="composer_connecting">Connecting. You can send when the connection is ready.</string>
+    <string name="composer_disconnected">Disconnected. Your draft is preserved.</string>
+    <string name="composer_disconnecting">Disconnecting. Your draft is preserved.</string>
+    <string name="composer_removed">This conversation’s connection was removed. Sending is unavailable.</string>
+    <string name="composer_reconnect">Reconnect</string>
+    <string name="composer_workspace_missing">Workspace unavailable. Check this conversation’s connection.</string>
+    <string name="composer_model_missing">Model unavailable. Check this conversation’s connection.</string>
+    <string name="composer_failed_uploads">Attachments failed to upload. Retry or remove them before sending.</string>
+    <string name="composer_retry_uploads">Retry uploads</string>
+    <string name="composer_uploading">Attachments are uploading. You can send when they are ready.</string>
+    <string name="composer_connection_failed">Connection failed. Sending is unavailable.</string>
 </resources>

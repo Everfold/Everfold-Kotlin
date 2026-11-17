@@ -135,10 +135,9 @@ class ConnectionFlowsTest(
             onNodeWithText("Office · 未连接").performClick()
             onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Keep this question")
             onNodeWithContentDescription("发送").assertIsNotEnabled()
-            onNodeWithText("管理连接").performClick()
-            onNode(hasText("连接") and hasAnySibling(hasText("在此新建会话"))).performClick()
+            onNodeWithText("重新连接").performClick()
+            onNodeWithText("正在连接，连接后即可发送。").assertIsDisplayed()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
-            onNodeWithText("在此新建会话").assertIsEnabled().performClick()
             onNode(hasSetTextAction() and hasText("Keep this question")).assertIsDisplayed()
             onNodeWithContentDescription("发送").assertIsEnabled().performClick()
             val session = runOnIdle { fixture.workspace.conversations.first { it.connectionId == id } }
@@ -146,7 +145,7 @@ class ConnectionFlowsTest(
                 fixture.workspace.connections.disconnect(id)
                 fixture.scheduler.advanceUntilIdle()
             }
-            onNodeWithText("连接尚未就绪，消息和草稿会保留。").assertIsDisplayed()
+            onNodeWithText("连接已断开，草稿已保留。").assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("在思考什么问题呢......")).performTextReplacement("Next question")
             onNodeWithContentDescription("发送").assertIsNotEnabled()
             runOnIdle {

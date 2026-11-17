@@ -62,11 +62,12 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.app.navigation.AppDestination
 import com.everfold.kotlin.feature.connections.ConnectionNavigationState
 import com.everfold.kotlin.feature.connections.ConnectionStatusIndicator
-import com.everfold.kotlin.feature.connections.ConnectionUnavailableNotice
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentButton
+import com.everfold.kotlin.feature.conversation.AttachmentStatus
 import com.everfold.kotlin.feature.conversation.AttachmentTarget
+import com.everfold.kotlin.feature.conversation.ComposerFeedback
 import com.everfold.kotlin.feature.conversation.ConversationMenu
 import com.everfold.kotlin.feature.conversation.ConversationScreen
 import com.everfold.kotlin.feature.conversation.DraftAttachments
@@ -443,10 +444,17 @@ internal fun EverfoldApp(
                                                         FilePickerError { fileErrorTarget = null }
                                                     }
                                                 },
-                                                connectionNotice = {
-                                                    ConnectionUnavailableNotice(
+                                                composerFeedback = {
+                                                    ComposerFeedback(
+                                                        session,
                                                         sessionConnection,
-                                                        openSessionConnection,
+                                                        onConnect = { workspace.connections.connect(session.connectionId) },
+                                                        onOpenConnection = openSessionConnection,
+                                                        onRetryUploads = {
+                                                            session.attachments.filter { it.status == AttachmentStatus.Failed }.forEach {
+                                                                options.retryAttachment(session.id, it.id)
+                                                            }
+                                                        },
                                                     )
                                                 },
                                                 onRetry = { selected?.let { workspace.retry(it.id) } },
