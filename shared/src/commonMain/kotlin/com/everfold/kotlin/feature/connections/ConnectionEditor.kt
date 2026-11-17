@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -43,6 +44,7 @@ import everfold.shared.generated.resources.connection_reset
 import everfold.shared.generated.resources.connection_save
 import everfold.shared.generated.resources.connection_save_connect
 import everfold.shared.generated.resources.connection_saved
+import everfold.shared.generated.resources.connection_unsaved
 import kotlinx.coroutines.delay
 
 private const val SAVE_NOTICE_DURATION_MILLIS = 2_000L
@@ -66,6 +68,7 @@ internal fun ConnectionEditor(
     }
     var showErrors by rememberSaveable { mutableStateOf(false) }
     var saveRevision by remember { mutableIntStateOf(0) }
+    val changed = draft.hasChanges(profile, initialName)
     val update: (ConnectionDraft) -> Unit = {
         draft = it
         saveRevision = 0
@@ -75,36 +78,54 @@ internal fun ConnectionEditor(
         if (draft.isValid) saveRevision = if (onSave(draft, connect)) saveRevision + 1 else 0
     }
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            Modifier
-                .widthIn(max = 760.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            if (profile == null) Text(localizedString(Res.string.connection_add), style = MaterialTheme.typography.headlineSmall)
-            ConnectionFields(draft, draft.name ?: initialName, update, showErrors)
-            if (profile?.canEditEndpoint == true && draft.setup != profile.setup) {
-                Text(
-                    localizedString(Res.string.connection_edit_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            ConnectionSaveNotice(saveRevision)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { save(false) }) { Text(localizedString(Res.string.connection_save)) }
-                if (profile == null) {
-                    OutlinedButton(onClick = { save(true) }) { Text(localizedString(Res.string.connection_save_connect)) }
-                } else {
-                    TextButton(onClick = {
-                        update(ConnectionDraft(null, profile.setup, profile.autoConnect))
-                        showErrors = false
-                    }) { Text(localizedString(Res.string.connection_reset)) }
+        Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                if (profile == null) Text(localizedString(Res.string.connection_add), style = MaterialTheme.typography.headlineSmall)
+                ConnectionFields(draft, draft.name ?: initialName, update, showErrors)
+                if (profile?.canEditEndpoint == true && draft.setup != profile.setup) {
+                    Text(
+                        localizedString(Res.string.connection_edit_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-                if (onCancel != null) TextButton(onClick = onCancel) { Text(localizedString(Res.string.cancel)) }
             }
+            ConnectionEditorActions(profile == null, changed, saveRevision, save, onReset = {
+                update(ConnectionDraft(null, profile?.setup, profile?.autoConnect ?: false))
+                showErrors = false
+            }, onCancel = onCancel)
+        }
+    }
+}
+
+@Composable
+private fun ConnectionEditorActions(
+    adding: Boolean,
+    changed: Boolean,
+    saveRevision: Int,
+    onSave: (Boolean) -> Unit,
+    onReset: () -> Unit,
+    onCancel: (() -> Unit)?,
+) {
+    HorizontalDivider()
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (!adding && changed) Text(localizedString(Res.string.connection_unsaved), style = MaterialTheme.typography.labelMedium)
+        ConnectionSaveNotice(saveRevision)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onSave(false) }, enabled = changed) { Text(localizedString(Res.string.connection_save)) }
+            if (adding) {
+                OutlinedButton(onClick = { onSave(true) }) { Text(localizedString(Res.string.connection_save_connect)) }
+            } else {
+                TextButton(onClick = onReset, enabled = changed) { Text(localizedString(Res.string.connection_reset)) }
+            }
+            if (onCancel != null) TextButton(onClick = onCancel) { Text(localizedString(Res.string.cancel)) }
         }
     }
 }
@@ -153,3 +174,8 @@ private fun ConnectionFields(
         }
     }
 }
+
+private fun ConnectionDraft.hasChanges(
+    profile: ConnectionProfile?,
+    initialName: String,
+): Boolean = profile == null || setup != profile.setup || autoConnect != profile.autoConnect || (name != null && name.trim() != initialName)

@@ -50,7 +50,7 @@ class ConnectionFlowsTest(
             onNodeWithText("在此新建会话").assertIsNotEnabled()
             onNodeWithText("配置").performClick()
             nameField().performTextReplacement("  ")
-            onNodeWithText("保存").performScrollTo().performClick()
+            onNodeWithText("保存").assertIsDisplayed().performClick()
             onNodeWithText("请输入连接名称").assertIsDisplayed()
             runOnIdle {
                 assertEquals(
@@ -62,10 +62,10 @@ class ConnectionFlowsTest(
                 )
             }
             nameField().performTextReplacement("Renamed")
-            onNodeWithText("保存").performScrollTo().performClick()
+            onNodeWithText("保存").assertIsDisplayed().performClick()
             onNodeWithText("已保存").assertIsDisplayed()
             nameField().performTextReplacement("Discard this")
-            onNodeWithText("还原修改").performScrollTo().performClick()
+            onNodeWithText("还原修改").assertIsDisplayed().performClick()
             nameField().assertTextContains("Renamed")
             runOnIdle {
                 assertEquals(
@@ -92,21 +92,21 @@ class ConnectionFlowsTest(
             onNodeWithText("配置").performClick()
             onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
             nameField().performTextReplacement("Renamed")
+            onNodeWithText("未保存").assertIsDisplayed()
+            onNodeWithText("保存").assertIsDisplayed().assertIsEnabled()
             onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("IP 地址")).performTextReplacement("127.0.0.1")
             onNodeWithText("修改接入参数后需重新连接").performScrollTo().assertIsDisplayed()
-            onNodeWithText("还原修改").performScrollTo().performClick()
+            onNodeWithText("还原修改").assertIsDisplayed().performClick()
             onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("IP 地址")).performTextReplacement("127.0.0.1")
             onNode(hasSetTextAction() and hasText("端口")).performTextReplacement("8080")
-            onNodeWithText("保存").performScrollTo().performClick()
+            onNodeWithText("保存").assertIsDisplayed().performClick()
             onNodeWithText("修改接入参数后需重新连接").assertDoesNotExist()
             onNodeWithText("已保存").assertIsDisplayed()
-            mainClock.advanceTimeBy(1_000)
-            onNodeWithText("保存").performClick()
-            mainClock.advanceTimeBy(1_100)
-            onNodeWithText("已保存").assertIsDisplayed()
-            mainClock.advanceTimeBy(1_000)
+            onNodeWithText("保存").assertIsNotEnabled()
+            onNodeWithText("未保存").assertDoesNotExist()
+            mainClock.advanceTimeBy(2_100)
             onNodeWithText("已保存").assertDoesNotExist()
         }
 
@@ -135,7 +135,7 @@ class ConnectionFlowsTest(
             openConnections()
             onNode(hasText("本机") and hasClickAction()).performClick()
             onNodeWithText("配置").performClick()
-            onNodeWithText("保存").performScrollTo().performClick()
+            onNodeWithText("保存").assertIsNotEnabled()
             runOnIdle { fixture.language = AppLanguage.English }
             onNode(hasSetTextAction() and hasText("Connection name")).assertTextContains("This device")
             runOnIdle {
@@ -147,7 +147,7 @@ class ConnectionFlowsTest(
                 )
             }
             onNode(hasSetTextAction() and hasText("Connection name")).performTextReplacement("My device")
-            onNodeWithText("Save").performScrollTo().performClick()
+            onNodeWithText("Save").assertIsDisplayed().performClick()
             runOnIdle { fixture.language = AppLanguage.Chinese }
             nameField().assertTextContains("My device")
         }
@@ -240,7 +240,7 @@ class ConnectionFlowsTest(
     private fun DesktopComposeUiTest.addConnection(name: String) {
         onNodeWithText("添加连接").performClick()
         nameField().performTextReplacement(name)
-        onNodeWithText("保存").performScrollTo().performClick()
+        onNodeWithText("保存").assertIsDisplayed().performClick()
     }
 
     private fun DesktopComposeUiTest.nameField() = onNode(hasSetTextAction() and hasText("连接名称"))

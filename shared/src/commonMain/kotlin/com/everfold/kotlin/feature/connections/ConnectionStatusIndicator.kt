@@ -17,6 +17,8 @@ import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.connection_status_description
 
+private val ConnectedColor = Color(0xFF43A047)
+
 /** 圆点表示会话所绑定连接的实时状态，文字提示与无障碍描述提供完整含义。 */
 @Composable
 internal fun ConnectionStatusIndicator(connection: Connection?) {
@@ -26,8 +28,12 @@ internal fun ConnectionStatusIndicator(connection: Connection?) {
             Res.string.connection_status_description,
             localizedString(status?.label ?: Res.string.connection_removed),
         )
-    val color = if (connection?.isConnected == true) Color(0xFF43A047) else MaterialTheme.colorScheme.error
+    val color = connectionStatusColor(status)
     AppTooltip(description) {
         Box(Modifier.size(8.dp).background(color, CircleShape).semantics { contentDescription = description })
     }
 }
+
+@Composable
+internal fun connectionStatusColor(status: ConnectionStatus?): Color =
+    if (status == ConnectionStatus.Connected) ConnectedColor else MaterialTheme.colorScheme.error

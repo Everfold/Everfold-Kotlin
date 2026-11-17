@@ -37,4 +37,5 @@
     <string name="connection_disconnect">断开</string>
     <string name="connection_removed">连接已移除</string>
     <string name="connection_manage">管理连接</string>
+    <string name="connection_unsaved">未保存</string>
 </resources>

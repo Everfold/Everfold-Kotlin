@@ -37,4 +37,5 @@
     <string name="connection_disconnect">Disconnect</string>
     <string name="connection_removed">Connection removed</string>
     <string name="connection_manage">Manage connections</string>
+    <string name="connection_unsaved">Unsaved changes</string>
 </resources>

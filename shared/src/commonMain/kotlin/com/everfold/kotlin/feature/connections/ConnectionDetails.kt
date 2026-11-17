@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
@@ -71,9 +72,21 @@ internal fun ConnectionDetails(
     var removing by rememberSaveable { mutableStateOf(false) }
     val pages = rememberSaveableStateHolder()
     Column(modifier.fillMaxSize()) {
-        Column(Modifier.padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(connection.profile.name.resolve(), style = MaterialTheme.typography.headlineSmall)
-            ConnectionStatusLabel(connection.runtime.status)
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    connection.profile.name.resolve(),
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                ConnectionStatusLabel(connection.runtime.status)
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ConnectionAction(connection.runtime.status, onConnect, onDisconnect)
                 OutlinedButton(onClick = onNewConversation, enabled = connection.isConnected) {
