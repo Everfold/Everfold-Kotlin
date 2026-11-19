@@ -19,33 +19,12 @@ internal data class ConnectionDraft(
                     mapOf(
                         "name" to draft.name,
                         "auto" to draft.autoConnect,
-                        "method" to draft.setup?.method?.name,
-                        "ip" to draft.setup?.ip,
-                        "port" to draft.setup?.port,
-                        "auth" to draft.setup?.auth?.name,
-                        "account" to draft.setup?.account,
-                        "server" to draft.setup?.serverCertificate,
-                        "ca" to draft.setup?.caCertificate,
-                        "public" to draft.setup?.clientPublicKey,
-                    )
+                    ) + draft.setup?.toSaveableMap().orEmpty()
                 },
                 restore = { values ->
                     ConnectionDraft(
                         values["name"] as String?,
-                        (values["method"] as String?)?.let { method ->
-                            ClusterSetup(
-                                method = ClusterMethod.valueOf(method),
-                                ip = values["ip"] as String,
-                                port = values["port"] as String,
-                                auth = ClusterAuth.valueOf(values["auth"] as String),
-                                account = values["account"] as String,
-                                password = "",
-                                serverCertificate = values["server"] as String?,
-                                caCertificate = values["ca"] as String?,
-                                clientPublicKey = values["public"] as String?,
-                                clientPrivateKey = null,
-                            )
-                        },
+                        (values["method"] as String?)?.let { values.toClusterSetup() },
                         values["auto"] as Boolean,
                     )
                 },

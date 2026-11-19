@@ -1,5 +1,7 @@
 package com.everfold.kotlin.feature.connections
 
+import androidx.compose.runtime.saveable.mapSaver
+
 /** 集群接入方式局域网发现中心节点或云服务 */
 enum class ClusterMethod { Lan, Central, Cloud }
 
@@ -60,3 +62,36 @@ private fun validIpv6(value: String): Boolean {
     val validCount = if (halves.size == 2) groups.size < 8 else groups.size == 8
     return halves.size <= 2 && validGroups && validCount
 }
+
+/** 仅序列化非敏感连接配置，密码与私钥不在 SavedInstanceState 中持久化。 */
+internal fun ClusterSetup.toSaveableMap(): Map<String, Any?> =
+    mapOf(
+        "method" to method.name,
+        "ip" to ip,
+        "port" to port,
+        "auth" to auth.name,
+        "account" to account,
+        "server" to serverCertificate,
+        "ca" to caCertificate,
+        "public" to clientPublicKey,
+    )
+
+internal fun Map<String, Any?>.toClusterSetup(): ClusterSetup =
+    ClusterSetup(
+        method = ClusterMethod.valueOf(this["method"] as String),
+        ip = this["ip"] as String,
+        port = this["port"] as String,
+        auth = ClusterAuth.valueOf(this["auth"] as String),
+        account = this["account"] as String,
+        password = "",
+        serverCertificate = this["server"] as String?,
+        caCertificate = this["ca"] as String?,
+        clientPublicKey = this["public"] as String?,
+        clientPrivateKey = null,
+    )
+
+internal val ClusterSetupSaver =
+    mapSaver<ClusterSetup>(
+        save = { it.toSaveableMap() },
+        restore = { it.toClusterSetup() },
+    )

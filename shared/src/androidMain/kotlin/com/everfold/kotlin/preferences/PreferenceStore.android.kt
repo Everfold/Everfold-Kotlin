@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+
+internal actual val preferenceIoDispatcher: CoroutineDispatcher = Dispatchers.IO
 
 @Composable
 internal actual fun rememberPreferenceStore(): PreferenceStore {

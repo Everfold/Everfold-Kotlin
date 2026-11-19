@@ -3,13 +3,12 @@ package com.everfold.kotlin.workspace
 import com.everfold.kotlin.feature.connections.ConnectionManager
 import com.everfold.kotlin.feature.conversation.ConversationOptions
 import com.everfold.kotlin.feature.conversation.ConversationUiState
-import com.everfold.kotlin.ui.theme.AppearancePreferences
 
 /**
  * 工作台的可观察状态与用户动作实现持有任务生命周期页面不负责生成回复。
  * 会话始终绑定创建时的连接连接不可用时拒绝发送并保留消息与草稿。
  */
-internal interface Workspace : AppearancePreferences {
+internal interface Workspace {
     val connections: ConnectionManager
     val conversations: List<ConversationUiState>
     val newConversation: ConversationUiState

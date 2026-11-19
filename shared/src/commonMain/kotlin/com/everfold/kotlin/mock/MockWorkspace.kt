@@ -3,7 +3,6 @@ package com.everfold.kotlin.mock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.everfold.kotlin.feature.connections.ClusterSetup
@@ -13,10 +12,6 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.feature.conversation.MessageRole
 import com.everfold.kotlin.ui.localization.UiText
-import com.everfold.kotlin.ui.theme.ThemeColorMode
-import com.everfold.kotlin.ui.theme.ThemeColorSelection
-import com.everfold.kotlin.ui.theme.ThemeMode
-import com.everfold.kotlin.ui.theme.ThemePreset
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.just_now
@@ -51,10 +46,6 @@ internal class MockWorkspace :
     override val conversationOptions = MockConversationOptions(viewModelScope, connections, ::read, ::update)
 
     override var conversations by mutableStateOf(sampleConversations().map(MockConversationCatalog::initialize))
-        private set
-    override var themeMode by mutableStateOf(ThemeMode.System)
-        private set
-    override var themeColor by mutableStateOf(ThemeColorSelection())
         private set
     var replyText: String = "Preview reply"
 
@@ -133,22 +124,6 @@ internal class MockWorkspace :
         id: String,
         value: String,
     ) = update(id) { it.copy(draft = value) }
-
-    override fun setTheme(mode: ThemeMode) {
-        themeMode = mode
-    }
-
-    override fun useSystemThemeColor() {
-        themeColor = themeColor.copy(mode = ThemeColorMode.System)
-    }
-
-    override fun selectThemePreset(preset: ThemePreset) {
-        themeColor = themeColor.copy(mode = ThemeColorMode.Preset, preset = preset)
-    }
-
-    override fun applyCustomThemeColor(color: Color) {
-        themeColor = themeColor.copy(mode = ThemeColorMode.Custom, customSeed = color)
-    }
 
     override fun selectNewConversationConnection(id: String) {
         if (connections.find(id) != null && id != newConversation.connectionId) {

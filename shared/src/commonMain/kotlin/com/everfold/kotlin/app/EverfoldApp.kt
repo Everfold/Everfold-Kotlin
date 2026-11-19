@@ -506,12 +506,12 @@ internal fun EverfoldApp(
                                         onSideMarginsChange = { value -> preferences.update { it.copy(sideMargins = value) } },
                                         language = language,
                                         onLanguageChange = onLanguageChange,
-                                        themeMode = workspace.themeMode,
-                                        themeColor = workspace.themeColor,
-                                        onThemeChange = workspace::setTheme,
-                                        onSystemColorChange = workspace::useSystemThemeColor,
-                                        onPresetChange = workspace::selectThemePreset,
-                                        onCustomColorChange = workspace::applyCustomThemeColor,
+                                        themeMode = preferences.themeMode,
+                                        themeColor = preferences.themeColor,
+                                        onThemeChange = preferences::setTheme,
+                                        onSystemColorChange = preferences::useSystemThemeColor,
+                                        onPresetChange = preferences::selectThemePreset,
+                                        onCustomColorChange = preferences::applyCustomThemeColor,
                                         onBack = if (wide) null else ({ destination = AppDestination.Sessions }),
                                     )
                                 }

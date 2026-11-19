@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -69,6 +70,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.feature.connections.ClusterConnectionForm
 import com.everfold.kotlin.feature.connections.ClusterSetup
+import com.everfold.kotlin.feature.connections.ClusterSetupSaver
 import com.everfold.kotlin.feature.connections.ConnectionPreviewOptions
 import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.description
@@ -112,15 +114,15 @@ internal fun OnboardingScreen(
     onComplete: (ClusterSetup?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var step by remember { mutableStateOf(SetupStep.Welcome) }
-    var furthestStep by remember { mutableIntStateOf(0) }
+    var step by rememberSaveable { mutableStateOf(SetupStep.Welcome) }
+    var furthestStep by rememberSaveable { mutableIntStateOf(0) }
     val focusRequester = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
-    var cluster by remember { mutableStateOf(false) }
-    var form by remember { mutableStateOf(ClusterSetup()) }
+    var cluster by rememberSaveable { mutableStateOf(false) }
+    var form by rememberSaveable(stateSaver = ClusterSetupSaver) { mutableStateOf(ClusterSetup()) }
     var test by remember { mutableStateOf(ConnectionTest.Idle) }
-    var previewResult by remember { mutableStateOf(ConnectionPreviewResult.Success) }
-    var showError by remember { mutableStateOf(false) }
+    var previewResult by rememberSaveable { mutableStateOf(ConnectionPreviewResult.Success) }
+    var showError by rememberSaveable { mutableStateOf(false) }
     // 连接测试只延迟演示所选结果不创建真实连接
     LaunchedEffect(test, form, previewResult, step) {
         if (test == ConnectionTest.Testing) {

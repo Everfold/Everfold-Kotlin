@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,18 +24,19 @@ import everfold.shared.generated.resources.sample_reply
 @Composable
 fun App(modifier: Modifier = Modifier) {
     val store = rememberPreferenceStore()
-    val preferences = remember(store) { UserPreferencesState(store) }
-    val workspace = viewModel { MockWorkspace().also { preferences.value.restoreAppearance(it) } }
+    val persistScope = rememberCoroutineScope()
+    val preferences = remember(store, persistScope) { UserPreferencesState(store, persistScope) }
+    val workspace = viewModel { MockWorkspace() }
     val language = preferences.value.language
-    val themeMode = workspace.themeMode
-    val themeColor = workspace.themeColor
-    SideEffect { preferences.update { it.copy(themeMode = themeMode, themeColor = themeColor) } }
+    val themeMode = preferences.themeMode
+    val themeColor = preferences.themeColor
+    val initialized = preferences.value.onboardingCompleted || workspace.initialized
     AppLanguageEnvironment(language) {
         val reply = localizedString(Res.string.sample_reply)
         SideEffect { workspace.replyText = reply }
         EverfoldTheme(mode = themeMode, color = themeColor) {
             Box(modifier.fillMaxSize()) {
-                if (workspace.initialized) {
+                if (initialized) {
                     EverfoldApp(
                         workspace,
                         language,
@@ -45,10 +47,13 @@ fun App(modifier: Modifier = Modifier) {
                     )
                 } else {
                     OnboardingScreen(
-                        workspace,
+                        preferences,
                         language,
                         { value -> preferences.update { it.copy(language = value) } },
-                        workspace::completeSetup,
+                        onComplete = { setup ->
+                            workspace.completeSetup(setup)
+                            preferences.markOnboardingCompleted()
+                        },
                     )
                 }
             }
