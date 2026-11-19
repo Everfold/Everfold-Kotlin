@@ -51,6 +51,7 @@ internal class WorkspaceShellState(
     var sessionsVisible by mutableStateOf(true)
     var sessionWidth by mutableFloatStateOf(300f)
     var sessionQuery by mutableStateOf("")
+    var connectionQuery by mutableStateOf("")
     var searchRequest by mutableIntStateOf(0)
     var composerFocusRequest by mutableIntStateOf(0)
 

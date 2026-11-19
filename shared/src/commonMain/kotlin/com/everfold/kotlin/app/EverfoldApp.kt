@@ -2,15 +2,12 @@ package com.everfold.kotlin.app
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.connections.ConnectionStatusIndicator
 import com.everfold.kotlin.feature.conversation.AgentRunState
@@ -24,22 +21,21 @@ import com.everfold.kotlin.feature.conversation.DraftAttachments
 import com.everfold.kotlin.feature.conversation.FilePickerError
 import com.everfold.kotlin.feature.conversation.ModelSelector
 import com.everfold.kotlin.feature.sessions.SessionsScreen
+import com.everfold.kotlin.feature.settings.SettingsActions
+import com.everfold.kotlin.feature.settings.SettingsListContent
 import com.everfold.kotlin.feature.settings.SettingsScreen
+import com.everfold.kotlin.feature.settings.SettingsUiState
 import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
-import com.everfold.kotlin.ui.theme.LocalAppBackdrop
-import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
-import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_removed
-import top.yukonga.miuix.kmp.basic.Scaffold
 
-/** 主界面组装入口：宽屏使用固定侧栏，窄屏采用底栏加 miuix-nav 路由栈 */
+/** 主界面组装入口：宽屏使用固定侧栏，窄屏采用单层 Scaffold + miuix-nav 路由栈。 */
 @Composable
 internal fun EverfoldApp(
     workspace: Workspace,
@@ -62,28 +58,14 @@ internal fun EverfoldApp(
             onPreviewState = onPreviewState,
             connectionOverviewExtra = connectionOverviewExtra,
         )
-    val rootBackdrop = rememberOptionalLayerBackdrop()
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0),
-    ) {
-        CompositionLocalProvider(LocalAppBackdrop provides rootBackdrop) {
-            BoxWithConstraints(
-                Modifier
-                    .fillMaxSize()
-                    .optionalLayerBackdrop(rootBackdrop)
-                    .focusable()
-                    .imePadding(),
-            ) {
-                val wide = maxWidth >= WIDE_LAYOUT_DP.dp
-                if (wide) {
-                    val maxSessionWidth =
-                        (maxWidth.value - CONVERSATION_MIN_RESERVE).coerceIn(MIN_SESSION_WIDTH, MAX_SESSION_WIDTH)
-                    WideWorkspaceShell(deps = deps, state = state, maxSessionWidth = maxSessionWidth)
-                } else {
-                    CompactWorkspaceShell(deps = deps, state = state)
-                }
-            }
+    BoxWithConstraints(modifier.fillMaxSize().focusable()) {
+        val wide = maxWidth >= WIDE_LAYOUT_DP.dp
+        if (wide) {
+            val maxSessionWidth =
+                (maxWidth.value - CONVERSATION_MIN_RESERVE).coerceIn(MIN_SESSION_WIDTH, MAX_SESSION_WIDTH)
+            WideWorkspaceShell(deps = deps, state = state, maxSessionWidth = maxSessionWidth)
+        } else {
+            CompactWorkspaceShell(deps = deps, state = state)
         }
     }
 }
@@ -94,8 +76,8 @@ internal fun SessionsPanel(
     state: WorkspaceShellState,
     onSelect: (String) -> Unit,
     onCreate: () -> Unit,
-    compactMode: Boolean,
-    bottomPadding: Dp,
+    showHeader: Boolean,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val selected = deps.workspace.conversations.firstOrNull { it.id == state.selectedId }
@@ -119,8 +101,8 @@ internal fun SessionsPanel(
             onTogglePin = deps.workspace::togglePinned,
             onCreate = onCreate,
             modifier = modifier.fillMaxSize(),
-            compactMode = compactMode,
-            bottomPadding = bottomPadding,
+            showHeader = showHeader,
+            contentPadding = contentPadding,
         )
     }
 }
@@ -205,30 +187,61 @@ private fun RowScope.ConversationToolsRow(
 }
 
 @Composable
-internal fun SettingsHost(
+internal fun CompactSettingsContent(
     deps: WorkspaceShellDeps,
-    bottomPadding: Dp = 0.dp,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
 ) {
-    SettingsScreen(
-        language = deps.language,
-        onLanguageChange = deps.onLanguageChange,
-        themeMode = deps.workspace.themeMode,
-        themeColor = deps.workspace.themeColor,
-        onThemeChange = deps.workspace::setTheme,
-        onSystemColorChange = deps.workspace::useSystemThemeColor,
-        onPresetChange = deps.workspace::selectThemePreset,
-        onCustomColorChange = deps.workspace::applyCustomThemeColor,
-        textSize = deps.preferences.value.textSize,
-        onTextSizeChange = { value -> deps.preferences.update { it.copy(textSize = value) } },
-        shortcut = deps.preferences.value.shortcut,
-        onShortcutChange = { value -> deps.preferences.update { it.copy(shortcut = value) } },
-        collapsePrompts = deps.preferences.value.collapsePrompts,
-        onCollapsePromptsChange = { value -> deps.preferences.update { it.copy(collapsePrompts = value) } },
-        sideMargins = deps.preferences.value.sideMargins,
-        onSideMarginsChange = { value -> deps.preferences.update { it.copy(sideMargins = value) } },
-        onBack = null,
-        bottomPadding = bottomPadding,
+    val (settingsState, actions) = rememberSettingsBinding(deps)
+    SettingsListContent(
+        state = settingsState,
+        actions = actions,
+        modifier = modifier,
+        contentPadding = contentPadding,
     )
+}
+
+@Composable
+internal fun WideSettingsHost(
+    deps: WorkspaceShellDeps,
+    modifier: Modifier = Modifier,
+) {
+    val (settingsState, actions) = rememberSettingsBinding(deps)
+    SettingsScreen(
+        state = settingsState,
+        actions = actions,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun rememberSettingsBinding(deps: WorkspaceShellDeps): Pair<SettingsUiState, SettingsActions> {
+    val prefs = deps.preferences.value
+    val settingsState =
+        SettingsUiState(
+            language = deps.language,
+            themeMode = deps.workspace.themeMode,
+            themeColor = deps.workspace.themeColor,
+            textSize = prefs.textSize,
+            shortcut = prefs.shortcut,
+            collapsePrompts = prefs.collapsePrompts,
+            sideMargins = prefs.sideMargins,
+        )
+    val actions =
+        remember(deps.workspace, deps.onLanguageChange, deps.preferences) {
+            SettingsActions(
+                onLanguageChange = deps.onLanguageChange,
+                onThemeChange = deps.workspace::setTheme,
+                onSystemColorChange = deps.workspace::useSystemThemeColor,
+                onPresetChange = deps.workspace::selectThemePreset,
+                onCustomColorChange = deps.workspace::applyCustomThemeColor,
+                onTextSizeChange = { value -> deps.preferences.update { it.copy(textSize = value) } },
+                onShortcutChange = { value -> deps.preferences.update { it.copy(shortcut = value) } },
+                onCollapsePromptsChange = { value -> deps.preferences.update { it.copy(collapsePrompts = value) } },
+                onSideMarginsChange = { value -> deps.preferences.update { it.copy(sideMargins = value) } },
+            )
+        }
+    return settingsState to actions
 }
 
 @Composable

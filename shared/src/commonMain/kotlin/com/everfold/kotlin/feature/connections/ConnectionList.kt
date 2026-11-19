@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
@@ -44,7 +43,9 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 列表按保存顺序渲染状态更新只刷新原位置搜索同时匹配名称与接入摘要 */
+private const val UNSELECTED_SURFACE_ALPHA = 0.65f
+
+/** 连接列表：统计标题与搜索栏放入同一滚动列表，支持顶底玻璃穿透。 */
 @Composable
 internal fun ConnectionList(
     connections: List<Connection>,
@@ -53,7 +54,7 @@ internal fun ConnectionList(
     onQueryChange: (String) -> Unit,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
-    bottomPadding: Dp = 0.dp,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val names = connections.associate { it.id to it.profile.name.resolve() }
     val endpoints = connections.associate { it.id to it.profile.endpointSummary() }
@@ -61,29 +62,39 @@ internal fun ConnectionList(
         connections.filter {
             names.getValue(it.id).contains(query, ignoreCase = true) || endpoints.getValue(it.id).contains(query, ignoreCase = true)
         }
-    Column(modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        SmallTitle(
-            text = localizedString(Res.string.connection_count, connections.size, connections.count { it.isConnected }),
-            insideMargin = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
-        )
-        ConnectionSearchBar(query = query, onQueryChange = onQueryChange)
-        LazyColumn(
-            Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 16.dp + bottomPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (filtered.isEmpty()) {
-                item { ConnectionNoResults(onClearQuery = { onQueryChange("") }, showClear = query.isNotEmpty()) }
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding =
+            PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = contentPadding.calculateTopPadding() + 4.dp,
+                bottom = contentPadding.calculateBottomPadding() + 16.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(key = "count") {
+            SmallTitle(
+                text = localizedString(Res.string.connection_count, connections.size, connections.count { it.isConnected }),
+                insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+            )
+        }
+        item(key = "search") {
+            ConnectionSearchBar(query = query, onQueryChange = onQueryChange)
+        }
+        if (filtered.isEmpty()) {
+            item(key = "empty") {
+                ConnectionNoResults(onClearQuery = { onQueryChange("") }, showClear = query.isNotEmpty())
             }
-            items(filtered, key = { it.id }) { connection ->
-                ConnectionListItem(
-                    connection = connection,
-                    name = names.getValue(connection.id),
-                    endpoint = endpoints.getValue(connection.id),
-                    selected = connection.id == selectedId,
-                    onSelect = { onSelect(connection.id) },
-                )
-            }
+        }
+        items(filtered, key = { it.id }) { connection ->
+            ConnectionListItem(
+                connection = connection,
+                name = names.getValue(connection.id),
+                endpoint = endpoints.getValue(connection.id),
+                selected = connection.id == selectedId,
+                onSelect = { onSelect(connection.id) },
+            )
         }
     }
 }
@@ -96,7 +107,7 @@ private fun ConnectionSearchBar(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
         insideMargin = DpSize(12.dp, 10.dp),
         cornerRadius = 14.dp,
         label = localizedString(Res.string.connection_search),
@@ -184,7 +195,7 @@ private fun ConnectionListItem(
         if (selected) {
             MiuixTheme.colorScheme.secondaryContainer
         } else {
-            MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.65f)
+            MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = UNSELECTED_SURFACE_ALPHA)
         }
     Surface(
         modifier =

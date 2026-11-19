@@ -1,12 +1,13 @@
 package com.everfold.kotlin.feature.connections
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,7 +21,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -33,7 +33,6 @@ import everfold.shared.generated.resources.connection_add
 import everfold.shared.generated.resources.connection_back
 import everfold.shared.generated.resources.connection_select_hint
 import everfold.shared.generated.resources.nav_connections
-import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.VerticalDivider
@@ -42,7 +41,7 @@ import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 宽屏并列展示列表和详情窄屏逐级进入同一详情状态随连接 ID 保存 */
+/** 宽屏连接分栏页面：左栏列表 + 右栏详情/新增编辑器，单层 Scaffold + OS4 Backdrop。 */
 @Composable
 internal fun ConnectionsScreen(
     connections: ConnectionManager,
@@ -51,47 +50,46 @@ internal fun ConnectionsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     overviewExtra: @Composable (String) -> Unit = {},
-    onOpenConnection: ((String) -> Unit)? = null,
-    onAddConnection: (() -> Unit)? = null,
-    bottomPadding: Dp = 0.dp,
 ) {
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
     val backdrop = rememberOptionalLayerBackdrop()
-    BoxWithConstraints(modifier.fillMaxSize()) {
-        val isWide = maxWidth >= 900.dp && onOpenConnection == null
-        val selected = connections.find(navigation.selectedId.orEmpty())
-        val showingDetail = navigation.adding || selected != null
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            contentWindowInsets = WindowInsets(0),
-            topBar = {
-                ConnectionsTopBar(
-                    backdrop = backdrop,
-                    showBack = (onOpenConnection == null && !isWide) || navigation.canGoBack,
-                    adding = navigation.adding,
-                    onBack = onBack,
-                    onAdd = { onAddConnection?.invoke() ?: navigation.add() },
-                )
-            },
-        ) { innerPadding ->
-            CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-                Box(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop).padding(top = innerPadding.calculateTopPadding())) {
-                    ConnectionsBody(
-                        connections = connections,
-                        navigation = navigation,
-                        pages = pages,
-                        selected = selected,
+    val selected = connections.find(navigation.selectedId.orEmpty())
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            ConnectionsTopBar(
+                backdrop = backdrop,
+                showBack = navigation.canGoBack,
+                adding = navigation.adding,
+                onBack = onBack,
+                onAdd = { navigation.add() },
+            )
+        },
+    ) { innerPadding ->
+        val contentPadding =
+            PaddingValues(
+                top = innerPadding.calculateTopPadding(),
+                bottom = maxOf(innerPadding.calculateBottomPadding(), navBottom),
+            )
+        CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
+            Row(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
+                pages.SaveableStateProvider("list") {
+                    ConnectionList(
+                        connections = connections.connections,
+                        selectedId = if (navigation.adding) null else navigation.selectedId,
                         query = query,
                         onQueryChange = { query = it },
-                        isWide = isWide,
-                        showingDetail = showingDetail,
-                        onOpenConnection = onOpenConnection,
-                        onNewConversation = onNewConversation,
-                        overviewExtra = overviewExtra,
-                        bottomPadding = bottomPadding,
-                        modifier = Modifier.fillMaxSize(),
+                        onSelect = { id -> navigation.open(id) },
+                        contentPadding = contentPadding,
+                        modifier = Modifier.width(300.dp).fillMaxHeight(),
                     )
+                }
+                VerticalDivider()
+                Box(Modifier.weight(1f).fillMaxHeight().padding(contentPadding)) {
+                    ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
                 }
             }
         }
@@ -106,6 +104,7 @@ private fun ConnectionsTopBar(
     onBack: () -> Unit,
     onAdd: () -> Unit,
 ) {
+    val addLabel = localizedString(Res.string.connection_add)
     GlassTopAppBar(
         title = localizedString(Res.string.nav_connections),
         expandable = false,
@@ -125,60 +124,17 @@ private fun ConnectionsTopBar(
         },
         actions = {
             if (!adding) {
-                Button(
-                    onClick = onAdd,
-                    modifier = Modifier.padding(end = 12.dp),
-                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    minHeight = 34.dp,
-                    cornerRadius = 18.dp,
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        AppIcon(AppSymbol.Plus, modifier = Modifier.size(16.dp))
-                        Text(localizedString(Res.string.connection_add), style = MiuixTheme.textStyles.button)
-                    }
+                GlassIconButton(onClick = onAdd) {
+                    AppIcon(
+                        AppSymbol.Plus,
+                        modifier = Modifier.size(28.dp),
+                        description = addLabel,
+                        tint = MiuixTheme.colorScheme.onSurface,
+                    )
                 }
             }
         },
     )
-}
-
-@Composable
-private fun ConnectionsBody(
-    connections: ConnectionManager,
-    navigation: ConnectionNavigationState,
-    pages: SaveableStateHolder,
-    selected: Connection?,
-    query: String,
-    onQueryChange: (String) -> Unit,
-    isWide: Boolean,
-    showingDetail: Boolean,
-    onOpenConnection: ((String) -> Unit)?,
-    onNewConversation: (String) -> Unit,
-    overviewExtra: @Composable (String) -> Unit,
-    bottomPadding: Dp,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier) {
-        if (isWide || !showingDetail || onOpenConnection != null) {
-            pages.SaveableStateProvider("list") {
-                ConnectionList(
-                    connections = connections.connections,
-                    selectedId = if (navigation.adding) null else navigation.selectedId,
-                    query = query,
-                    onQueryChange = onQueryChange,
-                    onSelect = { id -> onOpenConnection?.invoke(id) ?: navigation.open(id) },
-                    modifier = if (isWide) Modifier.width(300.dp) else Modifier.weight(1f),
-                    bottomPadding = bottomPadding,
-                )
-            }
-            if (isWide) VerticalDivider()
-        }
-        if (onOpenConnection == null && (isWide || showingDetail)) {
-            Box(Modifier.weight(1f).fillMaxSize()) {
-                ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
-            }
-        }
-    }
 }
 
 @Composable

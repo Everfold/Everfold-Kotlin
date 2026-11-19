@@ -3,8 +3,9 @@ package com.everfold.kotlin.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -19,27 +20,26 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.app.navigation.AppDestination
 import com.everfold.kotlin.app.navigation.EverfoldRoute
-import com.everfold.kotlin.feature.connections.ClusterSetup
-import com.everfold.kotlin.feature.connections.ConnectionDetails
-import com.everfold.kotlin.feature.connections.ConnectionEditor
-import com.everfold.kotlin.feature.connections.ConnectionsScreen
+import com.everfold.kotlin.feature.connections.ConnectionList
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
-import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
 import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
 import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_add
-import everfold.shared.generated.resources.connection_back
-import everfold.shared.generated.resources.nav_connections
+import everfold.shared.generated.resources.new_session
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
+import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassNavigationBar
 import top.yukonga.miuix.kmp.glass.GlassNavigationItem
@@ -180,6 +180,15 @@ private fun CompactHomeTabScaffold(
     onOpenConnectionAdd: () -> Unit,
 ) {
     val homeBackdrop = rememberOptionalLayerBackdrop()
+    val sessionsScroll = MiuixScrollBehavior()
+    val connectionsScroll = MiuixScrollBehavior()
+    val settingsScroll = MiuixScrollBehavior()
+    val activeScroll =
+        when (state.destination) {
+            AppDestination.Sessions -> sessionsScroll
+            AppDestination.Connections -> connectionsScroll
+            AppDestination.Settings -> settingsScroll
+        }
     val navItems =
         AppDestination.entries.map { item ->
             GlassNavigationItem(icon = item.icon.imageVector, label = localizedString(item.label))
@@ -188,6 +197,18 @@ private fun CompactHomeTabScaffold(
     Scaffold(
         modifier = Modifier.fillMaxSize().then(routeModifier),
         contentWindowInsets = WindowInsets(0),
+        topBar = {
+            CompactHomeTopBar(
+                destination = state.destination,
+                scrollBehavior = activeScroll,
+                backdrop = homeBackdrop,
+                onNewSession = {
+                    state.sessionQuery = ""
+                    onOpenConversation(null)
+                },
+                onAddConnection = onOpenConnectionAdd,
+            )
+        },
         bottomBar = {
             GlassNavigationBar(
                 items = navItems,
@@ -197,17 +218,21 @@ private fun CompactHomeTabScaffold(
             )
         },
     ) { innerPadding ->
-        val bottomPadding = innerPadding.calculateBottomPadding()
+        val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+        val listPadding =
+            PaddingValues(
+                top = innerPadding.calculateTopPadding(),
+                bottom = maxOf(innerPadding.calculateBottomPadding(), imeBottom),
+            )
         CompositionLocalProvider(LocalAppBackdrop provides homeBackdrop) {
             Box(Modifier.fillMaxSize().optionalLayerBackdrop(homeBackdrop)) {
                 CompactHomeTabContent(
                     deps = deps,
                     state = state,
-                    bottomPadding = bottomPadding,
-                    onSelectDestination = onSelectDestination,
+                    contentPadding = listPadding,
                     onOpenConversation = onOpenConversation,
                     onOpenConnectionDetail = onOpenConnectionDetail,
-                    onOpenConnectionAdd = onOpenConnectionAdd,
+                    modifier = Modifier.fillMaxSize().nestedScroll(activeScroll.nestedScrollConnection),
                 )
             }
         }
@@ -215,14 +240,64 @@ private fun CompactHomeTabScaffold(
 }
 
 @Composable
+private fun CompactHomeTopBar(
+    destination: AppDestination,
+    scrollBehavior: ScrollBehavior,
+    backdrop: LayerBackdrop?,
+    onNewSession: () -> Unit,
+    onAddConnection: () -> Unit,
+) {
+    GlassTopAppBar(
+        title = localizedString(destination.label),
+        expandable = true,
+        progressiveBlur = true,
+        backdrop = backdrop,
+        scrollBehavior = scrollBehavior,
+        actions = {
+            when (destination) {
+                AppDestination.Sessions -> {
+                    GlassTopBarAddButton(
+                        description = localizedString(Res.string.new_session),
+                        onClick = onNewSession,
+                    )
+                }
+
+                AppDestination.Connections -> {
+                    GlassTopBarAddButton(
+                        description = localizedString(Res.string.connection_add),
+                        onClick = onAddConnection,
+                    )
+                }
+
+                AppDestination.Settings -> {}
+            }
+        },
+    )
+}
+
+@Composable
+private fun GlassTopBarAddButton(
+    description: String,
+    onClick: () -> Unit,
+) {
+    GlassIconButton(onClick = onClick) {
+        AppIcon(
+            AppSymbol.Plus,
+            modifier = Modifier.size(28.dp),
+            description = description,
+            tint = MiuixTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
 private fun CompactHomeTabContent(
     deps: WorkspaceShellDeps,
     state: WorkspaceShellState,
-    bottomPadding: androidx.compose.ui.unit.Dp,
-    onSelectDestination: (AppDestination) -> Unit,
+    contentPadding: PaddingValues,
     onOpenConversation: (String?) -> Unit,
     onOpenConnectionDetail: (String) -> Unit,
-    onOpenConnectionAdd: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     when (state.destination) {
         AppDestination.Sessions -> {
@@ -234,133 +309,33 @@ private fun CompactHomeTabContent(
                     state.sessionQuery = ""
                     onOpenConversation(null)
                 },
-                compactMode = true,
-                bottomPadding = bottomPadding,
+                showHeader = false,
+                contentPadding = contentPadding,
+                modifier = modifier,
             )
         }
 
         AppDestination.Connections -> {
             state.connectionPageStates.SaveableStateProvider("connections") {
-                ConnectionsScreen(
-                    connections = deps.workspace.connections,
-                    navigation = state.connectionNavigation,
-                    onNewConversation = { id ->
-                        deps.workspace.selectNewConversationConnection(id)
-                        state.sessionQuery = ""
-                        onOpenConversation(null)
-                    },
-                    onBack = { onSelectDestination(AppDestination.Sessions) },
-                    onOpenConnection = onOpenConnectionDetail,
-                    onAddConnection = onOpenConnectionAdd,
-                    bottomPadding = bottomPadding,
+                ConnectionList(
+                    connections = deps.workspace.connections.connections,
+                    selectedId = null,
+                    query = state.connectionQuery,
+                    onQueryChange = { state.connectionQuery = it },
+                    onSelect = onOpenConnectionDetail,
+                    contentPadding = contentPadding,
+                    modifier = modifier,
                 )
             }
         }
 
         AppDestination.Settings -> {
-            SettingsHost(deps = deps, bottomPadding = bottomPadding)
-        }
-    }
-}
-
-@Composable
-private fun CompactConnectionDetailPage(
-    route: EverfoldRoute.ConnectionDetail,
-    deps: WorkspaceShellDeps,
-    state: WorkspaceShellState,
-    navController: NavController,
-    onNewConversation: (String) -> Unit,
-) {
-    val connection = deps.workspace.connections.find(route.connectionId)
-    val title = connection?.profile?.name?.resolve() ?: localizedString(Res.string.nav_connections)
-    val active = navController.backStack.lastOrNull() == route
-    CompactSubpageScaffold(title = title, active = active, onBack = { navController.pop() }) { innerPadding ->
-        if (connection != null) {
-            state.connectionPageStates.SaveableStateProvider(connection.id) {
-                ConnectionDetails(
-                    connection = connection,
-                    onConnect = { deps.workspace.connections.connect(connection.id) },
-                    onDisconnect = { deps.workspace.connections.disconnect(connection.id) },
-                    onSave = { draft -> deps.workspace.connections.save(connection.id, draft.name, draft.setup, draft.autoConnect) },
-                    onRemove = {
-                        deps.workspace.connections.remove(connection.id)
-                        navController.pop()
-                        state.connectionPageStates.removeState(connection.id)
-                    },
-                    onNewConversation = { onNewConversation(connection.id) },
-                    modifier = Modifier.padding(innerPadding),
-                    overviewExtra = { deps.connectionOverviewExtra(connection.id) },
+            state.connectionPageStates.SaveableStateProvider("settings") {
+                CompactSettingsContent(
+                    deps = deps,
+                    contentPadding = contentPadding,
+                    modifier = modifier,
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactConnectionAddPage(
-    deps: WorkspaceShellDeps,
-    state: WorkspaceShellState,
-    navController: NavController,
-) {
-    CompactSubpageScaffold(
-        title = localizedString(Res.string.connection_add),
-        active = navController.backStack.lastOrNull() is EverfoldRoute.ConnectionAdd,
-        onBack = { navController.pop() },
-    ) { innerPadding ->
-        state.connectionPageStates.SaveableStateProvider("add") {
-            ConnectionEditor(
-                profile = null,
-                onSave = { draft, connect ->
-                    val id = deps.workspace.connections.add(draft.name.orEmpty(), draft.setup ?: ClusterSetup(), draft.autoConnect)
-                    if (id != null) {
-                        if (connect) deps.workspace.connections.connect(id)
-                        state.connectionNavigation.open(id)
-                        navController.replace(EverfoldRoute.ConnectionDetail(id))
-                        state.connectionPageStates.removeState("add")
-                    }
-                    id != null
-                },
-                modifier = Modifier.padding(innerPadding),
-                onCancel = { navController.pop() },
-            )
-        }
-    }
-}
-
-@Composable
-private fun CompactSubpageScaffold(
-    title: String,
-    active: Boolean,
-    onBack: () -> Unit,
-    content: @Composable (PaddingValues) -> Unit,
-) {
-    val backdrop = rememberOptionalLayerBackdrop()
-    val routeModifier = if (active) Modifier else Modifier.focusProperties { canFocus = false }.clearAndSetSemantics {}
-    Scaffold(
-        modifier = Modifier.fillMaxSize().then(routeModifier),
-        contentWindowInsets = WindowInsets(0),
-        topBar = {
-            GlassTopAppBar(
-                title = title,
-                expandable = false,
-                progressiveBlur = true,
-                backdrop = backdrop,
-                navigationIcon = {
-                    GlassIconButton(onClick = onBack) {
-                        AppIcon(
-                            AppSymbol.Back,
-                            modifier = Modifier.size(28.dp),
-                            description = localizedString(Res.string.connection_back),
-                            tint = MiuixTheme.colorScheme.onSurface,
-                        )
-                    }
-                },
-            )
-        },
-    ) { innerPadding ->
-        CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-            Box(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
-                content(innerPadding)
             }
         }
     }
