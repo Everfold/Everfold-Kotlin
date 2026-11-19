@@ -1,15 +1,14 @@
 package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.connections.Connection
 import com.everfold.kotlin.feature.connections.ConnectionFailure
@@ -29,6 +28,10 @@ import everfold.shared.generated.resources.composer_retry_uploads
 import everfold.shared.generated.resources.composer_workspace_missing
 import everfold.shared.generated.resources.connection_manage
 import everfold.shared.generated.resources.retry_connection
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 优先说明阻止发送的原因，恢复动作不自动发送草稿。 */
 @Composable
@@ -121,7 +124,19 @@ private fun ComposerNotice(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (actionLabel != null) TextButton(onClick = onAction) { Text(actionLabel) }
+        Text(
+            text = message,
+            modifier = Modifier.weight(1f),
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+        )
+        if (actionLabel != null) {
+            TextButton(
+                text = actionLabel,
+                onClick = onAction,
+                colors = ButtonDefaults.textButtonColors(color = Color.Transparent, textColor = MiuixTheme.colorScheme.primary),
+                insideMargin = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
     }
 }

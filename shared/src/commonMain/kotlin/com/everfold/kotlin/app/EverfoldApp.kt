@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -30,10 +31,13 @@ import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
+import com.everfold.kotlin.ui.theme.LocalAppBackdrop
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_removed
 import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 /** 主界面组装入口：宽屏使用固定侧栏，窄屏采用底栏加 miuix-nav 路由栈 */
 @Composable
@@ -58,23 +62,27 @@ internal fun EverfoldApp(
             onPreviewState = onPreviewState,
             connectionOverviewExtra = connectionOverviewExtra,
         )
+    val rootBackdrop = rememberLayerBackdrop()
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
     ) {
-        BoxWithConstraints(
-            Modifier
-                .fillMaxSize()
-                .focusable()
-                .imePadding(),
-        ) {
-            val wide = maxWidth >= WIDE_LAYOUT_DP.dp
-            if (wide) {
-                val maxSessionWidth =
-                    (maxWidth.value - CONVERSATION_MIN_RESERVE).coerceIn(MIN_SESSION_WIDTH, MAX_SESSION_WIDTH)
-                WideWorkspaceShell(deps = deps, state = state, maxSessionWidth = maxSessionWidth)
-            } else {
-                CompactWorkspaceShell(deps = deps, state = state)
+        CompositionLocalProvider(LocalAppBackdrop provides rootBackdrop) {
+            BoxWithConstraints(
+                Modifier
+                    .fillMaxSize()
+                    .layerBackdrop(rootBackdrop)
+                    .focusable()
+                    .imePadding(),
+            ) {
+                val wide = maxWidth >= WIDE_LAYOUT_DP.dp
+                if (wide) {
+                    val maxSessionWidth =
+                        (maxWidth.value - CONVERSATION_MIN_RESERVE).coerceIn(MIN_SESSION_WIDTH, MAX_SESSION_WIDTH)
+                    WideWorkspaceShell(deps = deps, state = state, maxSessionWidth = maxSessionWidth)
+                } else {
+                    CompactWorkspaceShell(deps = deps, state = state)
+                }
             }
         }
     }

@@ -1,12 +1,14 @@
 package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.connections.Connection
 import com.everfold.kotlin.feature.connections.label
 import com.everfold.kotlin.ui.components.AppIcon
@@ -27,6 +29,8 @@ import everfold.shared.generated.resources.menu_connection
 import everfold.shared.generated.resources.menu_workspace
 import everfold.shared.generated.resources.preview_agent_states
 import everfold.shared.generated.resources.workspace_unavailable
+import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private enum class MenuPage { Overview, Connections, Workspaces, Preview }
 
@@ -46,7 +50,14 @@ internal fun ConversationMenu(
     val menuLabel = localizedString(Res.string.conversation_menu)
     Box {
         AppTooltip(menuLabel) {
-            IconButton(onClick = { page = MenuPage.Overview }) { AppIcon(AppSymbol.More, description = menuLabel) }
+            GlassIconButton(onClick = { page = MenuPage.Overview }) {
+                AppIcon(
+                    AppSymbol.More,
+                    modifier = Modifier.size(28.dp),
+                    description = menuLabel,
+                    tint = MiuixTheme.colorScheme.onSurface,
+                )
+            }
         }
         SelectionMenu(
             title = localizedString(currentPage.title),
@@ -54,32 +65,71 @@ internal fun ConversationMenu(
             expanded = page != null,
             onDismiss = { page = null },
         ) { id ->
-            if (id == "back") {
-                page = MenuPage.Overview
-            } else {
-                page = null
-                when (currentPage) {
-                    MenuPage.Overview -> {
-                        when (id) {
-                            "connection" -> if (canSelect) page = MenuPage.Connections else onOpenConnection()
-                            "workspace" -> page = MenuPage.Workspaces
-                            "preview" -> page = MenuPage.Preview
-                        }
-                    }
+            page =
+                handleMenuSelection(
+                    id = id,
+                    currentPage = currentPage,
+                    state = state,
+                    options = options,
+                    canSelect = canSelect,
+                    onSelectConnection = onSelectConnection,
+                    onOpenConnection = onOpenConnection,
+                    onPreviewState = onPreviewState,
+                )
+        }
+    }
+}
 
-                    MenuPage.Connections -> {
-                        if (id == "manage") onOpenConnection() else onSelectConnection(id)
-                    }
-
-                    MenuPage.Workspaces -> {
-                        if (canSelect) options.selectWorkspace(state.id, id)
-                    }
-
-                    MenuPage.Preview -> {
-                        onPreviewState?.invoke(AgentRunState.valueOf(id))
+private fun handleMenuSelection(
+    id: String,
+    currentPage: MenuPage,
+    state: ConversationUiState,
+    options: ConversationOptions,
+    canSelect: Boolean,
+    onSelectConnection: (String) -> Unit,
+    onOpenConnection: () -> Unit,
+    onPreviewState: ((AgentRunState) -> Unit)?,
+): MenuPage? {
+    if (id == "back") return MenuPage.Overview
+    return when (currentPage) {
+        MenuPage.Overview -> {
+            when (id) {
+                "connection" -> {
+                    if (canSelect) {
+                        MenuPage.Connections
+                    } else {
+                        onOpenConnection()
+                        null
                     }
                 }
+
+                "workspace" -> {
+                    MenuPage.Workspaces
+                }
+
+                "preview" -> {
+                    MenuPage.Preview
+                }
+
+                else -> {
+                    null
+                }
             }
+        }
+
+        MenuPage.Connections -> {
+            if (id == "manage") onOpenConnection() else onSelectConnection(id)
+            null
+        }
+
+        MenuPage.Workspaces -> {
+            if (canSelect) options.selectWorkspace(state.id, id)
+            null
+        }
+
+        MenuPage.Preview -> {
+            onPreviewState?.invoke(AgentRunState.valueOf(id))
+            null
         }
     }
 }
@@ -130,9 +180,7 @@ private fun menuChoices(
                 }
             }
         }
-    return if (page ==
-        MenuPage.Overview
-    ) {
+    return if (page == MenuPage.Overview) {
         choices
     } else {
         listOf(SelectionChoice("back", localizedString(Res.string.connection_back), searchable = false)) + choices
