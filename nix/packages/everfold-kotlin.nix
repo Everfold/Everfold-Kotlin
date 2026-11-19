@@ -16,6 +16,7 @@
   libXi,
   libXrender,
   libXtst,
+  libXcursor,
   fontconfig,
   gtk3,
 }:
@@ -30,6 +31,9 @@ let
   runtimeLibraries = [
     libglvnd
     libX11
+    libXext
+    libXi
+    libXcursor
     fontconfig
     gtk3
     stdenv.cc.cc.lib
@@ -116,7 +120,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     makeWrapper "$out/lib/jre/bin/java" "$out/bin/everfold-kotlin" \
       --prefix LD_LIBRARY_PATH : "$out/lib/jre/lib:${lib.makeLibraryPath runtimeLibraries}" \
       --prefix XDG_DATA_DIRS : "${gtk3}/share/gsettings-schemas/${gtk3.name}" \
-      --add-flags "--enable-native-access=ALL-UNNAMED -jar $out/share/everfold-kotlin/everfold-kotlin.jar"
+      --add-flags "--enable-native-access=ALL-UNNAMED --add-opens=java.desktop/sun.awt=ALL-UNNAMED --add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED --add-opens=java.desktop/java.awt=ALL-UNNAMED -jar $out/share/everfold-kotlin/everfold-kotlin.jar"
 
     runHook postInstall
   '';

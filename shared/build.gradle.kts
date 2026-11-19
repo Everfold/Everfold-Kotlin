@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -54,8 +55,18 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.animation)
             implementation(libs.compose.material3)
+            implementation(libs.markdown.core)
             implementation(libs.markdown.m3)
             implementation(libs.materialKolor)
+            implementation(libs.miuix.ui)
+            implementation(libs.miuix.preference)
+            implementation(libs.miuix.icons)
+            implementation(libs.miuix.glass.icons)
+            implementation(libs.miuix.material)
+            implementation(libs.miuix.blur)
+            implementation(libs.miuix.glass)
+            implementation(libs.miuix.nav)
+            implementation(libs.kotlinx.serialization.core)
             implementation(libs.compose.ui)
             implementation(libs.navigationevent.compose)
             implementation(libs.kotlinx.coroutinesCore)
