@@ -1,13 +1,13 @@
 package com.everfold.kotlin.feature.onboarding
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,8 +42,12 @@ import everfold.shared.generated.resources.mode_cluster
 import everfold.shared.generated.resources.mode_offline
 import everfold.shared.generated.resources.offline_hint
 import everfold.shared.generated.resources.onboarding_intro
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.interfaces.ExperimentalScrollBarApi
 
-/** 首次设置的共享滚动容器滚动条由各平台实现 */
+/** 首次设置的共享滚动容器使用 Miuix 跨平台滚动条 */
+@OptIn(ExperimentalScrollBarApi::class)
 @Composable
 internal fun OnboardingScrollArea(
     modifier: Modifier = Modifier,
@@ -56,15 +60,11 @@ internal fun OnboardingScrollArea(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             content = content,
         )
-        OnboardingScrollbar(scroll, Modifier.align(Alignment.CenterEnd))
+        if (scroll.maxValue > 0) {
+            VerticalScrollBar(rememberScrollBarAdapter(scroll), Modifier.align(Alignment.CenterEnd).fillMaxHeight())
+        }
     }
 }
-
-@Composable
-internal expect fun OnboardingScrollbar(
-    scroll: ScrollState,
-    modifier: Modifier = Modifier,
-)
 
 /** 欢迎介绍与功能卡片随可用宽度切换一列或两列 */
 @Composable

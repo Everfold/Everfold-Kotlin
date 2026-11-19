@@ -1,39 +1,47 @@
 package com.everfold.kotlin.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.theme.LocalAppBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.selection_empty
 import everfold.shared.generated.resources.selection_search
+import top.yukonga.miuix.kmp.basic.ListPopupColumn
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.basic.TextFieldDefaults
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.overlay.OverlayListPopup
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val SEARCH_THRESHOLD = 8
 
-/** 窄窗口使用底部面板，宽窗口在触发按钮旁展开；选项内容完全共用。 */
-@OptIn(ExperimentalMaterial3Api::class)
+/** 窄窗口使用玻璃底部面板，宽窗口在触发按钮旁展开；选项内容完全共用。 */
 @Composable
 internal fun SelectionMenu(
     title: String,
@@ -50,40 +58,71 @@ internal fun SelectionMenu(
     var query by remember(title, expanded) { mutableStateOf("") }
     val searchable = choices.count { it.searchable && !it.readOnly } >= SEARCH_THRESHOLD
     val filtered = choices.filter { !it.searchable || it.label.contains(query, true) || it.detail.contains(query, true) }
-    val content: @Composable () -> Unit = {
+    val body: @Composable () -> Unit = {
         if (searchable) {
-            OutlinedTextField(
-                query,
-                { query = it },
-                Modifier.fillMaxWidth().padding(12.dp),
-                placeholder = { Text(localizedString(Res.string.selection_search)) },
-                singleLine = true,
-            )
+            SelectionSearchField(query) { query = it }
         }
         if (filtered.none { it.searchable } && query.isNotEmpty()) {
-            Text(localizedString(Res.string.selection_empty), Modifier.padding(12.dp))
+            Text(
+                text = localizedString(Res.string.selection_empty),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
         }
         SelectionItems(filtered, onSelect)
     }
     if (compact) {
-        if (expanded) {
-            ModalBottomSheet(onDismissRequest = onDismiss) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(
-                            max = 420.dp,
-                        ).verticalScroll(rememberScrollState())
-                        .padding(start = 12.dp, end = 12.dp, bottom = 24.dp),
-                ) {
-                    Text(title, Modifier.padding(horizontal = 12.dp, vertical = 12.dp), style = MaterialTheme.typography.titleMedium)
-                    content()
-                }
+        GlassBottomSheet(
+            show = expanded,
+            onDismissRequest = onDismiss,
+            backdrop = LocalAppBackdrop.current,
+            title = title,
+            insideMargin = DpSize(12.dp, 12.dp),
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
+            ) {
+                body()
             }
         }
     } else {
-        DropdownMenu(expanded, onDismissRequest = onDismiss) { content() }
+        OverlayListPopup(
+            show = expanded,
+            onDismissRequest = onDismiss,
+        ) {
+            ListPopupColumn {
+                body()
+            }
+        }
     }
+}
+
+@Composable
+private fun SelectionSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+        insideMargin = DpSize(12.dp, 10.dp),
+        label = localizedString(Res.string.selection_search),
+        useLabelAsPlaceholder = true,
+        singleLine = true,
+        colors =
+            TextFieldDefaults.textFieldColors(
+                backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
+                labelColor = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                borderColor = MiuixTheme.colorScheme.primary,
+            ),
+        cursorBrush = SolidColor(MiuixTheme.colorScheme.primary),
+    )
 }
 
 @Composable
@@ -95,29 +134,78 @@ private fun SelectionItems(
         if (choice.readOnly) {
             SelectionInformation(choice)
         } else {
-            DropdownMenuItem(
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(choice.label)
-                        if (choice.detail.isNotEmpty()) Text(choice.detail, style = MaterialTheme.typography.bodySmall)
+            val containerColor =
+                if (choice.selected) {
+                    MiuixTheme.colorScheme.secondaryContainer
+                } else {
+                    Color.Transparent
+                }
+            val titleColor =
+                when {
+                    !choice.enabled -> MiuixTheme.colorScheme.disabledOnSecondaryVariant
+                    choice.selected -> MiuixTheme.colorScheme.primary
+                    else -> MiuixTheme.colorScheme.onSurfaceContainer
+                }
+            val summaryColor =
+                if (choice.enabled) {
+                    MiuixTheme.colorScheme.onSurfaceVariantSummary
+                } else {
+                    MiuixTheme.colorScheme.disabledOnSecondaryVariant
+                }
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(containerColor)
+                        .clickable(enabled = choice.enabled) { onSelect(choice.id) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = choice.label,
+                        style = MiuixTheme.textStyles.body1,
+                        fontWeight = if (choice.selected) FontWeight.SemiBold else FontWeight.Medium,
+                        color = titleColor,
+                    )
+                    if (choice.detail.isNotEmpty()) {
+                        Text(
+                            text = choice.detail,
+                            style = MiuixTheme.textStyles.body2,
+                            color = summaryColor,
+                        )
                     }
-                },
-                enabled = choice.enabled,
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                trailingIcon = { if (choice.selected) AppIcon(AppSymbol.Check) },
-                onClick = { onSelect(choice.id) },
-            )
+                }
+                if (choice.selected) {
+                    AppIcon(
+                        AppSymbol.Check,
+                        modifier = Modifier.size(18.dp),
+                        tint = MiuixTheme.colorScheme.primary,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun SelectionInformation(choice: SelectionChoice) {
-    SelectionContainer(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(choice.label)
-            Text(choice.detail, style = MaterialTheme.typography.bodySmall)
+    SelectionContainer(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = choice.label,
+                style = MiuixTheme.textStyles.body1,
+                fontWeight = FontWeight.Medium,
+                color = MiuixTheme.colorScheme.onSurfaceContainer,
+            )
+            if (choice.detail.isNotEmpty()) {
+                Text(
+                    text = choice.detail,
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                )
+            }
         }
     }
 }

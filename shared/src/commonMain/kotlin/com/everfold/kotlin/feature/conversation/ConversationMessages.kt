@@ -4,12 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.FilledTonalButton
@@ -34,6 +34,9 @@ import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.jump_to_latest
 import everfold.shared.generated.resources.model_unavailable
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.interfaces.ExperimentalScrollBarApi
 
 /** 倒序消息列表按用户意愿跟随最新回复并保留长消息折叠时的位置 */
 @Composable
@@ -111,7 +114,12 @@ internal fun ConversationMessages(
                 }
             }
         }
-        ConversationScrollbar(list, Modifier.align(Alignment.CenterEnd).padding(vertical = 8.dp))
+        @OptIn(ExperimentalScrollBarApi::class)
+        VerticalScrollBar(
+            adapter = rememberScrollBarAdapter(list),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(vertical = 8.dp),
+            reverseLayout = true,
+        )
         if (!atLatest) {
             FilledTonalButton(
                 onClick = {
@@ -158,9 +166,3 @@ private fun ChatMessage.authorName(
     } else {
         connectionName
     }
-
-@Composable
-internal expect fun ConversationScrollbar(
-    state: LazyListState,
-    modifier: Modifier = Modifier,
-)
