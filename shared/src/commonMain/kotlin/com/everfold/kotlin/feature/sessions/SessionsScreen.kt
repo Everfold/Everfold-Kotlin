@@ -43,6 +43,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ConversationUiState
@@ -86,6 +87,8 @@ fun SessionsScreen(
     modifier: Modifier = Modifier,
     searchRequest: Int = 0,
     connectionNames: Map<String, UiText> = emptyMap(),
+    compactMode: Boolean = false,
+    bottomPadding: Dp = 0.dp,
 ) {
     val searchFocus = remember { FocusRequester() }
     var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
@@ -130,7 +133,14 @@ fun SessionsScreen(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).focusRequester(searchFocus),
         )
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
+        if (compactMode) {
+            // 占位兼容，Batch 4 将彻底重构 SessionsScreen 为 GlassTopAppBar 模式
+        }
+        LazyColumn(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(bottom = 16.dp + bottomPadding),
+        ) {
             items(filtered, key = { it.id }) { session ->
                 Surface(
                     modifier =

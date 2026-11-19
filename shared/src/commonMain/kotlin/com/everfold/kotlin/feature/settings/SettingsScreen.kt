@@ -11,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.SettingsLayout
 import com.everfold.kotlin.ui.localization.AppLanguage
@@ -49,6 +50,7 @@ fun SettingsScreen(
     onSideMarginsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    bottomPadding: Dp = 0.dp,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.Theme) }
     val themeScrollState = rememberScrollState()
@@ -60,6 +62,7 @@ fun SettingsScreen(
         title = localizedString(Res.string.nav_settings),
         modifier = modifier,
         onBack = onBack,
+        bottomPadding = bottomPadding,
         scrollState =
             when (page) {
                 SettingsPage.Theme -> themeScrollState

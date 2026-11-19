@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -43,6 +44,7 @@ internal fun ConnectionList(
     onQueryChange: (String) -> Unit,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp,
 ) {
     val names = connections.associate { it.id to it.profile.name.resolve() }
     val endpoints = connections.associate { it.id to it.profile.endpointSummary() }
@@ -69,7 +71,11 @@ internal fun ConnectionList(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
         )
-        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LazyColumn(
+            Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 16.dp + bottomPadding),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             if (filtered.isEmpty()) {
                 item {
                     Text(

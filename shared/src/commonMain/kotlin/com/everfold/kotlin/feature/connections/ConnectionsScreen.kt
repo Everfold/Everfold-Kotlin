@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -43,51 +44,104 @@ internal fun ConnectionsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     overviewExtra: @Composable (String) -> Unit = {},
+    onOpenConnection: ((String) -> Unit)? = null,
+    onAddConnection: (() -> Unit)? = null,
+    bottomPadding: Dp = 0.dp,
 ) {
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val wide = maxWidth >= 900.dp
+        val isWide = maxWidth >= 900.dp && onOpenConnection == null
         val selected = connections.find(navigation.selectedId.orEmpty())
         val showingDetail = navigation.adding || selected != null
         Column {
-            TopAppBar(
-                title = { Text(localizedString(Res.string.nav_connections)) },
-                navigationIcon = {
-                    if (!wide || navigation.canGoBack) {
-                        IconButton(onClick = onBack) {
-                            AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
-                        }
-                    }
-                },
-                actions = {
-                    if (!navigation.adding) {
-                        TextButton(onClick = navigation::add) {
-                            AppIcon(AppSymbol.Plus)
-                            Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
-                        }
-                    }
-                },
+            ConnectionsTopBar(
+                showBack = !isWide || navigation.canGoBack,
+                adding = navigation.adding,
+                onBack = onBack,
+                onAdd = { onAddConnection?.invoke() ?: navigation.add() },
             )
-            Row(Modifier.weight(1f)) {
-                if (wide || !showingDetail) {
-                    pages.SaveableStateProvider("list") {
-                        ConnectionList(
-                            connections.connections,
-                            selectedId = if (navigation.adding) null else navigation.selectedId,
-                            query = query,
-                            onQueryChange = { query = it },
-                            onSelect = navigation::open,
-                            modifier = if (wide) Modifier.width(300.dp) else Modifier.weight(1f),
-                        )
-                    }
-                    if (wide) VerticalDivider()
+            ConnectionsBody(
+                connections = connections,
+                navigation = navigation,
+                pages = pages,
+                selected = selected,
+                query = query,
+                onQueryChange = { query = it },
+                isWide = isWide,
+                showingDetail = showingDetail,
+                onOpenConnection = onOpenConnection,
+                onNewConversation = onNewConversation,
+                overviewExtra = overviewExtra,
+                bottomPadding = bottomPadding,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConnectionsTopBar(
+    showBack: Boolean,
+    adding: Boolean,
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(localizedString(Res.string.nav_connections)) },
+        navigationIcon = {
+            if (showBack) {
+                IconButton(onClick = onBack) {
+                    AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
                 }
-                if (wide || showingDetail) {
-                    Box(Modifier.weight(1f).fillMaxSize()) {
-                        ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
-                    }
+            }
+        },
+        actions = {
+            if (!adding) {
+                TextButton(onClick = onAdd) {
+                    AppIcon(AppSymbol.Plus)
+                    Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
                 }
+            }
+        },
+    )
+}
+
+@Composable
+private fun ConnectionsBody(
+    connections: ConnectionManager,
+    navigation: ConnectionNavigationState,
+    pages: SaveableStateHolder,
+    selected: Connection?,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    isWide: Boolean,
+    showingDetail: Boolean,
+    onOpenConnection: ((String) -> Unit)?,
+    onNewConversation: (String) -> Unit,
+    overviewExtra: @Composable (String) -> Unit,
+    bottomPadding: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier) {
+        if (isWide || !showingDetail || onOpenConnection != null) {
+            pages.SaveableStateProvider("list") {
+                ConnectionList(
+                    connections.connections,
+                    selectedId = if (navigation.adding) null else navigation.selectedId,
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    onSelect = { id -> onOpenConnection?.invoke(id) ?: navigation.open(id) },
+                    modifier = if (isWide) Modifier.width(300.dp) else Modifier.weight(1f),
+                    bottomPadding = bottomPadding,
+                )
+            }
+            if (isWide) VerticalDivider()
+        }
+        if (onOpenConnection == null && (isWide || showingDetail)) {
+            Box(Modifier.weight(1f).fillMaxSize()) {
+                ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
             }
         }
     }
