@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 
 class ConnectionSavedStateTest {
     @Test
-    fun draftRestorationPreservesEveryConnectionMethodAndItsCredentials() {
+    fun draftRestorationPreservesConnectionSettingsWithoutPersistingSecrets() {
         for (method in ClusterMethod.entries) {
             for (auth in ClusterAuth.entries) {
                 val setup =
@@ -28,7 +28,11 @@ class ConnectionSavedStateTest {
                         clientPrivateKey = "private.pem",
                     )
                 val draft = ConnectionDraft("  Office  ", setup, true)
-                assertEquals(draft, restored(ConnectionDraft.Saver, draft), "$method / $auth")
+                val expected = draft.copy(setup = setup.copy(password = "", clientPrivateKey = null))
+                val actual = restored(ConnectionDraft.Saver, draft)
+                assertEquals(expected, actual, "$method / $auth")
+                assertEquals("", actual.setup?.password)
+                assertNull(actual.setup?.clientPrivateKey)
             }
         }
     }

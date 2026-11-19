@@ -15,6 +15,7 @@ internal data class ConnectionDraft(
         val Saver =
             mapSaver(
                 save = { draft: ConnectionDraft ->
+                    // 密码与客户端私钥等敏感凭据不序列化进 SavedInstanceState，防止进程间状态转储泄露。
                     mapOf(
                         "name" to draft.name,
                         "auto" to draft.autoConnect,
@@ -23,11 +24,9 @@ internal data class ConnectionDraft(
                         "port" to draft.setup?.port,
                         "auth" to draft.setup?.auth?.name,
                         "account" to draft.setup?.account,
-                        "password" to draft.setup?.password,
                         "server" to draft.setup?.serverCertificate,
                         "ca" to draft.setup?.caCertificate,
                         "public" to draft.setup?.clientPublicKey,
-                        "private" to draft.setup?.clientPrivateKey,
                     )
                 },
                 restore = { values ->
@@ -40,11 +39,11 @@ internal data class ConnectionDraft(
                                 port = values["port"] as String,
                                 auth = ClusterAuth.valueOf(values["auth"] as String),
                                 account = values["account"] as String,
-                                password = values["password"] as String,
+                                password = "",
                                 serverCertificate = values["server"] as String?,
                                 caCertificate = values["ca"] as String?,
                                 clientPublicKey = values["public"] as String?,
-                                clientPrivateKey = values["private"] as String?,
+                                clientPrivateKey = null,
                             )
                         },
                         values["auto"] as Boolean,
