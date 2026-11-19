@@ -6,9 +6,13 @@ import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import kotlinx.coroutines.Dispatchers
@@ -16,26 +20,26 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-internal actual fun rememberFilePicker(): FilePicker {
+internal actual fun rememberFilePicker(onResult: (Result<List<AttachmentSource>>) -> Unit): FilePicker {
     val resolver = LocalContext.current.contentResolver
     val scope = rememberCoroutineScope()
-    val pending = remember { mutableStateOf<((Result<List<AttachmentSource>>) -> Unit)?>(null) }
+    val latestOnResult by rememberUpdatedState(onResult)
+    var inFlight by rememberSaveable { mutableStateOf(false) }
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-            val callback = pending.value
-            pending.value = null
+            inFlight = false
             scope.launch {
                 val result = withContext(Dispatchers.IO) { runCatching { uris.map { resolver.attachment(it) } } }
-                callback?.invoke(result)
+                latestOnResult(result)
             }
         }
     return remember(launcher) {
-        FilePicker { callback ->
-            if (pending.value == null) {
-                pending.value = callback
+        FilePicker {
+            if (!inFlight) {
+                inFlight = true
                 runCatching { launcher.launch(arrayOf("*/*")) }.onFailure {
-                    pending.value = null
-                    callback(Result.failure(it))
+                    inFlight = false
+                    latestOnResult(Result.failure(it))
                 }
             }
         }

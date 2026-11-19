@@ -65,6 +65,7 @@ import com.everfold.kotlin.feature.connections.ConnectionStatusIndicator
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentButton
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.feature.conversation.AttachmentStatus
 import com.everfold.kotlin.feature.conversation.AttachmentTarget
 import com.everfold.kotlin.feature.conversation.ComposerFeedback
@@ -99,10 +100,20 @@ internal fun EverfoldApp(
     modifier: Modifier = Modifier,
     onPreviewState: ((String, AgentRunState) -> Unit)? = null,
     connectionOverviewExtra: @Composable (String) -> Unit = {},
-    filePicker: FilePicker = rememberFilePicker(),
+    filePickerProvider: @Composable ((Result<List<AttachmentSource>>) -> Unit) -> FilePicker = { rememberFilePicker(it) },
     preferences: UserPreferencesState = remember { UserPreferencesState() },
 ) {
-    var fileErrorTarget by remember { mutableStateOf<AttachmentTarget?>(null) }
+    var fileErrorTarget by rememberSaveable(stateSaver = AttachmentTarget.NullableSaver) { mutableStateOf(null) }
+    var pendingAttachmentTarget by rememberSaveable(stateSaver = AttachmentTarget.NullableSaver) { mutableStateOf(null) }
+    val filePicker =
+        filePickerProvider { result ->
+            val target = pendingAttachmentTarget ?: return@filePickerProvider
+            pendingAttachmentTarget = null
+            result
+                .onSuccess { files ->
+                    if (files.isNotEmpty()) workspace.conversationOptions.attach(target, files)
+                }.onFailure { fileErrorTarget = target }
+        }
     val textSize = preferences.value.textSize
     val shortcut = preferences.value.shortcut
     val collapsePrompts = preferences.value.collapsePrompts
@@ -429,13 +440,9 @@ internal fun EverfoldApp(
                                                 },
                                                 composerTools = {
                                                     AttachmentButton(enabled = !session.isResponding && session.workspace != null) {
-                                                        val target = session.attachmentTarget
+                                                        pendingAttachmentTarget = session.attachmentTarget
                                                         fileErrorTarget = null
-                                                        filePicker.launch { result ->
-                                                            result
-                                                                .onSuccess { options.attach(target, it) }
-                                                                .onFailure { fileErrorTarget = target }
-                                                        }
+                                                        filePicker.launch()
                                                     }
                                                     ModelSelector(session, options, Modifier.weight(1f))
                                                 },

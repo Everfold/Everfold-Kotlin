@@ -53,7 +53,7 @@ internal fun workspaceUiTest(
                             { fixture.language = it },
                             preferences = fixture.preferences,
                             onPreviewState = fixture.workspace::previewRunState,
-                            filePicker = FilePicker { it(fixture.fileResult) },
+                            filePickerProvider = { onResult -> FilePicker { onResult(fixture.fileResult) } },
                             connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
                         )
                     }

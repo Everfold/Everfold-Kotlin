@@ -1,5 +1,6 @@
 package com.everfold.kotlin.feature.conversation
 
+import androidx.compose.runtime.saveable.listSaver
 import com.everfold.kotlin.ui.localization.UiText
 
 /** 连接提供的项目与模型快照，ID 仅在所属连接内使用。 */
@@ -35,7 +36,32 @@ data class AttachmentTarget(
     val connectionId: String,
     val workspaceId: String?,
     val revision: Int,
-)
+) {
+    companion object {
+        val Saver =
+            listSaver<AttachmentTarget, Any>(
+                save = { encodeTarget(it) },
+                restore = ::decodeTarget,
+            )
+
+        val NullableSaver =
+            listSaver<AttachmentTarget?, Any>(
+                save = { target -> if (target == null) listOf(false) else listOf(true) + encodeTarget(target) },
+                restore = { values -> if (values.firstOrNull() == true) decodeTarget(values.drop(1)) else null },
+            )
+
+        private fun encodeTarget(target: AttachmentTarget): List<Any> =
+            listOf(target.conversationId, target.connectionId, target.workspaceId.orEmpty(), target.revision)
+
+        private fun decodeTarget(values: List<Any>): AttachmentTarget =
+            AttachmentTarget(
+                conversationId = values[0] as String,
+                connectionId = values[1] as String,
+                workspaceId = (values[2] as String).ifEmpty { null },
+                revision = values[3] as Int,
+            )
+    }
+}
 
 internal interface ConversationOptions {
     fun workspaces(connectionId: String): List<SessionWorkspace>

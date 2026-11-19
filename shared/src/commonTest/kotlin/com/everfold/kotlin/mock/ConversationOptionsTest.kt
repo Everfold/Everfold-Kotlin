@@ -1,9 +1,11 @@
 package com.everfold.kotlin.mock
 
+import androidx.compose.runtime.saveable.SaverScope
 import androidx.lifecycle.ViewModelStore
 import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.feature.conversation.AttachmentStatus
+import com.everfold.kotlin.feature.conversation.AttachmentTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -154,6 +156,27 @@ class ConversationOptionsTest {
                     .status,
             )
         }
+
+    @Test
+    fun attachmentTargetSaverRestoresNonNullAndNullWorkspaces() {
+        val scope =
+            object : SaverScope {
+                override fun canBeSaved(value: Any) = value is String || value is Int || value is Boolean
+            }
+        val targets =
+            listOf(
+                AttachmentTarget("draft", "built-in", "built-in/default", 3),
+                AttachmentTarget("session-1", "remote", null, 0),
+            )
+        targets.forEach { target ->
+            val saved = with(AttachmentTarget.Saver) { scope.save(target) }
+            assertEquals(target, AttachmentTarget.Saver.restore(assertNotNull(saved)))
+            val nullableSaved = with(AttachmentTarget.NullableSaver) { scope.save(target) }
+            assertEquals(target, AttachmentTarget.NullableSaver.restore(assertNotNull(nullableSaved)))
+        }
+        val nullSaved = with(AttachmentTarget.NullableSaver) { scope.save(null) }
+        assertNull(AttachmentTarget.NullableSaver.restore(assertNotNull(nullSaved)))
+    }
 
     private fun optionsTest(block: suspend TestScope.(MockWorkspace) -> Unit) =
         runTest {
