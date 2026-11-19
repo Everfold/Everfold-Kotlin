@@ -3,7 +3,7 @@ package com.everfold.kotlin.feature.connections
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +11,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -20,15 +31,10 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.dialog
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
-import com.everfold.kotlin.ui.theme.LocalAppBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.cancel
 import everfold.shared.generated.resources.connection_cached_info
@@ -48,21 +54,9 @@ import everfold.shared.generated.resources.connection_remove
 import everfold.shared.generated.resources.connection_remove_hint
 import everfold.shared.generated.resources.connection_remove_title
 import everfold.shared.generated.resources.retry_connection
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.HorizontalDivider
-import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
-import top.yukonga.miuix.kmp.basic.TabRowWithContour
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.glass.GlassDialog
-import top.yukonga.miuix.kmp.glass.GlassDialogButton
-import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 所有连接共享概览与配置离线时保留编辑入口和最后一次内核信息 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConnectionDetails(
     connection: Connection,
@@ -78,13 +72,33 @@ internal fun ConnectionDetails(
     var removing by rememberSaveable { mutableStateOf(false) }
     val pages = rememberSaveableStateHolder()
     Column(modifier.fillMaxSize()) {
-        ConnectionDetailsHeader(connection, onConnect, onDisconnect, onNewConversation)
-        TabRowWithContour(
-            tabs = listOf(localizedString(Res.string.connection_overview), localizedString(Res.string.connection_configuration)),
-            selectedTabIndex = tab,
-            onTabSelected = { tab = it },
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
-        )
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    connection.profile.name.resolve(),
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                ConnectionStatusLabel(connection.runtime.status)
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ConnectionAction(connection.runtime.status, onConnect, onDisconnect)
+                OutlinedButton(onClick = onNewConversation, enabled = connection.isConnected) {
+                    Text(localizedString(Res.string.connection_new_session))
+                }
+            }
+        }
+        SecondaryScrollableTabRow(selectedTabIndex = tab, edgePadding = 24.dp) {
+            listOf(Res.string.connection_overview, Res.string.connection_configuration).forEachIndexed { index, title ->
+                Tab(selected = tab == index, onClick = { tab = index }, text = { Text(localizedString(title)) })
+            }
+        }
         Box(Modifier.weight(1f)) {
             pages.SaveableStateProvider(tab) {
                 if (tab == 0) {
@@ -95,46 +109,21 @@ internal fun ConnectionDetails(
             }
         }
     }
-    ConnectionRemoveDialog(
-        show = removing,
-        connectionName = connection.profile.name.resolve(),
-        onDismiss = { removing = false },
-        onConfirm = {
-            removing = false
-            onRemove()
-        },
-    )
-}
-
-@Composable
-private fun ConnectionDetailsHeader(
-    connection: Connection,
-    onConnect: () -> Unit,
-    onDisconnect: () -> Unit,
-    onNewConversation: () -> Unit,
-) {
-    Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = connection.profile.name.resolve(),
-                modifier = Modifier.weight(1f),
-                style = MiuixTheme.textStyles.title4,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            ConnectionStatusLabel(connection.runtime.status)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            ConnectionAction(connection.runtime.status, onConnect, onDisconnect)
-            Button(onClick = onNewConversation, enabled = connection.isConnected) {
-                Text(localizedString(Res.string.connection_new_session), style = MiuixTheme.textStyles.button)
-            }
-        }
+    if (removing) {
+        AlertDialog(
+            onDismissRequest = { removing = false },
+            title = { Text(localizedString(Res.string.connection_remove_title, connection.profile.name.resolve())) },
+            text = { Text(localizedString(Res.string.connection_remove_hint)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    removing = false
+                    onRemove()
+                }) {
+                    Text(localizedString(Res.string.connection_remove), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = { removing = false }) { Text(localizedString(Res.string.cancel)) } },
+        )
     }
 }
 
@@ -145,7 +134,6 @@ private fun ConnectionOverview(
     onRemove: () -> Unit,
     extraContent: @Composable () -> Unit,
 ) {
-    val runtime = connection.runtime
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             Modifier
@@ -153,96 +141,57 @@ private fun ConnectionOverview(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            val runtime = connection.runtime
             if (runtime.status == ConnectionStatus.Connecting || runtime.status == ConnectionStatus.Disconnecting) {
-                LinearProgressIndicator(Modifier.fillMaxWidth(), progress = null)
+                LinearProgressIndicator(Modifier.fillMaxWidth())
             }
-            runtime.failure?.let { failure ->
-                ConnectionFailureCard(localizedString(failure.description), onEdit)
+            runtime.failure?.let {
+                Text(localizedString(it.description), color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = onEdit) { Text(localizedString(Res.string.connection_edit)) }
             }
-            ConnectionOverviewCard(connection, runtime)
+            ConnectionInfo(localizedString(Res.string.connection_endpoint), connection.profile.endpointSummary())
+            if (!connection.isConnected && runtime.lastConnectedAt != null) {
+                Text(
+                    localizedString(Res.string.connection_cached_info),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            ConnectionInfo(
+                localizedString(Res.string.connection_kernel_version),
+                runtime.kernelVersion ?: localizedString(Res.string.connection_info_unavailable),
+            )
+            ConnectionInfo(
+                localizedString(Res.string.connection_last_connected),
+                runtime.lastConnectedAt
+                    ?.toString()
+                    ?.substringBefore('.')
+                    ?.replace('T', ' ')
+                    ?.removeSuffix("Z")
+                    ?.plus(" UTC")
+                    ?: localizedString(Res.string.connection_never_connected),
+            )
+            HorizontalDivider()
             extraContent()
             if (connection.profile.canRemove) {
-                Button(
+                TextButton(
                     onClick = onRemove,
-                    colors = ButtonDefaults.buttonColors(color = MiuixTheme.colorScheme.errorContainer),
-                ) {
-                    Text(
-                        text = localizedString(Res.string.connection_remove),
-                        style = MiuixTheme.textStyles.button,
-                        color = MiuixTheme.colorScheme.error,
-                    )
-                }
+                ) { Text(localizedString(Res.string.connection_remove), color = MaterialTheme.colorScheme.error) }
             }
         }
     }
 }
 
 @Composable
-private fun ConnectionFailureCard(
-    message: String,
-    onEdit: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        insideMargin = PaddingValues(16.dp),
-        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.errorContainer),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = message, style = MiuixTheme.textStyles.body2, color = MiuixTheme.colorScheme.onErrorContainer)
-            TextButton(
-                text = localizedString(Res.string.connection_edit),
-                onClick = onEdit,
-                colors = ButtonDefaults.textButtonColors(color = Color.Transparent, textColor = MiuixTheme.colorScheme.primary),
-                insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ConnectionOverviewCard(
-    connection: Connection,
-    runtime: ConnectionRuntimeState,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        ConnectionInfoRow(localizedString(Res.string.connection_endpoint), connection.profile.endpointSummary())
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        if (!connection.isConnected && runtime.lastConnectedAt != null) {
-            Text(
-                text = localizedString(Res.string.connection_cached_info),
-                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
-                style = MiuixTheme.textStyles.footnote1,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            )
-        }
-        ConnectionInfoRow(
-            localizedString(Res.string.connection_kernel_version),
-            runtime.kernelVersion ?: localizedString(Res.string.connection_info_unavailable),
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ConnectionInfoRow(
-            localizedString(Res.string.connection_last_connected),
-            runtime.lastConnectedAt
-                ?.toString()
-                ?.substringBefore('.')
-                ?.replace('T', ' ')
-                ?.removeSuffix("Z")
-                ?.plus(" UTC")
-                ?: localizedString(Res.string.connection_never_connected),
-        )
-    }
-}
-
-@Composable
-private fun ConnectionInfoRow(
+private fun ConnectionInfo(
     label: String,
     value: String,
 ) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = label, style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
-        Text(text = value, style = MiuixTheme.textStyles.body1)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -253,52 +202,17 @@ private fun ConnectionAction(
     onDisconnect: () -> Unit,
 ) {
     val disconnect = status in listOf(ConnectionStatus.Connected, ConnectionStatus.Connecting, ConnectionStatus.Disconnecting)
-    val colors = if (disconnect) ButtonDefaults.buttonColors() else ButtonDefaults.buttonColorsPrimary()
-    Button(
-        onClick = if (disconnect) onDisconnect else onConnect,
-        enabled = status != ConnectionStatus.Disconnecting,
-        colors = colors,
-    ) {
+    Button(onClick = if (disconnect) onDisconnect else onConnect, enabled = status != ConnectionStatus.Disconnecting) {
         Text(
-            text =
-                localizedString(
-                    when (status) {
-                        ConnectionStatus.Connected -> Res.string.connection_disconnect
-                        ConnectionStatus.Connecting -> Res.string.cancel
-                        ConnectionStatus.Disconnecting -> Res.string.connection_disconnecting
-                        ConnectionStatus.Failed -> Res.string.retry_connection
-                        ConnectionStatus.Disconnected -> Res.string.connection_connect
-                    },
-                ),
-            style = MiuixTheme.textStyles.button,
+            localizedString(
+                when (status) {
+                    ConnectionStatus.Connected -> Res.string.connection_disconnect
+                    ConnectionStatus.Connecting -> Res.string.cancel
+                    ConnectionStatus.Disconnecting -> Res.string.connection_disconnecting
+                    ConnectionStatus.Failed -> Res.string.retry_connection
+                    ConnectionStatus.Disconnected -> Res.string.connection_connect
+                },
+            ),
         )
-    }
-}
-
-@Composable
-private fun ConnectionRemoveDialog(
-    show: Boolean,
-    connectionName: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    GlassDialog(
-        show = show,
-        onDismissRequest = onDismiss,
-        backdrop = LocalAppBackdrop.current,
-        title = localizedString(Res.string.connection_remove_title, connectionName),
-        summary = localizedString(Res.string.connection_remove_hint),
-    ) {
-        Row(
-            modifier = Modifier.semantics { dialog() },
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            GlassDialogButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                Text(text = localizedString(Res.string.cancel), style = MiuixTheme.textStyles.button)
-            }
-            GlassDialogButton(onClick = onConfirm, modifier = Modifier.weight(1f), role = GlassDialogButtonRole.Destructive) {
-                Text(text = localizedString(Res.string.connection_remove), style = MiuixTheme.textStyles.button)
-            }
-        }
     }
 }

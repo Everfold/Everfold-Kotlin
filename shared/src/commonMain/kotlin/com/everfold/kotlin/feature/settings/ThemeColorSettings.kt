@@ -1,16 +1,23 @@
 package com.everfold.kotlin.feature.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,13 +25,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.everfold.kotlin.ui.components.AppIcon
-import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.ThemeColorMode
 import com.everfold.kotlin.ui.theme.ThemeColorSelection
@@ -35,16 +40,6 @@ import everfold.shared.generated.resources.adjust
 import everfold.shared.generated.resources.custom_color
 import everfold.shared.generated.resources.follow_system
 import everfold.shared.generated.resources.theme_color
-import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.HorizontalDivider
-import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.preference.ArrowPreference
-import top.yukonga.miuix.kmp.preference.RadioButtonPreference
-import top.yukonga.miuix.kmp.squircle.squircleBorder
-import top.yukonga.miuix.kmp.squircle.squircleClip
-import top.yukonga.miuix.kmp.squircle.squircleSurface
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 主题色选择系统配色预设种子色与自定义颜色共用选择状态 */
 @Composable
@@ -55,32 +50,76 @@ internal fun ThemeColorSettings(
     onCustomColorChange: (Color) -> Unit,
 ) {
     var showCustomDialog by rememberSaveable { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SmallTitle(text = localizedString(Res.string.theme_color), insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp))
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().selectableGroup()) {
-                RadioButtonPreference(
-                    title = localizedString(Res.string.follow_system),
-                    selected = selection.mode == ThemeColorMode.System,
-                    onClick = onSystemColorChange,
-                )
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                ThemePresetGrid(selection, onPresetChange)
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                ArrowPreference(
-                    title = localizedString(Res.string.custom_color),
-                    summary = selection.customSeed.toHexColor(),
-                    startAction = { ColorSwatch(selection.customSeed, selection.mode == ThemeColorMode.Custom) },
-                    endActions = {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 主题色
+        Text(localizedString(Res.string.theme_color), style = MaterialTheme.typography.titleMedium)
+        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .selectable(selection.mode == ThemeColorMode.System, role = Role.RadioButton, onClick = onSystemColorChange)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    RadioButton(selection.mode == ThemeColorMode.System, onClick = null)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // 跟随系统
+                        Text(localizedString(Res.string.follow_system), style = MaterialTheme.typography.titleSmall)
+                    }
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                ThemePreset.entries.chunked(3).forEach { presets ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        presets.forEach { preset ->
+                            val selected = selection.mode == ThemeColorMode.Preset && selection.preset == preset
+                            Column(
+                                Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                                    .selectable(selected, role = Role.RadioButton, onClick = { onPresetChange(preset) })
+                                    .padding(vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                ColorSwatch(preset.seed, selected)
+
+                                // 标签见 ThemePreset
+                                Text(localizedString(preset.label), style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .selectable(selection.mode == ThemeColorMode.Custom, role = Role.RadioButton, onClick = { showCustomDialog = true })
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    ColorSwatch(selection.customSeed, selection.mode == ThemeColorMode.Custom)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // 自定义颜色
+                        Text(localizedString(Res.string.custom_color), style = MaterialTheme.typography.titleSmall)
                         Text(
-                            text = localizedString(Res.string.adjust),
-                            style = MiuixTheme.textStyles.body2,
-                            color = MiuixTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium,
+                            selection.customSeed.toHexColor(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    },
-                    onClick = { showCustomDialog = true },
-                )
+                    }
+                    Text(
+                        // 调整
+                        localizedString(Res.string.adjust),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     }
@@ -97,59 +136,18 @@ internal fun ThemeColorSettings(
 }
 
 @Composable
-private fun ThemePresetGrid(
-    selection: ThemeColorSelection,
-    onPresetChange: (ThemePreset) -> Unit,
-) {
-    Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ThemePreset.entries.chunked(3).forEach { presets ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                presets.forEach { preset ->
-                    val selected = selection.mode == ThemeColorMode.Preset && selection.preset == preset
-                    val container = if (selected) MiuixTheme.colorScheme.secondaryContainer else Color.Transparent
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .squircleSurface(color = container, cornerRadius = 16.dp)
-                            .selectable(selected, role = Role.RadioButton, onClick = { onPresetChange(preset) })
-                            .padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        ColorSwatch(preset.seed, selected)
-                        Text(
-                            text = localizedString(preset.label),
-                            style = MiuixTheme.textStyles.footnote1,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ColorSwatch(
     color: Color,
     selected: Boolean,
 ) {
-    val ring = if (selected) MiuixTheme.colorScheme.primary else Color.Transparent
     Box(
         Modifier
-            .size(44.dp)
-            .squircleBorder(width = 2.dp, color = ring, cornerRadius = 14.dp)
+            .size(48.dp)
+            .border(2.dp, if (selected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
             .padding(4.dp)
-            .squircleClip(10.dp)
-            .background(color),
+            .background(color, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected) {
-            AppIcon(
-                AppSymbol.Check,
-                modifier = Modifier.size(16.dp),
-                tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
-            )
-        }
+        if (selected) Text("✓", color = if (color.luminance() > 0.5f) Color.Black else Color.White)
     }
 }

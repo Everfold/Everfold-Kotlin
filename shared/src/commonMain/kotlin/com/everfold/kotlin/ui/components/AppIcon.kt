@@ -1,83 +1,65 @@
 package com.everfold.kotlin.ui.components
 
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
-import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.basic.Check
-import top.yukonga.miuix.kmp.icon.glass.Add
-import top.yukonga.miuix.kmp.icon.glass.Ai
-import top.yukonga.miuix.kmp.icon.glass.ChevronBackward
-import top.yukonga.miuix.kmp.icon.glass.Close
-import top.yukonga.miuix.kmp.icon.glass.CollapseList
-import top.yukonga.miuix.kmp.icon.glass.Delete
-import top.yukonga.miuix.kmp.icon.glass.Edit
-import top.yukonga.miuix.kmp.icon.glass.ExpandMore
-import top.yukonga.miuix.kmp.icon.glass.File
-import top.yukonga.miuix.kmp.icon.glass.FolderOutline
-import top.yukonga.miuix.kmp.icon.glass.FullScreen
-import top.yukonga.miuix.kmp.icon.glass.Hide
-import top.yukonga.miuix.kmp.icon.glass.Menu
-import top.yukonga.miuix.kmp.icon.glass.Messages
-import top.yukonga.miuix.kmp.icon.glass.More
-import top.yukonga.miuix.kmp.icon.glass.MoreConnections
-import top.yukonga.miuix.kmp.icon.glass.OpenWithOtherApp
-import top.yukonga.miuix.kmp.icon.glass.Pause
-import top.yukonga.miuix.kmp.icon.glass.Pin
-import top.yukonga.miuix.kmp.icon.glass.Refresh
-import top.yukonga.miuix.kmp.icon.glass.Search
-import top.yukonga.miuix.kmp.icon.glass.Send
-import top.yukonga.miuix.kmp.icon.glass.SettingsOutline
-import top.yukonga.miuix.kmp.icon.glass.Show
-import top.yukonga.miuix.kmp.icon.glass.Sidebar
-import top.yukonga.miuix.kmp.icon.glass.Unpin
-import top.yukonga.miuix.kmp.theme.LocalContentColor
+import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.unit.dp
 
 enum class AppSymbol(
-    val imageVector: ImageVector,
+    val path: String,
 ) {
-    Chat(MiuixIcons.Glass.Messages),
-    Connection(MiuixIcons.Glass.MoreConnections),
-    Settings(MiuixIcons.Glass.SettingsOutline),
-    Folder(MiuixIcons.Glass.FolderOutline),
-    Attachment(MiuixIcons.Glass.File),
-    ChevronDown(MiuixIcons.Glass.ExpandMore),
-    Check(MiuixIcons.Basic.Check),
-    Close(MiuixIcons.Glass.Close),
-    Retry(MiuixIcons.Glass.Refresh),
-    Plus(MiuixIcons.Glass.Add),
-    Back(MiuixIcons.Glass.ChevronBackward),
-    Send(MiuixIcons.Glass.Send),
-    Stop(MiuixIcons.Glass.Pause),
-    Search(MiuixIcons.Glass.Search),
-    Menu(MiuixIcons.Glass.Menu),
-    Sidebar(MiuixIcons.Glass.Sidebar),
-    OpenInNew(MiuixIcons.Glass.OpenWithOtherApp),
-    Expand(MiuixIcons.Glass.FullScreen),
-    Collapse(MiuixIcons.Glass.CollapseList),
-    More(MiuixIcons.Glass.More),
-    Spark(MiuixIcons.Glass.Ai),
-    Edit(MiuixIcons.Glass.Edit),
-    Delete(MiuixIcons.Glass.Delete),
-    Pin(MiuixIcons.Glass.Pin),
-    Unpin(MiuixIcons.Glass.Unpin),
-    Show(MiuixIcons.Glass.Show),
-    Hide(MiuixIcons.Glass.Hide),
+    Chat("M4,4 L20,4 L20,16 L9,16 L4,20 Z M8,8 L16,8 M8,12 L13,12"),
+    Connection("M8,7 L8,3 M16,7 L16,3 M5,7 L19,7 L19,10 C19,14 16,16 12,16 C8,16 5,14 5,10 Z M12,16 L12,21"),
+    Settings("M4,6 L20,6 M4,12 L20,12 M4,18 L20,18 M8,3 L8,9 M16,9 L16,15 M10,15 L10,21"),
+    Folder("M3,6 L9,6 L11,8 L21,8 L21,20 L3,20 Z M3,6 L3,4 L10,4 L12,6"),
+    Attachment("M8,12 L14,6 C18,2 23,7 19,11 L10,20 C5,25 -1,19 3,15 L12,6 M6,15 L14,7"),
+    ChevronDown("M6,9 L12,15 L18,9"),
+    Check("M4,12 L9,17 L20,6"),
+    Close("M6,6 L18,18 M18,6 L6,18"),
+    Retry("M4,10 C6,2 18,2 20,10 M4,4 L4,10 L10,10 M20,14 C18,22 6,22 4,14 M20,20 L20,14 L14,14"),
+    Plus("M12,5 L12,19 M5,12 L19,12"),
+    Back("M19,12 L5,12 M11,6 L5,12 L11,18"),
+    Send("M12,19 L12,5 M5,12 L12,5 L19,12"),
+    Stop("M6,6 L18,6 L18,18 L6,18 Z"),
+    Search("M10,3 C6,3 3,6 3,10 C3,14 6,17 10,17 C14,17 17,14 17,10 C17,6 14,3 10,3 Z M15,15 L21,21"),
+    Menu("M4,6 L20,6 M4,12 L20,12 M4,18 L20,18"),
+    Sidebar("M3,4 L21,4 L21,20 L3,20 Z M9,4 L9,20"),
+    OpenInNew("M14,3 L21,3 L21,10 M21,3 L10,14 M10,3 L3,3 L3,21 L21,21 L21,14"),
+    Expand("M8,3 L3,3 L3,8 M16,3 L21,3 L21,8 M3,16 L3,21 L8,21 M21,16 L21,21 L16,21"),
+    Collapse("M3,8 L8,8 L8,3 M21,8 L16,8 L16,3 M8,21 L8,16 L3,16 M16,21 L16,16 L21,16"),
+    More("M5,11 L5,13 M12,11 L12,13 M19,11 L19,13"),
+    Spark("M12,3 L14.5,9.5 L21,12 L14.5,14.5 L12,21 L9.5,14.5 L3,12 L9.5,9.5 Z"),
 }
+
+private val vectors =
+    AppSymbol.entries.associateWith { symbol ->
+        ImageVector
+            .Builder(symbol.name, 24.dp, 24.dp, 24f, 24f)
+            .apply {
+                addPath(
+                    pathData = addPathNodes(symbol.path),
+                    pathFillType = PathFillType.NonZero,
+                    fill = null,
+                    stroke = SolidColor(Color.Black),
+                    strokeLineWidth = 1.7f,
+                    strokeLineCap = StrokeCap.Round,
+                    strokeLineJoin = StrokeJoin.Round,
+                )
+            }.build()
+    }
 
 @Composable
 fun AppIcon(
     symbol: AppSymbol,
     modifier: Modifier = Modifier,
     description: String? = null,
-    tint: Color = LocalContentColor.current,
 ) {
-    Icon(
-        imageVector = symbol.imageVector,
-        contentDescription = description,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(vectors.getValue(symbol), contentDescription = description, modifier = modifier)
 }

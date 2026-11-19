@@ -2,19 +2,23 @@ package com.everfold.kotlin.feature.conversation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
@@ -29,12 +33,6 @@ import everfold.shared.generated.resources.attachment_retry
 import everfold.shared.generated.resources.attachment_uploading
 import everfold.shared.generated.resources.dismiss_file_error
 import everfold.shared.generated.resources.file_picker_failed
-import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 internal fun DraftAttachments(
@@ -59,20 +57,15 @@ private fun AttachmentCard(
     onRetry: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    Card(
-        cornerRadius = 14.dp,
-        insideMargin = PaddingValues(8.dp),
-        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(Modifier.widthIn(max = 280.dp).width(androidx.compose.foundation.layout.IntrinsicSize.Max)) {
+    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Column(Modifier.widthIn(max = 280.dp).width(IntrinsicSize.Max).padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = file.source.name,
+                        file.source.name,
                         maxLines = 1,
                         overflow = TextOverflow.MiddleEllipsis,
-                        style = MiuixTheme.textStyles.body2,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelLarge,
                     )
                     val label =
                         when (file.status) {
@@ -82,36 +75,32 @@ private fun AttachmentCard(
                         }
                     if (label != null) {
                         Text(
-                            text = localizedString(label),
-                            style = MiuixTheme.textStyles.footnote1,
+                            localizedString(label),
+                            style = MaterialTheme.typography.labelSmall,
                             color =
-                                if (file.status == AttachmentStatus.Failed) {
-                                    MiuixTheme.colorScheme.error
+                                if (file.status ==
+                                    AttachmentStatus.Failed
+                                ) {
+                                    MaterialTheme.colorScheme.error
                                 } else {
-                                    MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                                 },
                         )
                     }
                 }
                 if (file.status == AttachmentStatus.Failed) {
-                    IconButton(onClick = onRetry) {
-                        AppIcon(
-                            AppSymbol.Retry,
-                            modifier = Modifier.size(18.dp),
-                            description = localizedString(Res.string.attachment_retry, file.source.name),
-                        )
-                    }
+                    IconButton(
+                        onClick = onRetry,
+                    ) { AppIcon(AppSymbol.Retry, description = localizedString(Res.string.attachment_retry, file.source.name)) }
                 }
-                IconButton(onClick = onRemove) {
-                    AppIcon(
-                        AppSymbol.Close,
-                        modifier = Modifier.size(18.dp),
-                        description = localizedString(Res.string.attachment_remove, file.source.name),
-                    )
-                }
+                IconButton(
+                    onClick = onRemove,
+                ) { AppIcon(AppSymbol.Close, description = localizedString(Res.string.attachment_remove, file.source.name)) }
             }
-            if (file.status == AttachmentStatus.Uploading) {
-                LinearProgressIndicator(progress = file.progress, modifier = Modifier.fillMaxWidth())
+            if (file.status ==
+                AttachmentStatus.Uploading
+            ) {
+                LinearProgressIndicator(progress = { file.progress }, modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -124,9 +113,7 @@ internal fun AttachmentButton(
 ) {
     val label = localizedString(Res.string.attach_files)
     AppTooltip(label) {
-        IconButton(onClick = onClick, enabled = enabled) {
-            AppIcon(AppSymbol.Attachment, modifier = Modifier.size(20.dp), description = label)
-        }
+        IconButton(onClick = onClick, enabled = enabled) { AppIcon(AppSymbol.Attachment, description = label) }
     }
 }
 
@@ -134,35 +121,26 @@ internal fun AttachmentButton(
 internal fun FilePickerError(onDismiss: () -> Unit) {
     Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = localizedString(Res.string.file_picker_failed),
-            modifier = Modifier.weight(1f),
-            color = MiuixTheme.colorScheme.error,
-            style = MiuixTheme.textStyles.footnote1,
+            localizedString(Res.string.file_picker_failed),
+            Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
         )
-        IconButton(onClick = onDismiss) {
-            AppIcon(
-                AppSymbol.Close,
-                modifier = Modifier.size(18.dp),
-                description = localizedString(Res.string.dismiss_file_error),
-            )
-        }
+        IconButton(onClick = onDismiss) { AppIcon(AppSymbol.Close, description = localizedString(Res.string.dismiss_file_error)) }
     }
 }
 
 @Composable
 internal fun MessageAttachments(files: List<ConversationAttachment>) {
     files.forEach { file ->
-        Card(
-            cornerRadius = 14.dp,
-            insideMargin = PaddingValues(12.dp),
-            colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainerHigh),
-        ) {
+        Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Row(
+                Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                AppIcon(AppSymbol.Attachment, modifier = Modifier.size(18.dp))
-                Text(text = file.source.name, style = MiuixTheme.textStyles.body2)
+                AppIcon(AppSymbol.Attachment)
+                Text(file.source.name, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

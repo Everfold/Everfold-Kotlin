@@ -3,13 +3,16 @@ package com.everfold.kotlin.feature.conversation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.progressSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,8 +20,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -39,12 +42,6 @@ import everfold.shared.generated.resources.agent_stopped
 import everfold.shared.generated.resources.agent_waiting
 import everfold.shared.generated.resources.agent_waiting_hint
 import everfold.shared.generated.resources.execution_details
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.squircle.squircleClip
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val EXPANDED_CHEVRON_ROTATION = 180f
 
@@ -63,33 +60,25 @@ internal fun AgentStatusBar(
             StatusSummary(state, expanded) { expanded = !expanded }
             Spacer(Modifier.weight(1f))
             if (state == AgentRunState.Waiting || state == AgentRunState.Failed || state == AgentRunState.Stopped) {
-                TextButton(
-                    text = localizedString(if (state == AgentRunState.Failed) Res.string.agent_retry else Res.string.agent_continue),
-                    onClick = onRetry,
-                    enabled = canRetry,
-                    colors = ButtonDefaults.textButtonColors(color = Color.Transparent, textColor = MiuixTheme.colorScheme.primary),
-                    insideMargin = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                )
+                TextButton(onClick = onRetry, enabled = canRetry) {
+                    Text(localizedString(if (state == AgentRunState.Failed) Res.string.agent_retry else Res.string.agent_continue))
+                }
             }
         }
         if (state == AgentRunState.Waiting) {
             Text(
-                text = localizedString(Res.string.agent_waiting_hint),
-                style = MiuixTheme.textStyles.footnote1,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                localizedString(Res.string.agent_waiting_hint),
+                style = MaterialTheme.typography.bodySmall,
             )
         }
         if (expanded) {
+            // 整理输入
+            Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
             Text(
-                text = "1. " + localizedString(Res.string.agent_step_prepare),
-                style = MiuixTheme.textStyles.footnote1,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            )
-            Text(
-                text = "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
-                modifier = Modifier.padding(bottom = 8.dp),
-                style = MiuixTheme.textStyles.footnote1,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                // 生成回复中文状态见下方 AgentRunState.label 映射
+                "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
+                Modifier.padding(bottom = 12.dp),
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -105,29 +94,26 @@ private fun StatusSummary(
     Row(
         modifier =
             Modifier
-                .squircleClip(8.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .clickable(role = Role.Button, onClick = onClick)
                 .semantics { contentDescription = detailsLabel }
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (state == AgentRunState.Running) {
-            InfiniteProgressIndicator(
-                modifier = Modifier.progressSemantics(),
-                color = MiuixTheme.colorScheme.primary,
-                size = 12.dp,
-                strokeWidth = 1.5.dp,
-            )
+            CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp)
         }
         Text(
-            text = localizedString(state.label),
-            style = MiuixTheme.textStyles.footnote2,
+            localizedString(state.label),
+            style = MaterialTheme.typography.labelMedium,
             color =
-                if (state == AgentRunState.Failed) {
-                    MiuixTheme.colorScheme.error
+                if (state ==
+                    AgentRunState.Failed
+                ) {
+                    MaterialTheme.colorScheme.error
                 } else {
-                    MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 },
         )
         AppIcon(AppSymbol.ChevronDown, Modifier.size(16.dp).rotate(if (expanded) EXPANDED_CHEVRON_ROTATION else 0f))
@@ -138,10 +124,22 @@ private fun StatusSummary(
 internal val AgentRunState.label
     get() =
         when (this) {
+
+            // 就绪
             AgentRunState.Idle -> Res.string.agent_idle
+
+            // 执行中
             AgentRunState.Running -> Res.string.agent_running
+
+            // 等待回复
             AgentRunState.Waiting -> Res.string.agent_waiting
+
+            // 已完成
             AgentRunState.Completed -> Res.string.agent_completed
+
+            // 已停止
             AgentRunState.Stopped -> Res.string.agent_stopped
+
+            // 执行失败
             AgentRunState.Failed -> Res.string.agent_failed
         }

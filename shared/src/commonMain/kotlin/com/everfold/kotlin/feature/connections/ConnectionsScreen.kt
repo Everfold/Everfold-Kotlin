@@ -1,18 +1,20 @@
 package com.everfold.kotlin.feature.connections
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.SaveableStateHolder
@@ -25,23 +27,14 @@ import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
-import com.everfold.kotlin.ui.theme.LocalAppBackdrop
-import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
-import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_add
 import everfold.shared.generated.resources.connection_back
 import everfold.shared.generated.resources.connection_select_hint
 import everfold.shared.generated.resources.nav_connections
-import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.VerticalDivider
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.glass.GlassIconButton
-import top.yukonga.miuix.kmp.glass.GlassTopAppBar
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 宽屏连接分栏页面：左栏列表 + 右栏详情/新增编辑器，单层 Scaffold + OS4 Backdrop。 */
+/** 宽屏并列展示列表和详情窄屏逐级进入同一详情状态随连接 ID 保存 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConnectionsScreen(
     connections: ConnectionManager,
@@ -53,88 +46,51 @@ internal fun ConnectionsScreen(
 ) {
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
-    val backdrop = rememberOptionalLayerBackdrop()
-    val selected = connections.find(navigation.selectedId.orEmpty())
-    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0),
-        topBar = {
-            ConnectionsTopBar(
-                backdrop = backdrop,
-                showBack = navigation.canGoBack,
-                adding = navigation.adding,
-                onBack = onBack,
-                onAdd = { navigation.add() },
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val wide = maxWidth >= 900.dp
+        val selected = connections.find(navigation.selectedId.orEmpty())
+        val showingDetail = navigation.adding || selected != null
+        Column {
+            TopAppBar(
+                title = { Text(localizedString(Res.string.nav_connections)) },
+                navigationIcon = {
+                    if (!wide || navigation.canGoBack) {
+                        IconButton(onClick = onBack) {
+                            AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
+                        }
+                    }
+                },
+                actions = {
+                    if (!navigation.adding) {
+                        TextButton(onClick = navigation::add) {
+                            AppIcon(AppSymbol.Plus)
+                            Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
+                        }
+                    }
+                },
             )
-        },
-    ) { innerPadding ->
-        val contentPadding =
-            PaddingValues(
-                top = innerPadding.calculateTopPadding(),
-                bottom = maxOf(innerPadding.calculateBottomPadding(), navBottom),
-            )
-        CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-            Row(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
-                pages.SaveableStateProvider("list") {
-                    ConnectionList(
-                        connections = connections.connections,
-                        selectedId = if (navigation.adding) null else navigation.selectedId,
-                        query = query,
-                        onQueryChange = { query = it },
-                        onSelect = { id -> navigation.open(id) },
-                        contentPadding = contentPadding,
-                        modifier = Modifier.width(300.dp).fillMaxHeight(),
-                    )
+            Row(Modifier.weight(1f)) {
+                if (wide || !showingDetail) {
+                    pages.SaveableStateProvider("list") {
+                        ConnectionList(
+                            connections.connections,
+                            selectedId = if (navigation.adding) null else navigation.selectedId,
+                            query = query,
+                            onQueryChange = { query = it },
+                            onSelect = navigation::open,
+                            modifier = if (wide) Modifier.width(300.dp) else Modifier.weight(1f),
+                        )
+                    }
+                    if (wide) VerticalDivider()
                 }
-                VerticalDivider()
-                Box(Modifier.weight(1f).fillMaxHeight().padding(contentPadding)) {
-                    ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
+                if (wide || showingDetail) {
+                    Box(Modifier.weight(1f).fillMaxSize()) {
+                        ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
+                    }
                 }
             }
         }
     }
-}
-
-@Composable
-private fun ConnectionsTopBar(
-    backdrop: LayerBackdrop?,
-    showBack: Boolean,
-    adding: Boolean,
-    onBack: () -> Unit,
-    onAdd: () -> Unit,
-) {
-    val addLabel = localizedString(Res.string.connection_add)
-    GlassTopAppBar(
-        title = localizedString(Res.string.nav_connections),
-        expandable = false,
-        progressiveBlur = true,
-        backdrop = backdrop,
-        navigationIcon = {
-            if (showBack) {
-                GlassIconButton(onClick = onBack) {
-                    AppIcon(
-                        AppSymbol.Back,
-                        modifier = Modifier.size(28.dp),
-                        description = localizedString(Res.string.connection_back),
-                        tint = MiuixTheme.colorScheme.onSurface,
-                    )
-                }
-            }
-        },
-        actions = {
-            if (!adding) {
-                GlassIconButton(onClick = onAdd) {
-                    AppIcon(
-                        AppSymbol.Plus,
-                        modifier = Modifier.size(28.dp),
-                        description = addLabel,
-                        tint = MiuixTheme.colorScheme.onSurface,
-                    )
-                }
-            }
-        },
-    )
 }
 
 @Composable
@@ -160,7 +116,6 @@ private fun ConnectionPane(
                         }
                         id != null
                     },
-                    showTitle = true,
                     onCancel = { navigation.back() },
                 )
             }
@@ -187,10 +142,9 @@ private fun ConnectionPane(
         else -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = localizedString(Res.string.connection_select_hint),
-                    modifier = Modifier.padding(24.dp),
-                    style = MiuixTheme.textStyles.body2,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    localizedString(Res.string.connection_select_hint),
+                    Modifier.padding(24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

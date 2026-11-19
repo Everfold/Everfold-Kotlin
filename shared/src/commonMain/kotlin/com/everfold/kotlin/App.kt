@@ -1,12 +1,12 @@
 package com.everfold.kotlin
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.everfold.kotlin.app.EverfoldApp
@@ -18,20 +18,13 @@ import com.everfold.kotlin.preferences.rememberPreferenceStore
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.EverfoldTheme
-import com.everfold.kotlin.ui.theme.ThemeColorSelection
-import com.everfold.kotlin.ui.theme.ThemeMode
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.sample_reply
-import org.jetbrains.compose.resources.painterResource
-
-@Composable
-fun everfoldLogoPainter(): Painter = painterResource(Res.drawable.logo)
 
 @Composable
 fun App(
     modifier: Modifier = Modifier,
-    onAppearanceChange: (ThemeMode, ThemeColorSelection) -> Unit = { _, _ -> },
+    titleBar: @Composable () -> Unit = {},
 ) {
     val store = rememberPreferenceStore()
     val preferences = remember(store) { UserPreferencesState(store) }
@@ -39,31 +32,31 @@ fun App(
     val language = preferences.value.language
     val themeMode = workspace.themeMode
     val themeColor = workspace.themeColor
-    SideEffect {
-        preferences.update { it.copy(themeMode = themeMode, themeColor = themeColor) }
-        onAppearanceChange(themeMode, themeColor)
-    }
+    SideEffect { preferences.update { it.copy(themeMode = themeMode, themeColor = themeColor) } }
     AppLanguageEnvironment(language) {
         val reply = localizedString(Res.string.sample_reply)
         SideEffect { workspace.replyText = reply }
         EverfoldTheme(mode = themeMode, color = themeColor) {
-            Box(modifier.fillMaxSize()) {
-                if (workspace.initialized) {
-                    EverfoldApp(
-                        workspace = workspace,
-                        language = language,
-                        onLanguageChange = { value -> preferences.update { it.copy(language = value) } },
-                        preferences = preferences,
-                        onPreviewState = workspace::previewRunState,
-                        connectionOverviewExtra = { MockConnectionOptions(workspace.connections, it) },
-                    )
-                } else {
-                    OnboardingScreen(
-                        appearance = workspace,
-                        language = language,
-                        onLanguageChange = { value -> preferences.update { it.copy(language = value) } },
-                        onComplete = workspace::completeSetup,
-                    )
+            Column(modifier.fillMaxSize()) {
+                titleBar()
+                Box(Modifier.weight(1f)) {
+                    if (workspace.initialized) {
+                        EverfoldApp(
+                            workspace,
+                            language,
+                            { value -> preferences.update { it.copy(language = value) } },
+                            preferences = preferences,
+                            onPreviewState = workspace::previewRunState,
+                            connectionOverviewExtra = { MockConnectionOptions(workspace.connections, it) },
+                        )
+                    } else {
+                        OnboardingScreen(
+                            workspace,
+                            language,
+                            { value -> preferences.update { it.copy(language = value) } },
+                            workspace::completeSetup,
+                        )
+                    }
                 }
             }
         }

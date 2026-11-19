@@ -3,11 +3,11 @@ let
   jdk = pkgs.zulu25;
   buildToolsVersion = "36.0.0";
   androidSdk = pkgs.androidenv.composeAndroidPackages {
-    platformVersions = [ "37.2" ];
+    platformVersions = [ "37.0" ];
     buildToolsVersions = [ buildToolsVersion ];
     includeEmulator = true;
     includeSystemImages = true;
-    systemImageTypes = [ "google_apis_ps16k" ];
+    systemImageTypes = [ "google_apis" ];
     abiVersions = [ "x86_64" ];
     includeSources = false;
     includeNDK = true;

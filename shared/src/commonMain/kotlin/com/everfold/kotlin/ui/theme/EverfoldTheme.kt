@@ -1,15 +1,14 @@
 package com.everfold.kotlin.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import com.materialkolor.rememberDynamicColorScheme
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.follow_system
 import everfold.shared.generated.resources.theme_dark
 import everfold.shared.generated.resources.theme_light
 import org.jetbrains.compose.resources.StringResource
-import top.yukonga.miuix.kmp.theme.ColorSchemeMode
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.ThemeController
 
 enum class ThemeMode(
     val label: StringResource,
@@ -30,23 +29,13 @@ fun EverfoldTheme(
     color: ThemeColorSelection = ThemeColorSelection(),
     content: @Composable () -> Unit,
 ) {
-    val colorSchemeMode =
+    val dark =
         when (mode) {
-            ThemeMode.System -> ColorSchemeMode.MonetSystem
-            ThemeMode.Light -> ColorSchemeMode.MonetLight
-            ThemeMode.Dark -> ColorSchemeMode.MonetDark
+            ThemeMode.System -> isSystemInDarkTheme()
+            ThemeMode.Light -> false
+            ThemeMode.Dark -> true
         }
-    val keyColor =
-        when (color.mode) {
-            ThemeColorMode.System -> null
-            ThemeColorMode.Preset, ThemeColorMode.Custom -> color.seed
-        }
-    val controller =
-        remember(colorSchemeMode, keyColor) {
-            ThemeController(
-                colorSchemeMode = colorSchemeMode,
-                keyColor = keyColor,
-            )
-        }
-    MiuixTheme(controller = controller, content = content)
+    val systemColors = if (color.mode == ThemeColorMode.System) systemColorScheme(dark) else null
+    val colors = systemColors ?: rememberDynamicColorScheme(seedColor = color.seed, isDark = dark)
+    MaterialTheme(colorScheme = colors, content = content)
 }
