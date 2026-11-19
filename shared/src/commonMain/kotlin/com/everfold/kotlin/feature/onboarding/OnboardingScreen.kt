@@ -16,10 +16,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -175,9 +176,7 @@ internal fun OnboardingScreen(
             .focusRequester(focusRequester)
             .focusable(),
     ) {
-        BoxWithConstraints(
-            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding(),
-        ) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= 1000.dp
             val slideDistance = with(LocalDensity.current) { 32.dp.roundToPx() }
             val progress by animateFloatAsState(
@@ -200,7 +199,21 @@ internal fun OnboardingScreen(
                 if (wide) {
                     SetupSidebar(step, furthestStep, cluster, navigate)
                 }
-                Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp)) {
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(
+                                if (wide) {
+                                    WindowInsetsSides.Vertical + WindowInsetsSides.End
+                                } else {
+                                    WindowInsetsSides.Vertical +
+                                        WindowInsetsSides.Horizontal
+                                },
+                            ),
+                        ).padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp),
+                ) {
                     if (!wide) {
                         LinearProgressIndicator(
                             progress = { progress },
@@ -351,7 +364,7 @@ private fun SetupSidebar(
         Modifier.width(280.dp).fillMaxHeight(),
         drawerShape = RectangleShape,
         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        windowInsets = WindowInsets(0),
+        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start),
     ) {
         Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SetupStep.entries.take(if (cluster) 4 else 3).forEach { destination ->

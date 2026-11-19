@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -138,9 +139,7 @@ internal fun EverfoldApp(
         BoxWithConstraints(
             Modifier
                 .fillMaxSize()
-                .focusable()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .imePadding(),
+                .focusable(),
         ) {
             // 宽屏使用固定侧栏窄屏复用同一会话列表作为抽屉内容
             val wide = maxWidth >= 900.dp
@@ -327,7 +326,13 @@ internal fun EverfoldApp(
                                             Surface(
                                                 modifier = Modifier.width(sessionWidth.coerceIn(260f, maxSessionWidth).dp).fillMaxHeight(),
                                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                            ) { sessions(Modifier.fillMaxSize()) }
+                                            ) {
+                                                sessions(
+                                                    Modifier
+                                                        .fillMaxSize()
+                                                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)),
+                                                )
+                                            }
                                         }
                                         if (wide && sessionsVisible) {
                                             Box(

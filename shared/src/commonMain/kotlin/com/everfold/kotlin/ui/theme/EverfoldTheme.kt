@@ -37,5 +37,6 @@ fun EverfoldTheme(
         }
     val systemColors = if (color.mode == ThemeColorMode.System) systemColorScheme(dark) else null
     val colors = systemColors ?: rememberDynamicColorScheme(seedColor = color.seed, isDark = dark)
+    SystemBarsAppearance(dark)
     MaterialTheme(colorScheme = colors, content = content)
 }
