@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowDecoration
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
@@ -59,6 +60,7 @@ fun main() =
                 onCloseRequest = ::exitApplication,
                 title = "Everfold",
                 icon = logo,
+                decoration = desktopWindowDecoration,
                 properties = desktopWindowProperties(isDark),
             ) {
                 DesktopWindowContent(logo) { mode, color ->
@@ -67,6 +69,14 @@ fun main() =
                 }
             }
         }
+    }
+
+@OptIn(ExperimentalComposeUiApi::class)
+private val desktopWindowDecoration: WindowDecoration =
+    if (System.getProperty("os.name").orEmpty().startsWith("Linux", ignoreCase = true)) {
+        WindowDecoration.Undecorated(resizerThickness = 4.dp)
+    } else {
+        WindowDecoration.SystemDefault
     }
 
 @Composable
