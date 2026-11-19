@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -122,7 +125,7 @@ fun ConversationScreen(
     )
     val backdrop = rememberOptionalLayerBackdrop()
     Scaffold(
-        modifier = modifier.fillMaxSize().collapseEditorOnEscape(expandedEditor) { expandedEditor = false },
+        modifier = modifier.fillMaxSize().imePadding().collapseEditorOnEscape(expandedEditor) { expandedEditor = false },
         contentWindowInsets = WindowInsets(0),
         topBar = {
             ConversationTopBar(
@@ -141,6 +144,7 @@ fun ConversationScreen(
         ConversationScaffoldBody(
             state = state,
             connectionName = connectionName,
+            compactNavigation = compactNavigation,
             textSize = textSize,
             shortcut = shortcut,
             collapsePrompts = collapsePrompts,
@@ -179,6 +183,7 @@ private fun Modifier.collapseEditorOnEscape(
 private fun ConversationScaffoldBody(
     state: ConversationUiState,
     connectionName: String,
+    compactNavigation: Boolean,
     textSize: ConversationTextSize,
     shortcut: SendShortcut,
     collapsePrompts: Boolean,
@@ -199,12 +204,13 @@ private fun ConversationScaffoldBody(
 ) {
     var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
     val imeOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val topPadding = innerPadding.calculateTopPadding()
-    val bottomPadding = if (imeOpen) 0.dp else innerPadding.calculateBottomPadding()
-    CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-        Column(Modifier.fillMaxSize()) {
+    val bottomPadding = if (imeOpen) 0.dp else maxOf(innerPadding.calculateBottomPadding(), navBottom)
+    CompositionLocalProvider(LocalAppBackdrop provides if (compactNavigation) backdrop else null) {
+        Column(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
             if (!expandedEditor) {
-                Box(Modifier.weight(1f).fillMaxWidth().optionalLayerBackdrop(backdrop)) {
+                Box(Modifier.weight(1f).fillMaxWidth()) {
                     ConversationBody(
                         state = state,
                         scrollRequest = scrollRequest,

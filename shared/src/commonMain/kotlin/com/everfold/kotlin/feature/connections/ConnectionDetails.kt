@@ -3,7 +3,6 @@ package com.everfold.kotlin.feature.connections
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -130,7 +129,7 @@ private fun ConnectionDetailsHeader(
             )
             ConnectionStatusLabel(connection.runtime.status)
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             ConnectionAction(connection.runtime.status, onConnect, onDisconnect)
             Button(onClick = onNewConversation, enabled = connection.isConnected) {
                 Text(localizedString(Res.string.connection_new_session), style = MiuixTheme.textStyles.button)

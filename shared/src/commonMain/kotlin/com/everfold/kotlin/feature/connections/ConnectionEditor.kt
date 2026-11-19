@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -62,6 +62,7 @@ internal fun ConnectionEditor(
     profile: ConnectionProfile?,
     onSave: (ConnectionDraft, Boolean) -> Boolean,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = false,
     onCancel: (() -> Unit)? = null,
 ) {
     val initialName = profile?.name?.resolve().orEmpty()
@@ -87,7 +88,7 @@ internal fun ConnectionEditor(
     }
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
-            ConnectionEditorForm(profile, draft, initialName, showErrors, update, Modifier.weight(1f))
+            ConnectionEditorForm(profile, draft, initialName, showErrors, showTitle, update, Modifier.weight(1f))
             ConnectionEditorActions(
                 adding = profile == null,
                 changed = changed,
@@ -109,6 +110,7 @@ private fun ConnectionEditorForm(
     draft: ConnectionDraft,
     initialName: String,
     showErrors: Boolean,
+    showTitle: Boolean,
     onChange: (ConnectionDraft) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -116,7 +118,7 @@ private fun ConnectionEditorForm(
         modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        if (profile == null) {
+        if (profile == null && showTitle) {
             Text(
                 text = localizedString(Res.string.connection_add),
                 style = MiuixTheme.textStyles.title4,
@@ -153,7 +155,7 @@ private fun ConnectionEditorActions(
             )
         }
         ConnectionSaveNotice(saveRevision)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(
                 onClick = { onSave(false) },
                 enabled = changed,

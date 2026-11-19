@@ -8,7 +8,6 @@
     <ID>MagicNumber:ClusterSetup.kt:3</ID>
     <ID>MagicNumber:ClusterSetup.kt:4</ID>
     <ID>MagicNumber:ClusterSetup.kt:8</ID>
-    <ID>MagicNumber:ConnectionsScreen.kt:900</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.ExtraLarge$1.25f</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.Large$1.125f</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.Small$0.875f</ID>
@@ -16,13 +15,6 @@
     <ID>MagicNumber:MockWorkspace.kt:MockWorkspace$3</ID>
     <ID>MagicNumber:MockWorkspace.kt:MockWorkspace$350</ID>
     <ID>MagicNumber:MockWorkspace.kt:MockWorkspace$45</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:0.38f</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:100</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:160</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:200</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:240</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:3</ID>
-    <ID>MagicNumber:OnboardingScreen.kt:4</ID>
     <ID>MagicNumber:ThemeColor.kt:0xFFFFFF</ID>
     <ID>MagicNumber:ThemeColor.kt:16</ID>
     <ID>MagicNumber:ThemeColor.kt:6</ID>

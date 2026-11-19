@@ -2,11 +2,14 @@ package com.everfold.kotlin.feature.connections
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.theme.LocalAppBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.account
 import everfold.shared.generated.resources.auth_certificate
@@ -29,12 +32,14 @@ import everfold.shared.generated.resources.lan_hint
 import everfold.shared.generated.resources.password
 import everfold.shared.generated.resources.port
 import everfold.shared.generated.resources.server_certificate
-import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.TabRowWithContour
+import everfold.shared.generated.resources.setup_cluster
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 根据连接方式和验证方式展示表单宽窄屏共用字段与校验反馈 */
+/** 根据连接方式和验证方式展示表单，宽窄屏共用 HyperOS 卡片选择器与字段校验。 */
 @Composable
 internal fun ClusterConnectionForm(
     form: ClusterSetup,
@@ -44,28 +49,59 @@ internal fun ClusterConnectionForm(
 ) {
     val errors = form.invalidFields
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        val methodLabels =
-            ClusterMethod.entries.map { method ->
-                localizedString(
-                    when (method) {
-                        ClusterMethod.Lan -> Res.string.cluster_lan
-                        ClusterMethod.Central -> Res.string.cluster_central
-                        ClusterMethod.Cloud -> Res.string.cluster_cloud
-                    },
-                )
-            }
-        TabRowWithContour(
-            tabs = methodLabels,
-            selectedTabIndex = ClusterMethod.entries.indexOf(form.method),
-            onTabSelected = { index -> onChange(form.copy(method = ClusterMethod.entries[index])) },
-        )
+        ClusterMethodAndAuthCard(form = form, onChange = onChange)
         if (form.method != ClusterMethod.Cloud) {
             ClusterEndpointFields(form, wide, errors, showErrors, onChange)
         }
-        if (form.method == ClusterMethod.Central) {
-            ClusterAuthSelector(form.auth) { onChange(form.copy(auth = it)) }
-        }
         ClusterCredentialsSection(form, wide, errors, showErrors, onChange)
+    }
+}
+
+@Composable
+private fun ClusterMethodAndAuthCard(
+    form: ClusterSetup,
+    onChange: (ClusterSetup) -> Unit,
+) {
+    val backdrop = LocalAppBackdrop.current
+    val methodLabels =
+        ClusterMethod.entries.map { method ->
+            localizedString(
+                when (method) {
+                    ClusterMethod.Lan -> Res.string.cluster_lan
+                    ClusterMethod.Central -> Res.string.cluster_central
+                    ClusterMethod.Cloud -> Res.string.cluster_cloud
+                },
+            )
+        }
+    val authLabels =
+        ClusterAuth.entries.map { auth ->
+            localizedString(
+                when (auth) {
+                    ClusterAuth.None -> Res.string.auth_none
+                    ClusterAuth.Password -> Res.string.auth_password
+                    ClusterAuth.Certificate -> Res.string.auth_certificate
+                    ClusterAuth.Mtls -> Res.string.auth_mtls
+                },
+            )
+        }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        GlassDropdownPreference(
+            title = localizedString(Res.string.setup_cluster),
+            items = methodLabels,
+            selectedIndex = ClusterMethod.entries.indexOf(form.method),
+            onSelectedIndexChange = { index -> onChange(form.copy(method = ClusterMethod.entries[index])) },
+            backdrop = backdrop,
+        )
+        if (form.method == ClusterMethod.Central) {
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            GlassDropdownPreference(
+                title = localizedString(Res.string.auth_method),
+                items = authLabels,
+                selectedIndex = ClusterAuth.entries.indexOf(form.auth),
+                onSelectedIndexChange = { index -> onChange(form.copy(auth = ClusterAuth.entries[index])) },
+                backdrop = backdrop,
+            )
+        }
     }
 }
 
@@ -107,30 +143,6 @@ private fun ClusterEndpointFields(
                 keyboard = KeyboardType.Number,
             )
         },
-    )
-}
-
-@Composable
-private fun ClusterAuthSelector(
-    selectedAuth: ClusterAuth,
-    onSelect: (ClusterAuth) -> Unit,
-) {
-    SmallTitle(text = localizedString(Res.string.auth_method), insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp))
-    val authLabels =
-        ClusterAuth.entries.map { auth ->
-            localizedString(
-                when (auth) {
-                    ClusterAuth.None -> Res.string.auth_none
-                    ClusterAuth.Password -> Res.string.auth_password
-                    ClusterAuth.Certificate -> Res.string.auth_certificate
-                    ClusterAuth.Mtls -> Res.string.auth_mtls
-                },
-            )
-        }
-    TabRowWithContour(
-        tabs = authLabels,
-        selectedTabIndex = ClusterAuth.entries.indexOf(selectedAuth),
-        onTabSelected = { index -> onSelect(ClusterAuth.entries[index]) },
     )
 }
 

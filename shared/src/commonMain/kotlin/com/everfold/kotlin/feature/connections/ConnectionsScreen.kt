@@ -160,6 +160,7 @@ private fun ConnectionPane(
                         }
                         id != null
                     },
+                    showTitle = true,
                     onCancel = { navigation.back() },
                 )
             }

@@ -2,7 +2,6 @@ package com.everfold.kotlin.feature.connections
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -137,31 +139,24 @@ internal fun FileImportField(
         colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = localizedString(label), style = MiuixTheme.textStyles.headline1)
+            FileImportHeader(
+                label = label,
+                hasValue = value != null,
+                onRemove = {
+                    touched = true
+                    onImport(null)
+                },
+            )
             Text(
                 text = value ?: localizedString(Res.string.no_file),
                 style = MiuixTheme.textStyles.body2,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
             )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { scanning = false.also { importing = true } }) {
-                    Text(localizedString(if (value == null) Res.string.choose_file else Res.string.replace_file))
-                }
-                Button(onClick = { scanning = true.also { importing = true } }) {
-                    Text(localizedString(Res.string.scan_file))
-                }
-                if (value != null) {
-                    TextButton(
-                        text = localizedString(Res.string.remove_file),
-                        onClick = {
-                            touched = true
-                            onImport(null)
-                        },
-                        colors = ButtonDefaults.textButtonColors(color = Color.Transparent, textColor = MiuixTheme.colorScheme.error),
-                        insideMargin = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
-                    )
-                }
-            }
+            FileImportActions(
+                hasValue = value != null,
+                onChoose = { scanning = false.also { importing = true } },
+                onScan = { scanning = true.also { importing = true } },
+            )
             if ((showErrors || touched) && value.isNullOrBlank()) {
                 Text(
                     text = localizedString(Res.string.error_certificate),
@@ -180,6 +175,49 @@ internal fun FileImportField(
             importing = false
         },
     )
+}
+
+@Composable
+private fun FileImportHeader(
+    label: StringResource,
+    hasValue: Boolean,
+    onRemove: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = localizedString(label), style = MiuixTheme.textStyles.headline1)
+        if (hasValue) {
+            TextButton(
+                text = localizedString(Res.string.remove_file),
+                onClick = onRemove,
+                colors = ButtonDefaults.textButtonColors(color = Color.Transparent, textColor = MiuixTheme.colorScheme.error),
+                insideMargin = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FileImportActions(
+    hasValue: Boolean,
+    onChoose: () -> Unit,
+    onScan: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Button(onClick = onChoose, insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+            Text(localizedString(if (hasValue) Res.string.replace_file else Res.string.choose_file))
+        }
+        Button(onClick = onScan, insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+            Text(localizedString(Res.string.scan_file))
+        }
+    }
 }
 
 @Composable
@@ -213,13 +251,34 @@ internal fun SetupColumns(
     first: @Composable () -> Unit,
     second: @Composable () -> Unit,
 ) {
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        maxItemsInEachRow = if (wide) 2 else 1,
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Column(Modifier.weight(1f)) { first() }
-        Column(Modifier.weight(1f)) { second() }
+    val gapPx = with(LocalDensity.current) { (if (wide) 24.dp else 16.dp).roundToPx() }
+    Layout(
+        modifier = Modifier.fillMaxWidth(),
+        content = {
+            first()
+            second()
+        },
+    ) { measurables, constraints ->
+        val firstMeasurable = measurables[0]
+        val secondMeasurable = measurables[1]
+        if (wide && constraints.hasBoundedWidth) {
+            val colWidth = (constraints.maxWidth - gapPx).coerceAtLeast(0) / 2
+            val colConstraints = constraints.copy(minWidth = colWidth, maxWidth = colWidth, minHeight = 0)
+            val firstPlaceable = firstMeasurable.measure(colConstraints)
+            val secondPlaceable = secondMeasurable.measure(colConstraints)
+            layout(constraints.maxWidth, maxOf(firstPlaceable.height, secondPlaceable.height)) {
+                firstPlaceable.placeRelative(0, 0)
+                secondPlaceable.placeRelative(colWidth + gapPx, 0)
+            }
+        } else {
+            val stackConstraints = constraints.copy(minHeight = 0)
+            val firstPlaceable = firstMeasurable.measure(stackConstraints)
+            val secondPlaceable = secondMeasurable.measure(stackConstraints)
+            val width = if (constraints.hasBoundedWidth) constraints.maxWidth else maxOf(firstPlaceable.width, secondPlaceable.width)
+            layout(width, firstPlaceable.height + gapPx + secondPlaceable.height) {
+                firstPlaceable.placeRelative(0, 0)
+                secondPlaceable.placeRelative(0, firstPlaceable.height + gapPx)
+            }
+        }
     }
 }
