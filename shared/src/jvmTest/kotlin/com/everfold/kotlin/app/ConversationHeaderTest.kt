@@ -28,6 +28,7 @@ class ConversationHeaderTest(
     @Test
     fun headerStaysOneRowAndShowsLiveConnectionStatus() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNodeWithContentDescription("连接状态：已连接").assertIsDisplayed()
             val longName = "Office connection with a very long name that belongs in the menu"
             val id =
@@ -58,6 +59,7 @@ class ConversationHeaderTest(
     @Test
     fun menuContainsContextAndAllowsReturningBetweenSelectors() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNodeWithContentDescription("会话菜单").performClick()
             onNodeWithText("本机 · 已连接").assertIsDisplayed()
             if (width < 600) {
@@ -67,7 +69,7 @@ class ConversationHeaderTest(
                         hasText("连接") and hasAnySibling(hasText("本机 · 已连接")),
                         useUnmergedTree = true,
                     ).fetchSemanticsNode().boundsInRoot
-                assertEquals(title.left, connection.left, absoluteTolerance = 1f)
+                assertTrue(title.bottom <= connection.top)
             }
             onNode(hasText("连接") and hasText("本机 · 已连接") and hasClickAction()).performClick()
             onNodeWithText("管理连接").assertIsDisplayed()
@@ -76,7 +78,7 @@ class ConversationHeaderTest(
             if (width < 600) {
                 val title = onNodeWithText("选择工作区", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
                 val option = onNodeWithText("Notes", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-                assertEquals(title.left, option.left, absoluteTolerance = 1f)
+                assertTrue(title.bottom <= option.top)
             }
             onNodeWithText("Notes").performClick()
             runOnIdle {
@@ -93,6 +95,7 @@ class ConversationHeaderTest(
     @Test
     fun boundWorkspaceIsReadableWithoutACopyButton() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Workspace details")
             onNodeWithContentDescription("发送").performClick()
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
@@ -104,6 +107,7 @@ class ConversationHeaderTest(
     @Test
     fun longConnectionListsCanBeSearchedWithoutHidingNavigation() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             val target =
                 runOnIdle {
                     (1..10).map { assertNotNull(fixture.workspace.connections.add("Office $it", ClusterSetup())) }.last()

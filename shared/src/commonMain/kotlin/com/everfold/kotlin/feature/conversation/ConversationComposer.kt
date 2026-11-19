@@ -32,6 +32,11 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
@@ -315,12 +320,19 @@ private fun ComposerSendStopButton(
             enabled = enabled,
             backgroundColor = container,
             cornerRadius = 18.dp,
-            modifier = Modifier.padding(end = 2.dp, bottom = 2.dp),
+            modifier =
+                Modifier
+                    .padding(end = 2.dp, bottom = 2.dp)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = actionLabel
+                        role = Role.Button
+                        if (!enabled) disabled()
+                    },
         ) {
             AppIcon(
                 symbol = if (responding) AppSymbol.Stop else AppSymbol.Send,
                 modifier = Modifier.size(20.dp),
-                description = actionLabel,
+                description = null,
                 tint = contentTint,
             )
         }

@@ -119,11 +119,7 @@ class ConnectionFlowsTest(
             nameField().performTextReplacement("Unfinished edit")
             onNodeWithContentDescription("返回").performClick()
             onNode(hasText("Office") and hasClickAction()).assertIsDisplayed()
-            if (width < 900) {
-                onNodeWithContentDescription("返回").performClick()
-            } else {
-                onNode(hasText("工作台") and hasClickAction()).performClick()
-            }
+            onNode(hasText("工作台") and hasClickAction()).performClick()
             openConnections()
             onNode(hasText("Office") and hasClickAction()).performClick()
             nameField().assertTextContains("Unfinished edit")
@@ -155,6 +151,7 @@ class ConnectionFlowsTest(
     @Test
     fun offlineDraftCannotSendAndConnectedSessionKeepsItsBindingWhenDisconnected() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             val id = runOnIdle { assertNotNull(fixture.workspace.connections.add("Office", ClusterSetup())) }
             onNodeWithContentDescription("会话菜单").performClick()
             onNode(hasText("连接") and hasText("本机 · 已连接") and hasClickAction()).performClick()
@@ -233,7 +230,6 @@ class ConnectionFlowsTest(
         }
 
     private fun DesktopComposeUiTest.openConnections() {
-        if (width < 900) onNodeWithContentDescription("打开工作台").performClick()
         onNode(hasText("连接") and hasClickAction()).performClick()
     }
 

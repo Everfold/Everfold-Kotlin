@@ -46,11 +46,12 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.label
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
-import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.clear_search
 import everfold.shared.generated.resources.connection_removed
@@ -70,8 +71,6 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
 import top.yukonga.miuix.kmp.squircle.squircleSurface
@@ -181,7 +180,7 @@ private fun SessionsHostAndDialogs(
     if (compactMode) {
         CompactSessionsHost(onCreate = onCreate, bottomPadding = bottomPadding, modifier = modifier, body = body)
     } else {
-        WideSessionsHost(onCreate = onCreate, bottomPadding = bottomPadding, modifier = modifier, body = body)
+        WideSessionsHost(bottomPadding = bottomPadding, modifier = modifier, body = body)
     }
     SessionDialogs(
         renamingId = renaming,
@@ -202,7 +201,7 @@ private fun CompactSessionsHost(
     modifier: Modifier = Modifier,
     body: @Composable (Modifier, PaddingValues) -> Unit,
 ) {
-    val backdrop = rememberLayerBackdrop()
+    val backdrop = rememberOptionalLayerBackdrop()
     val scrollBehavior = MiuixScrollBehavior()
     val newSessionLabel = localizedString(Res.string.new_session)
     Scaffold(
@@ -229,7 +228,7 @@ private fun CompactSessionsHost(
         },
     ) { innerPadding ->
         CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-            Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+            Box(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
                 body(
                     Modifier
                         .fillMaxSize()
@@ -244,15 +243,13 @@ private fun CompactSessionsHost(
 
 @Composable
 private fun WideSessionsHost(
-    onCreate: () -> Unit,
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
     body: @Composable (Modifier, PaddingValues) -> Unit,
 ) {
-    val newSessionLabel = localizedString(Res.string.new_session)
     Column(modifier.fillMaxSize()) {
         Row(
-            Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
+            Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -261,11 +258,6 @@ private fun WideSessionsHost(
                 style = MiuixTheme.textStyles.title4,
                 fontWeight = FontWeight.SemiBold,
             )
-            AppTooltip(newSessionLabel) {
-                IconButton(onClick = onCreate) {
-                    AppIcon(AppSymbol.Plus, Modifier.size(22.dp), description = newSessionLabel)
-                }
-            }
         }
         body(Modifier.weight(1f), PaddingValues(bottom = 16.dp + bottomPadding))
     }

@@ -24,6 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
@@ -248,6 +251,7 @@ private fun ConnectionFields(
                 title = localizedString(Res.string.connection_auto_connect),
                 checked = draft.autoConnect,
                 onCheckedChange = { onChange(draft.copy(autoConnect = it)) },
+                modifier = Modifier.semantics { toggleableState = ToggleableState(draft.autoConnect) },
             )
         }
     }

@@ -1,6 +1,6 @@
 package com.everfold.kotlin.feature.connections
 
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,6 +15,8 @@ import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
 import com.everfold.kotlin.ui.localization.UiText
+import com.everfold.kotlin.ui.theme.EverfoldTheme
+import com.everfold.kotlin.ui.theme.LocalBackdropBlurEnabled
 import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,13 +34,15 @@ class ConnectionManagerUiTest {
                 var newSessionConnection: String? = null
                 setContent {
                     AppLanguageEnvironment(AppLanguage.Chinese) {
-                        MaterialTheme {
-                            ConnectionsScreen(
-                                manager,
-                                navigation,
-                                onNewConversation = { newSessionConnection = it },
-                                onBack = {},
-                            )
+                        CompositionLocalProvider(LocalBackdropBlurEnabled provides false) {
+                            EverfoldTheme {
+                                ConnectionsScreen(
+                                    manager,
+                                    navigation,
+                                    onNewConversation = { newSessionConnection = it },
+                                    onBack = {},
+                                )
+                            }
                         }
                     }
                 }

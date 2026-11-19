@@ -26,6 +26,8 @@ import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_add
 import everfold.shared.generated.resources.connection_back
@@ -36,8 +38,6 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.VerticalDivider
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -57,7 +57,7 @@ internal fun ConnectionsScreen(
 ) {
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
-    val backdrop = rememberLayerBackdrop()
+    val backdrop = rememberOptionalLayerBackdrop()
     BoxWithConstraints(modifier.fillMaxSize()) {
         val isWide = maxWidth >= 900.dp && onOpenConnection == null
         val selected = connections.find(navigation.selectedId.orEmpty())
@@ -68,7 +68,7 @@ internal fun ConnectionsScreen(
             topBar = {
                 ConnectionsTopBar(
                     backdrop = backdrop,
-                    showBack = !isWide || navigation.canGoBack,
+                    showBack = (onOpenConnection == null && !isWide) || navigation.canGoBack,
                     adding = navigation.adding,
                     onBack = onBack,
                     onAdd = { onAddConnection?.invoke() ?: navigation.add() },
@@ -76,7 +76,7 @@ internal fun ConnectionsScreen(
             },
         ) { innerPadding ->
             CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-                Box(Modifier.fillMaxSize().layerBackdrop(backdrop).padding(top = innerPadding.calculateTopPadding())) {
+                Box(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop).padding(top = innerPadding.calculateTopPadding())) {
                     ConnectionsBody(
                         connections = connections,
                         navigation = navigation,
@@ -100,7 +100,7 @@ internal fun ConnectionsScreen(
 
 @Composable
 private fun ConnectionsTopBar(
-    backdrop: LayerBackdrop,
+    backdrop: LayerBackdrop?,
     showBack: Boolean,
     adding: Boolean,
     onBack: () -> Unit,

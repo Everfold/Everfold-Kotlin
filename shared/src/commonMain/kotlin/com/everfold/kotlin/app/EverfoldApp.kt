@@ -32,12 +32,12 @@ import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_removed
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 /** 主界面组装入口：宽屏使用固定侧栏，窄屏采用底栏加 miuix-nav 路由栈 */
 @Composable
@@ -62,7 +62,7 @@ internal fun EverfoldApp(
             onPreviewState = onPreviewState,
             connectionOverviewExtra = connectionOverviewExtra,
         )
-    val rootBackdrop = rememberLayerBackdrop()
+    val rootBackdrop = rememberOptionalLayerBackdrop()
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
@@ -71,7 +71,7 @@ internal fun EverfoldApp(
             BoxWithConstraints(
                 Modifier
                     .fillMaxSize()
-                    .layerBackdrop(rootBackdrop)
+                    .optionalLayerBackdrop(rootBackdrop)
                     .focusable()
                     .imePadding(),
             ) {

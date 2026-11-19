@@ -52,35 +52,17 @@ fun SettingsScreen(
     bottomPadding: Dp = 0.dp,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.Theme) }
-    val themeScrollState = rememberScrollState()
-    val conversationScrollState = rememberScrollState()
-    val displayScrollState = rememberScrollState()
-    val aboutScrollState = rememberScrollState()
-    val tabs =
-        listOf(
-            localizedString(Res.string.theme_settings),
-            localizedString(Res.string.display_settings),
-            localizedString(Res.string.conversation_settings),
-            localizedString(Res.string.about),
-        )
+    val scrollStates = SettingsPage.entries.map { rememberScrollState() }
     SettingsLayout(
         title = localizedString(Res.string.nav_settings),
         modifier = modifier,
         onBack = onBack,
         bottomPadding = bottomPadding,
-        scrollState =
-            when (page) {
-                SettingsPage.Theme -> themeScrollState
-                SettingsPage.Display -> displayScrollState
-                SettingsPage.Conversation -> conversationScrollState
-                SettingsPage.About -> aboutScrollState
-            },
+        scrollState = scrollStates[page.ordinal],
         navigation = {
-            TabRowWithContour(
-                tabs = tabs,
-                selectedTabIndex = page.ordinal,
-                onTabSelected = { page = SettingsPage.entries[it] },
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+            SettingsTabs(
+                selected = page,
+                onSelect = { page = it },
             )
         },
     ) {
@@ -116,4 +98,24 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun SettingsTabs(
+    selected: SettingsPage,
+    onSelect: (SettingsPage) -> Unit,
+) {
+    val tabs =
+        listOf(
+            localizedString(Res.string.theme_settings),
+            localizedString(Res.string.display_settings),
+            localizedString(Res.string.conversation_settings),
+            localizedString(Res.string.about),
+        )
+    TabRowWithContour(
+        tabs = tabs,
+        selectedTabIndex = selected.ordinal,
+        onTabSelected = { onSelect(SettingsPage.entries[it]) },
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+    )
 }

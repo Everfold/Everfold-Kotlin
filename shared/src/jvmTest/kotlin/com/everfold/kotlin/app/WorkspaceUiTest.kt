@@ -1,10 +1,13 @@
 package com.everfold.kotlin.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.lifecycle.ViewModelStore
 import com.everfold.kotlin.feature.conversation.AttachmentSource
@@ -16,10 +19,12 @@ import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
 import com.everfold.kotlin.ui.theme.EverfoldTheme
+import com.everfold.kotlin.ui.theme.LocalBackdropBlurEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import java.util.Locale
@@ -32,7 +37,7 @@ internal fun workspaceUiTest(
 ) {
     val originalLocale = Locale.getDefault()
     val scheduler = TestCoroutineScheduler()
-    Dispatchers.setMain(StandardTestDispatcher(scheduler))
+    Dispatchers.setMain(UnconfinedTestDispatcher(scheduler))
     val store = ViewModelStore()
     try {
         val fixture = WorkspaceFixture(MockWorkspace(), scheduler)
@@ -46,16 +51,18 @@ internal fun workspaceUiTest(
         ) {
             setContent {
                 AppLanguageEnvironment(fixture.language) {
-                    EverfoldTheme {
-                        EverfoldApp(
-                            fixture.workspace,
-                            fixture.language,
-                            { fixture.language = it },
-                            preferences = fixture.preferences,
-                            onPreviewState = fixture.workspace::previewRunState,
-                            filePicker = FilePicker { it(fixture.fileResult) },
-                            connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
-                        )
+                    CompositionLocalProvider(LocalBackdropBlurEnabled provides false) {
+                        EverfoldTheme {
+                            EverfoldApp(
+                                fixture.workspace,
+                                fixture.language,
+                                { fixture.language = it },
+                                preferences = fixture.preferences,
+                                onPreviewState = fixture.workspace::previewRunState,
+                                filePicker = FilePicker { it(fixture.fileResult) },
+                                connectionOverviewExtra = { MockConnectionOptions(fixture.workspace.connections, it) },
+                            )
+                        }
                     }
                 }
             }
@@ -67,6 +74,11 @@ internal fun workspaceUiTest(
         Dispatchers.resetMain()
         Locale.setDefault(originalLocale)
     }
+}
+
+@OptIn(ExperimentalTestApi::class)
+internal fun DesktopComposeUiTest.openConversationIfCompact(width: Int) {
+    if (width < 900) onNodeWithContentDescription("新建会话").performClick()
 }
 
 internal class WorkspaceFixture(

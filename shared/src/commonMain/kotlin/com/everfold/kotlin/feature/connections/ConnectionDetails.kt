@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.dialog
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -288,7 +290,10 @@ private fun ConnectionRemoveDialog(
         title = localizedString(Res.string.connection_remove_title, connectionName),
         summary = localizedString(Res.string.connection_remove_hint),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.semantics { dialog() },
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             GlassDialogButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
                 Text(text = localizedString(Res.string.cancel), style = MiuixTheme.textStyles.button)
             }

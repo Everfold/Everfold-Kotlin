@@ -108,7 +108,7 @@ private fun StatusSummary(
                 .squircleClip(8.dp)
                 .clickable(role = Role.Button, onClick = onClick)
                 .semantics { contentDescription = detailsLabel }
-                .padding(horizontal = 4.dp, vertical = 6.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -122,7 +122,7 @@ private fun StatusSummary(
         }
         Text(
             text = localizedString(state.label),
-            style = MiuixTheme.textStyles.footnote1,
+            style = MiuixTheme.textStyles.footnote2,
             color =
                 if (state == AgentRunState.Failed) {
                     MiuixTheme.colorScheme.error

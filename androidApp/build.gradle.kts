@@ -25,6 +25,10 @@ android {
         libs.versions.android.compileSdk
             .get()
             .toInt()
+    compileSdkMinor =
+        libs.versions.android.compileSdkMinor
+            .get()
+            .toInt()
 
     defaultConfig {
         applicationId = "com.everfold.kotlin"

@@ -21,14 +21,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.back_to_conversation
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.blur.Backdrop
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -44,7 +44,7 @@ fun SettingsLayout(
     navigation: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val backdrop = rememberLayerBackdrop()
+    val backdrop = rememberOptionalLayerBackdrop()
     val scrollBehavior = MiuixScrollBehavior()
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -54,7 +54,7 @@ fun SettingsLayout(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .layerBackdrop(backdrop),
+                    .optionalLayerBackdrop(backdrop),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Column(
@@ -88,7 +88,7 @@ fun SettingsLayout(
 @Composable
 private fun SettingsTopBar(
     title: String,
-    backdrop: Backdrop,
+    backdrop: Backdrop?,
     scrollBehavior: ScrollBehavior,
     onBack: (() -> Unit)?,
 ) {

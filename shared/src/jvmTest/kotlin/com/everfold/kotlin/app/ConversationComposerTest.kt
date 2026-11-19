@@ -30,6 +30,7 @@ class ConversationComposerTest(
     @Test
     fun selectorsAndAttachmentOnlySendingWorkAtBothWidths() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNodeWithContentDescription("会话菜单").performClick()
             onNode(hasText("工作区") and hasClickAction()).performClick()
             onNodeWithText("Notes").performClick()
@@ -71,6 +72,7 @@ class ConversationComposerTest(
     @Test
     fun changingWorkspaceClearsFilesAndPickerFailureCanBeDismissed() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement("Keep my draft")
             runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
             onNodeWithContentDescription("上传文件").performClick()
@@ -89,6 +91,7 @@ class ConversationComposerTest(
     @Test
     fun expandedEditorKeepsTheDraftAndGivesLongTextMoreRoom() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             val draft = (1..12).joinToString("\n") { "Draft line $it" }
             onNodeWithContentDescription("展开编辑").assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("输入消息…")).performTextReplacement(draft)

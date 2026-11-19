@@ -29,6 +29,7 @@ class ConversationLayoutSettingsTest(
     @Test
     fun marginsSettingResizesMessagesAndComposerWithoutLosingTheDraft() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             val reply = "A reply that fills the available reading width. ".repeat(6).trim()
             runOnIdle { fixture.workspace.replyText = reply }
             onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Start a conversation")
@@ -71,10 +72,9 @@ class ConversationLayoutSettingsTest(
     }
 
     private fun DesktopComposeUiTest.returnToConversation() {
+        onNode(hasText("工作台") and hasClickAction()).performClick()
         if (width < 900) {
-            onNodeWithContentDescription("返回会话").performClick()
-        } else {
-            onNode(hasText("工作台") and hasClickAction()).performClick()
+            onNode(hasText("Start a conversation") and hasClickAction()).performClick()
         }
     }
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -19,6 +20,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.app.navigation.AppDestination
 import com.everfold.kotlin.app.navigation.EverfoldRoute
@@ -31,13 +33,13 @@ import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_add
 import everfold.shared.generated.resources.connection_back
 import everfold.shared.generated.resources.nav_connections
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassNavigationBar
 import top.yukonga.miuix.kmp.glass.GlassNavigationItem
@@ -79,6 +81,7 @@ internal fun CompactWorkspaceShell(
             CompactHomeTabScaffold(
                 deps = deps,
                 state = state,
+                active = navController.backStack.lastOrNull() is EverfoldRoute.Home,
                 onSelectDestination = {
                     focusManager.clearFocus()
                     state.destination = it
@@ -91,7 +94,15 @@ internal fun CompactWorkspaceShell(
                 onOpenConnectionAdd = { navController.pushUnique(EverfoldRoute.ConnectionAdd) },
             )
         }
-        entry<EverfoldRoute.Conversation> { CompactConversationEntry(deps, state, navController, openConversation) }
+        entry<EverfoldRoute.Conversation> {
+            CompactConversationEntry(
+                deps = deps,
+                state = state,
+                navController = navController,
+                active = navController.backStack.lastOrNull() is EverfoldRoute.Conversation,
+                onOpenConversation = openConversation,
+            )
+        }
         entry<EverfoldRoute.ConnectionDetail> { route ->
             CompactConnectionDetailPage(route, deps, state, navController) { id ->
                 deps.workspace.selectNewConversationConnection(id)
@@ -135,14 +146,16 @@ private fun CompactConversationEntry(
     deps: WorkspaceShellDeps,
     state: WorkspaceShellState,
     navController: NavController,
-    openConversation: (String?) -> Unit,
+    active: Boolean,
+    onOpenConversation: (String?) -> Unit,
 ) {
+    val routeModifier = if (active) Modifier else Modifier.focusProperties { canFocus = false }.clearAndSetSemantics {}
     ConversationPaneHost(
         deps = deps,
         state = state,
         compactNavigation = true,
         onToggleSessions = { navController.pop() },
-        onNewConversation = { openConversation(null) },
+        onNewConversation = { onOpenConversation(null) },
         onOpenConnection = { connId ->
             if (deps.workspace.connections.find(connId) != null) {
                 state.connectionNavigation.open(connId)
@@ -152,7 +165,7 @@ private fun CompactConversationEntry(
                 navController.popUntil { it is EverfoldRoute.Home }
             }
         },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().then(routeModifier),
     )
 }
 
@@ -160,18 +173,20 @@ private fun CompactConversationEntry(
 private fun CompactHomeTabScaffold(
     deps: WorkspaceShellDeps,
     state: WorkspaceShellState,
+    active: Boolean,
     onSelectDestination: (AppDestination) -> Unit,
     onOpenConversation: (String?) -> Unit,
     onOpenConnectionDetail: (String) -> Unit,
     onOpenConnectionAdd: () -> Unit,
 ) {
-    val homeBackdrop = rememberLayerBackdrop()
+    val homeBackdrop = rememberOptionalLayerBackdrop()
     val navItems =
         AppDestination.entries.map { item ->
             GlassNavigationItem(icon = item.icon.imageVector, label = localizedString(item.label))
         }
+    val routeModifier = if (active) Modifier else Modifier.focusProperties { canFocus = false }.clearAndSetSemantics {}
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().then(routeModifier),
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             GlassNavigationBar(
@@ -184,7 +199,7 @@ private fun CompactHomeTabScaffold(
     ) { innerPadding ->
         val bottomPadding = innerPadding.calculateBottomPadding()
         CompositionLocalProvider(LocalAppBackdrop provides homeBackdrop) {
-            Box(Modifier.fillMaxSize().layerBackdrop(homeBackdrop)) {
+            Box(Modifier.fillMaxSize().optionalLayerBackdrop(homeBackdrop)) {
                 CompactHomeTabContent(
                     deps = deps,
                     state = state,
@@ -258,7 +273,8 @@ private fun CompactConnectionDetailPage(
 ) {
     val connection = deps.workspace.connections.find(route.connectionId)
     val title = connection?.profile?.name?.resolve() ?: localizedString(Res.string.nav_connections)
-    CompactSubpageScaffold(title = title, onBack = { navController.pop() }) { innerPadding ->
+    val active = navController.backStack.lastOrNull() == route
+    CompactSubpageScaffold(title = title, active = active, onBack = { navController.pop() }) { innerPadding ->
         if (connection != null) {
             state.connectionPageStates.SaveableStateProvider(connection.id) {
                 ConnectionDetails(
@@ -288,6 +304,7 @@ private fun CompactConnectionAddPage(
 ) {
     CompactSubpageScaffold(
         title = localizedString(Res.string.connection_add),
+        active = navController.backStack.lastOrNull() is EverfoldRoute.ConnectionAdd,
         onBack = { navController.pop() },
     ) { innerPadding ->
         state.connectionPageStates.SaveableStateProvider("add") {
@@ -313,12 +330,14 @@ private fun CompactConnectionAddPage(
 @Composable
 private fun CompactSubpageScaffold(
     title: String,
+    active: Boolean,
     onBack: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val backdrop = rememberLayerBackdrop()
+    val backdrop = rememberOptionalLayerBackdrop()
+    val routeModifier = if (active) Modifier else Modifier.focusProperties { canFocus = false }.clearAndSetSemantics {}
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().then(routeModifier),
         contentWindowInsets = WindowInsets(0),
         topBar = {
             GlassTopAppBar(
@@ -340,7 +359,7 @@ private fun CompactSubpageScaffold(
         },
     ) { innerPadding ->
         CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
-            Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+            Box(Modifier.fillMaxSize().optionalLayerBackdrop(backdrop)) {
                 content(innerPadding)
             }
         }

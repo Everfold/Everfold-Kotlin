@@ -21,10 +21,19 @@ kotlin {
     jvm()
     android {
         namespace = "com.everfold.kotlin.shared"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
+        compileSdk {
+            version =
+                release(
+                    libs.versions.android.compileSdk
+                        .get()
+                        .toInt(),
+                ) {
+                    minorApiLevel =
+                        libs.versions.android.compileSdkMinor
+                            .get()
+                            .toInt()
+                }
+        }
         minSdk =
             libs.versions.android.minSdk
                 .get()
@@ -54,10 +63,7 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.animation)
-            implementation(libs.compose.material3)
             implementation(libs.markdown.core)
-            implementation(libs.markdown.m3)
-            implementation(libs.materialKolor)
             implementation(libs.miuix.ui)
             implementation(libs.miuix.preference)
             implementation(libs.miuix.icons)

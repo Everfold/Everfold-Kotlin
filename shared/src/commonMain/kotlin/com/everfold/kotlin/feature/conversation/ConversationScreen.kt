@@ -57,6 +57,8 @@ import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
@@ -73,8 +75,6 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
 import top.yukonga.miuix.kmp.squircle.squircleSurface
@@ -120,19 +120,9 @@ fun ConversationScreen(
         isBackEnabled = expandedEditor,
         onBackCompleted = { expandedEditor = false },
     )
-    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
-    val backdrop = rememberLayerBackdrop()
-    val imeOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val backdrop = rememberOptionalLayerBackdrop()
     Scaffold(
-        modifier =
-            modifier.fillMaxSize().onPreviewKeyEvent {
-                if (expandedEditor && it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
-                    expandedEditor = false
-                    true
-                } else {
-                    false
-                }
-            },
+        modifier = modifier.fillMaxSize().collapseEditorOnEscape(expandedEditor) { expandedEditor = false },
         contentWindowInsets = WindowInsets(0),
         topBar = {
             ConversationTopBar(
@@ -150,7 +140,6 @@ fun ConversationScreen(
     ) { innerPadding ->
         ConversationScaffoldBody(
             state = state,
-            scrollRequest = scrollRequest,
             connectionName = connectionName,
             textSize = textSize,
             shortcut = shortcut,
@@ -160,15 +149,10 @@ fun ConversationScreen(
             expandedEditor = expandedEditor,
             onExpandedEditorChange = { expandedEditor = it },
             inputFocus = inputFocus,
-            topPadding = innerPadding.calculateTopPadding(),
-            bottomPadding = if (imeOpen) 0.dp else innerPadding.calculateBottomPadding(),
+            innerPadding = innerPadding,
             backdrop = backdrop,
             onDraftChange = onDraftChange,
-            onSend = {
-                scrollRequest++
-                expandedEditor = false
-                onSend()
-            },
+            onSend = onSend,
             onStop = onStop,
             onRetry = onRetry,
             composerFeedback = composerFeedback,
@@ -178,10 +162,22 @@ fun ConversationScreen(
     }
 }
 
+private fun Modifier.collapseEditorOnEscape(
+    expandedEditor: Boolean,
+    onCollapse: () -> Unit,
+): Modifier =
+    onPreviewKeyEvent {
+        if (expandedEditor && it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
+            onCollapse()
+            true
+        } else {
+            false
+        }
+    }
+
 @Composable
 private fun ConversationScaffoldBody(
     state: ConversationUiState,
-    scrollRequest: Int,
     connectionName: String,
     textSize: ConversationTextSize,
     shortcut: SendShortcut,
@@ -191,9 +187,8 @@ private fun ConversationScaffoldBody(
     expandedEditor: Boolean,
     onExpandedEditorChange: (Boolean) -> Unit,
     inputFocus: FocusRequester,
-    topPadding: Dp,
-    bottomPadding: Dp,
-    backdrop: LayerBackdrop,
+    innerPadding: PaddingValues,
+    backdrop: LayerBackdrop?,
     onDraftChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -202,10 +197,14 @@ private fun ConversationScaffoldBody(
     composerTools: @Composable RowScope.() -> Unit,
     attachmentsContent: @Composable () -> Unit,
 ) {
+    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
+    val imeOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val topPadding = innerPadding.calculateTopPadding()
+    val bottomPadding = if (imeOpen) 0.dp else innerPadding.calculateBottomPadding()
     CompositionLocalProvider(LocalAppBackdrop provides backdrop) {
         Column(Modifier.fillMaxSize()) {
             if (!expandedEditor) {
-                Box(Modifier.weight(1f).fillMaxWidth().layerBackdrop(backdrop)) {
+                Box(Modifier.weight(1f).fillMaxWidth().optionalLayerBackdrop(backdrop)) {
                     ConversationBody(
                         state = state,
                         scrollRequest = scrollRequest,
@@ -234,7 +233,11 @@ private fun ConversationScaffoldBody(
                 inputFocus = inputFocus,
                 bottomPadding = bottomPadding,
                 onDraftChange = onDraftChange,
-                onSend = onSend,
+                onSend = {
+                    scrollRequest++
+                    onExpandedEditorChange(false)
+                    onSend()
+                },
                 onStop = onStop,
                 composerFeedback = composerFeedback,
                 composerTools = composerTools,
@@ -249,7 +252,7 @@ private fun ConversationScaffoldBody(
 private fun ConversationTopBar(
     title: String,
     subtitle: String,
-    backdrop: LayerBackdrop,
+    backdrop: LayerBackdrop?,
     compactNavigation: Boolean,
     sessionsVisible: Boolean,
     onToggleSessions: () -> Unit,

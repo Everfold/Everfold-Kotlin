@@ -32,6 +32,7 @@ class ConversationExperienceTest(
     @Test
     fun replyWidthIsBoundedAndStatusBelongsToTheReply() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             val reply = "A readable reply with enough words to fill a line. ".repeat(6).trim()
             runOnIdle { fixture.workspace.replyText = reply }
             onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Explain this")
@@ -73,6 +74,7 @@ class ConversationExperienceTest(
     @Test
     fun stoppingBeforeTheFirstTokenStillOffersContinueInTheMessageList() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Start a reply")
             onNodeWithContentDescription("发送").performClick()
             onNodeWithContentDescription("暂停").performClick()
@@ -85,6 +87,7 @@ class ConversationExperienceTest(
     @Test
     fun uploadFailuresCanBeRecoveredWithoutLeavingTheDraft() =
         workspaceUiTest(width) { fixture ->
+            openConversationIfCompact(width)
             runOnIdle { fixture.fileResult = Result.success(listOf(AttachmentSource("draft.txt", "file:///draft.txt"))) }
             onNode(hasSetTextAction() and !hasText("搜索")).performTextReplacement("Keep this draft")
             onNodeWithContentDescription("上传文件").performClick()

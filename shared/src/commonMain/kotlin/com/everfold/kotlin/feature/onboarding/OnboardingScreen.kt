@@ -79,6 +79,8 @@ import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.AppearancePreferences
 import com.everfold.kotlin.ui.theme.LocalAppBackdrop
+import com.everfold.kotlin.ui.theme.optionalLayerBackdrop
+import com.everfold.kotlin.ui.theme.rememberOptionalLayerBackdrop
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_success
 import everfold.shared.generated.resources.continue_setup_shortcut
@@ -105,8 +107,6 @@ import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.VerticalDivider
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -124,6 +124,8 @@ private val SetupStep.title
 
 private enum class ConnectionTest { Idle, Testing, Success, Failure }
 
+private const val CONNECTION_TEST_DELAY_MS = 900L
+
 private data class OnboardingUiState(
     val step: SetupStep = SetupStep.Welcome,
     val furthestStep: Int = 0,
@@ -132,7 +134,24 @@ private data class OnboardingUiState(
     val test: ConnectionTest = ConnectionTest.Idle,
     val previewResult: ConnectionPreviewResult = ConnectionPreviewResult.Success,
     val showError: Boolean = false,
-)
+) {
+    val isFinishStep: Boolean
+        get() = step == SetupStep.Cluster || (step == SetupStep.Mode && !cluster)
+
+    fun navigateTo(target: SetupStep): OnboardingUiState =
+        copy(
+            step = target,
+            furthestStep = maxOf(furthestStep, target.ordinal),
+            test = if (test == ConnectionTest.Testing) ConnectionTest.Idle else test,
+        )
+
+    fun updateForm(next: ClusterSetup): OnboardingUiState =
+        copy(
+            form = next,
+            showError = form.method == next.method && form.auth == next.auth && showError,
+            test = ConnectionTest.Idle,
+        )
+}
 
 /** 首次设置向导协调步骤偏好与模拟连接测试完成后回传配置 */
 @Composable
@@ -148,40 +167,19 @@ internal fun OnboardingScreen(
     var hasFocus by remember { mutableStateOf(false) }
     LaunchedEffect(ui.test, ui.form, ui.previewResult, ui.step) {
         if (ui.test == ConnectionTest.Testing) {
-            delay(900)
+            delay(CONNECTION_TEST_DELAY_MS)
             val result = if (ui.previewResult == ConnectionPreviewResult.Success) ConnectionTest.Success else ConnectionTest.Failure
             ui = ui.copy(test = result)
         }
     }
-    val navigate: (SetupStep) -> Unit = { target ->
-        val nextTest = if (ui.test == ConnectionTest.Testing) ConnectionTest.Idle else ui.test
-        ui = ui.copy(step = target, furthestStep = maxOf(ui.furthestStep, target.ordinal), test = nextTest)
-    }
-    val back = { navigate(SetupStep.entries[(ui.step.ordinal - 1).coerceAtLeast(0)]) }
-    val finish = ui.step == SetupStep.Cluster || (ui.step == SetupStep.Mode && !ui.cluster)
-    val advance = {
-        when {
-            ui.step == SetupStep.Cluster && ui.test != ConnectionTest.Success -> {
-                val invalid = !ui.form.isValid
-                val nextTest = if (!invalid && ui.test != ConnectionTest.Testing) ConnectionTest.Testing else ui.test
-                ui = ui.copy(showError = invalid, test = nextTest)
-            }
-
-            finish -> {
-                onComplete(if (ui.cluster) ui.form else null)
-            }
-
-            else -> {
-                navigate(SetupStep.entries[ui.step.ordinal + 1])
-            }
-        }
-    }
+    val back = { ui = ui.navigateTo(SetupStep.entries[(ui.step.ordinal - 1).coerceAtLeast(0)]) }
+    val advance = { ui = advanceOnboarding(ui, onComplete) }
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
         isBackEnabled = ui.step != SetupStep.Welcome,
         onBackCompleted = back,
     )
-    val backdrop = rememberLayerBackdrop()
+    val backdrop = rememberOptionalLayerBackdrop()
     Scaffold(
         modifier =
             modifier
@@ -196,7 +194,7 @@ internal fun OnboardingScreen(
             BoxWithConstraints(
                 Modifier
                     .fillMaxSize()
-                    .layerBackdrop(backdrop)
+                    .optionalLayerBackdrop(backdrop)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .imePadding(),
             ) {
@@ -212,21 +210,35 @@ internal fun OnboardingScreen(
                     appearance = appearance,
                     language = language,
                     onLanguageChange = onLanguageChange,
-                    onNavigate = navigate,
-                    onClusterChange = { ui = ui.copy(cluster = it) },
-                    onFormChange = { next ->
-                        val keepError = ui.form.method == next.method && ui.form.auth == next.auth && ui.showError
-                        ui = ui.copy(form = next, showError = keepError, test = ConnectionTest.Idle)
-                    },
-                    onPreviewResultChange = { ui = ui.copy(previewResult = it, test = ConnectionTest.Idle) },
+                    onUiChange = { ui = it },
                     onBack = back,
                     onAdvance = advance,
-                    finish = finish,
                 )
             }
         }
     }
 }
+
+private fun advanceOnboarding(
+    ui: OnboardingUiState,
+    onComplete: (ClusterSetup?) -> Unit,
+): OnboardingUiState =
+    when {
+        ui.step == SetupStep.Cluster && ui.test != ConnectionTest.Success -> {
+            val invalid = !ui.form.isValid
+            val nextTest = if (!invalid && ui.test != ConnectionTest.Testing) ConnectionTest.Testing else ui.test
+            ui.copy(showError = invalid, test = nextTest)
+        }
+
+        ui.isFinishStep -> {
+            onComplete(if (ui.cluster) ui.form else null)
+            ui
+        }
+
+        else -> {
+            ui.navigateTo(SetupStep.entries[ui.step.ordinal + 1])
+        }
+    }
 
 private fun handleOnboardingKey(
     event: KeyEvent,
@@ -263,13 +275,9 @@ private fun OnboardingBody(
     appearance: AppearancePreferences,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
-    onNavigate: (SetupStep) -> Unit,
-    onClusterChange: (Boolean) -> Unit,
-    onFormChange: (ClusterSetup) -> Unit,
-    onPreviewResultChange: (ConnectionPreviewResult) -> Unit,
+    onUiChange: (OnboardingUiState) -> Unit,
     onBack: () -> Unit,
     onAdvance: () -> Unit,
-    finish: Boolean,
 ) {
     val progress by animateFloatAsState(
         targetValue = (ui.step.ordinal + 1) / (if (ui.cluster) 4f else 3f),
@@ -279,7 +287,7 @@ private fun OnboardingBody(
     val contentWidth = maxWidth - (if (wide) 280.dp + 64.dp else 48.dp) - 12.dp
     Row(Modifier.fillMaxSize()) {
         if (wide) {
-            SetupSidebar(ui.step, ui.furthestStep, ui.cluster, onNavigate)
+            SetupSidebar(ui.step, ui.furthestStep, ui.cluster) { onUiChange(ui.navigateTo(it)) }
         }
         Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp)) {
             if (!wide) {
@@ -291,9 +299,9 @@ private fun OnboardingBody(
                 appearance = appearance,
                 language = language,
                 onLanguageChange = onLanguageChange,
-                onClusterChange = onClusterChange,
-                onFormChange = onFormChange,
-                onPreviewResultChange = onPreviewResultChange,
+                onClusterChange = { onUiChange(ui.copy(cluster = it)) },
+                onFormChange = { onUiChange(ui.updateForm(it)) },
+                onPreviewResultChange = { onUiChange(ui.copy(previewResult = it, test = ConnectionTest.Idle)) },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
             HorizontalDivider()
@@ -301,7 +309,7 @@ private fun OnboardingBody(
                 wide = wide,
                 step = ui.step,
                 test = ui.test,
-                finish = finish,
+                finish = ui.isFinishStep,
                 onBack = onBack,
                 onAdvance = onAdvance,
             )
@@ -529,34 +537,28 @@ private fun OnboardingPreferences(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            OnboardingAppearance(appearance, appearanceHorizontal)
-            if (columns == 2) OnboardingThemeColors(appearance)
+            AppearanceSettings(appearance.themeMode, appearance::setTheme, appearanceHorizontal)
+            if (columns == 2) {
+                ThemeColorSettings(
+                    appearance.themeColor,
+                    appearance::useSystemThemeColor,
+                    appearance::selectThemePreset,
+                    appearance::applyCustomThemeColor,
+                )
+            }
         }
         if (columns != 2) {
             Column(Modifier.weight(1f)) {
-                OnboardingThemeColors(appearance)
+                ThemeColorSettings(
+                    appearance.themeColor,
+                    appearance::useSystemThemeColor,
+                    appearance::selectThemePreset,
+                    appearance::applyCustomThemeColor,
+                )
             }
         }
         Column(Modifier.weight(1f)) {
             LanguageSettings(language, onLanguageChange)
         }
     }
-}
-
-@Composable
-private fun OnboardingThemeColors(appearance: AppearancePreferences) {
-    ThemeColorSettings(
-        appearance.themeColor,
-        appearance::useSystemThemeColor,
-        appearance::selectThemePreset,
-        appearance::applyCustomThemeColor,
-    )
-}
-
-@Composable
-private fun OnboardingAppearance(
-    appearance: AppearancePreferences,
-    horizontal: Boolean,
-) {
-    AppearanceSettings(appearance.themeMode, appearance::setTheme, horizontal)
 }

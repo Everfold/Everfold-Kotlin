@@ -1,6 +1,7 @@
 [versions]
 agp = "9.5.1"
 android-compileSdk = "37"
+android-compileSdkMinor = "2"
 android-minSdk = "33"
 android-targetSdk = "37"
 androidx-activity = "1.13.0"
@@ -15,10 +16,8 @@ junit = "4.13.2"
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.13.0"
-material3 = "1.12.0-alpha03"
 miuix = "0.9.5-beta01"
 navigationevent = "1.2.0"
-materialKolor = "5.0.1"
 markdown = "0.46.0"
 spotless = "8.11.0"
 ktlint = "1.8.0"
@@ -27,7 +26,6 @@ detekt = "2.0.0-alpha.6"
 
 [libraries]
 markdown-core = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "markdown" }
-markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown" }
 kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 composeRules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref = "composeRules" }
@@ -46,8 +44,6 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-animation = { module = "org.jetbrains.compose.animation:animation", version.ref = "composeMultiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
-materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference", version.ref = "miuix" }
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons", version.ref = "miuix" }
