@@ -2,69 +2,47 @@ package com.everfold.kotlin.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.ThemeMode
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.appearance
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TabRowWithContour
+import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 
-/** 外观模式选择按空间使用分段按钮或纵向单选列表 */
+/** 外观模式选择按空间使用分段标签或 HyperOS 分组卡片 */
 @Composable
 internal fun AppearanceSettings(
     selected: ThemeMode,
     onSelect: (ThemeMode) -> Unit,
     horizontal: Boolean = false,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 外观
-        Text(localizedString(Res.string.appearance), style = MaterialTheme.typography.titleMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SmallTitle(text = localizedString(Res.string.appearance), insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp))
         if (horizontal) {
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            TabRowWithContour(
+                tabs = ThemeMode.entries.map { localizedString(it.label) },
+                selectedTabIndex = selected.ordinal,
+                onTabSelected = { onSelect(ThemeMode.entries[it]) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            Card(modifier = Modifier.fillMaxWidth()) {
                 ThemeMode.entries.forEachIndexed { index, mode ->
-                    SegmentedButton(
+                    if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                    RadioButtonPreference(
+                        title = localizedString(mode.label),
                         selected = selected == mode,
                         onClick = { onSelect(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
-                    ) {
-                        // 标签见 ThemeMode
-                        Text(localizedString(mode.label))
-                    }
-                }
-            }
-        } else {
-            Column(Modifier.selectableGroup()) {
-                ThemeMode.entries.forEach { mode ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected == mode,
-                                role = Role.RadioButton,
-                                onClick = { onSelect(mode) },
-                            ).padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        RadioButton(selected == mode, onClick = null)
-
-                        // 标签见 ThemeMode
-                        Text(localizedString(mode.label))
-                    }
+                    )
                 }
             }
         }

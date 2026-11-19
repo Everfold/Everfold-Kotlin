@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,6 +15,7 @@ import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.connection_status_description
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val ConnectedColor = Color(0xFF43A047)
 
@@ -36,4 +36,4 @@ internal fun ConnectionStatusIndicator(connection: Connection?) {
 
 @Composable
 internal fun connectionStatusColor(status: ConnectionStatus?): Color =
-    if (status == ConnectionStatus.Connected) ConnectedColor else MaterialTheme.colorScheme.error
+    if (status == ConnectionStatus.Connected) ConnectedColor else MiuixTheme.colorScheme.error

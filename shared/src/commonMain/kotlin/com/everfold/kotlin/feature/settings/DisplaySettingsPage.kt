@@ -3,15 +3,8 @@ package com.everfold.kotlin.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -25,6 +18,11 @@ import everfold.shared.generated.resources.text_size_extra_large
 import everfold.shared.generated.resources.text_size_large
 import everfold.shared.generated.resources.text_size_preview
 import everfold.shared.generated.resources.text_size_small
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TabRowWithContour
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 显示设置调整会话文字大小并实时预览复用语言选择组件 */
 @Composable
@@ -35,16 +33,19 @@ internal fun DisplaySettingsPage(
     onTextSizeChange: (ConversationTextSize) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        // 会话文字大小
-        Text(localizedString(Res.string.conversation_text_size), style = MaterialTheme.typography.titleMedium)
-        TextSizeChoices(textSize, onTextSizeChange)
-        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SmallTitle(
+                text = localizedString(Res.string.conversation_text_size),
+                insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+            )
+            TextSizeChoices(textSize, onTextSizeChange)
+        }
+        Card(modifier = Modifier.fillMaxWidth(), insideMargin = PaddingValues(20.dp)) {
             ConversationTextScale(textSize) {
                 Text(
-                    // 让每一个想法清晰呈现\n这里预览会话正文和输入框的文字大小
-                    localizedString(Res.string.text_size_preview),
-                    Modifier.fillMaxWidth().padding(20.dp),
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = localizedString(Res.string.text_size_preview),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MiuixTheme.textStyles.body1,
                 )
             }
         }
@@ -69,15 +70,12 @@ private fun TextSizeChoices(
     }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth >= 480.dp * LocalDensity.current.fontScale) {
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                ConversationTextSize.entries.forEachIndexed { index, size ->
-                    SegmentedButton(
-                        selected == size,
-                        onClick = { onSelect(size) },
-                        shape = SegmentedButtonDefaults.itemShape(index, ConversationTextSize.entries.size),
-                    ) { Text(label(size)) }
-                }
-            }
+            TabRowWithContour(
+                tabs = ConversationTextSize.entries.map { label(it) },
+                selectedTabIndex = selected.ordinal,
+                onTabSelected = { onSelect(ConversationTextSize.entries[it]) },
+                modifier = Modifier.fillMaxWidth(),
+            )
         } else {
             SettingsChoices(ConversationTextSize.entries, selected, onSelect, label)
         }

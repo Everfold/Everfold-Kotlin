@@ -2,20 +2,11 @@ package com.everfold.kotlin.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
@@ -26,6 +17,11 @@ import everfold.shared.generated.resources.conversation_side_margins_hint
 import everfold.shared.generated.resources.send_shortcut
 import everfold.shared.generated.resources.send_shortcut_enter
 import everfold.shared.generated.resources.send_shortcut_setting
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.preference.RadioButtonPreference
+import top.yukonga.miuix.kmp.preference.SwitchPreference
 
 /** 会话偏好页：发送快捷键、长消息折叠与正文宽度。 */
 @Composable
@@ -39,44 +35,39 @@ internal fun ConversationSettingsPage(
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         if (desktopUi) {
-            // 发送快捷键
-            Text(localizedString(Res.string.send_shortcut_setting), style = MaterialTheme.typography.titleMedium)
-            SettingsChoices(
-                options = SendShortcut.entries,
-                selected = shortcut,
-                onSelect = onShortcutChange,
-                // Enter 发送 · Shift + Enter 换行 / Ctrl/Cmd + Enter 发送 · Enter 换行
-                label = { localizedString(if (it == SendShortcut.Enter) Res.string.send_shortcut_enter else Res.string.send_shortcut) },
-            )
-        }
-        Row(
-            Modifier.fillMaxWidth().toggleable(sideMargins, role = Role.Switch, onValueChange = onSideMarginsChange).padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(localizedString(Res.string.conversation_side_margins))
-                Text(
-                    localizedString(Res.string.conversation_side_margins_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SmallTitle(
+                    text = localizedString(Res.string.send_shortcut_setting),
+                    insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                )
+                SettingsChoices(
+                    options = SendShortcut.entries,
+                    selected = shortcut,
+                    onSelect = onShortcutChange,
+                    label = {
+                        localizedString(if (it == SendShortcut.Enter) Res.string.send_shortcut_enter else Res.string.send_shortcut)
+                    },
                 )
             }
-            Switch(checked = sideMargins, onCheckedChange = null)
         }
-        Row(
-            Modifier.fillMaxWidth().toggleable(collapsePrompts, role = Role.Switch, onValueChange = onCollapsePromptsChange).padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // 自动折叠较长的用户消息
-            Text(localizedString(Res.string.collapse_long_prompts), Modifier.weight(1f))
-            Switch(checked = collapsePrompts, onCheckedChange = null)
+        Card(modifier = Modifier.fillMaxWidth()) {
+            SwitchPreference(
+                title = localizedString(Res.string.conversation_side_margins),
+                summary = localizedString(Res.string.conversation_side_margins_hint),
+                checked = sideMargins,
+                onCheckedChange = onSideMarginsChange,
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            SwitchPreference(
+                title = localizedString(Res.string.collapse_long_prompts),
+                checked = collapsePrompts,
+                onCheckedChange = onCollapsePromptsChange,
+            )
         }
     }
 }
 
-/** 通用单选列表整行负责选择避免单选按钮产生重复点击事件 */
+/** 通用单选列表：HyperOS 分组卡片 + Miuix RadioButtonPreference */
 @Composable
 internal fun <T> SettingsChoices(
     options: List<T>,
@@ -84,22 +75,14 @@ internal fun <T> SettingsChoices(
     onSelect: (T) -> Unit,
     label: @Composable (T) -> String,
 ) {
-    Column(Modifier.fillMaxWidth().selectableGroup()) {
-        options.forEach { option ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected == option,
-                        role = Role.RadioButton,
-                        onClick = { onSelect(option) },
-                    ).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                RadioButton(selected == option, onClick = null)
-                Text(label(option))
-            }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, option ->
+            if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            RadioButtonPreference(
+                title = label(option),
+                selected = selected == option,
+                onClick = { onSelect(option) },
+            )
         }
     }
 }

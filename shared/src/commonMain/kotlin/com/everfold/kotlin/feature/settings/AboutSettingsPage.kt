@@ -1,24 +1,18 @@
 package com.everfold.kotlin.feature.settings
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -31,6 +25,11 @@ import everfold.shared.generated.resources.official_website
 import everfold.shared.generated.resources.open_in_browser
 import everfold.shared.generated.resources.open_source_license
 import org.jetbrains.compose.resources.painterResource
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 关于页展示品牌可用版本信息以及官网源码和许可链接 */
 @Composable
@@ -47,39 +46,39 @@ internal fun AboutSettingsPage() {
                 contentDescription = null,
                 modifier = Modifier.size(75.dp),
             )
-            Text("Everfold", style = MaterialTheme.typography.headlineSmall)
-            if (version != null) Text("v$version", style = MaterialTheme.typography.labelLarge)
-        }
-        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            Column {
-                AboutLink(
-                    // 官方网站
-                    title = localizedString(Res.string.official_website),
-                    detail = "everfold.org",
-                    url = "https://everfold.org/",
-                )
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                AboutLink(
-                    // 应用 GitHub 仓库
-                    title = localizedString(Res.string.github_repository),
-                    detail = "github.com/Everfold/Everfold-Kotlin",
-                    url = "https://github.com/Everfold/Everfold-Kotlin",
-                )
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                AboutLink(
-                    // 内核 GitHub 仓库
-                    title = localizedString(Res.string.kernel_github_repository),
-                    detail = "github.com/Everfold/Beamlet",
-                    url = "https://github.com/Everfold/Beamlet",
-                )
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                AboutLink(
-                    // 开源许可
-                    title = localizedString(Res.string.open_source_license),
-                    detail = "Apache License, Version 2.0",
-                    url = "https://www.apache.org/licenses/LICENSE-2.0",
+            Text("Everfold", style = MiuixTheme.textStyles.title3, fontWeight = FontWeight.SemiBold)
+            if (version != null) {
+                Text(
+                    text = "v$version",
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }
+        }
+        Card(modifier = Modifier.fillMaxWidth()) {
+            AboutLink(
+                title = localizedString(Res.string.official_website),
+                detail = "everfold.org",
+                url = "https://everfold.org/",
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            AboutLink(
+                title = localizedString(Res.string.github_repository),
+                detail = "github.com/Everfold/Everfold-Kotlin",
+                url = "https://github.com/Everfold/Everfold-Kotlin",
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            AboutLink(
+                title = localizedString(Res.string.kernel_github_repository),
+                detail = "github.com/Everfold/Beamlet",
+                url = "https://github.com/Everfold/Beamlet",
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            AboutLink(
+                title = localizedString(Res.string.open_source_license),
+                detail = "Apache License, Version 2.0",
+                url = "https://www.apache.org/licenses/LICENSE-2.0",
+            )
         }
     }
 }
@@ -91,17 +90,18 @@ private fun AboutLink(
     url: String,
 ) {
     val uriHandler = LocalUriHandler.current
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(detail) },
-        trailingContent = { AppIcon(AppSymbol.OpenInNew) },
-        modifier =
-            Modifier.clickable(
-                role = Role.Button,
-                // 在浏览器中打开
-                onClickLabel = localizedString(Res.string.open_in_browser),
-                onClick = { uriHandler.openUri(url) },
-            ),
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    val openLabel = localizedString(Res.string.open_in_browser)
+    ArrowPreference(
+        title = title,
+        summary = detail,
+        modifier = Modifier.semantics { stateDescription = openLabel },
+        endActions = {
+            AppIcon(
+                AppSymbol.OpenInNew,
+                modifier = Modifier.size(18.dp),
+                tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
+            )
+        },
+        onClick = { uriHandler.openUri(url) },
     )
 }
