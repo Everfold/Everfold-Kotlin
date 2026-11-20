@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
@@ -44,6 +45,7 @@ private data class MessageDisplayConfig(
     val textSize: ConversationTextSize,
     val collapsePrompts: Boolean,
     val sideMargins: Boolean,
+    val processVisibility: ProcessVisibility,
     val canRetry: Boolean,
 )
 
@@ -60,6 +62,7 @@ internal fun ConversationMessages(
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
     sideMargins: Boolean = true,
+    processVisibility: ProcessVisibility = ProcessVisibility(),
     onSelectGateOption: (String) -> Unit = {},
 ) {
     val list = rememberLazyListState()
@@ -75,7 +78,7 @@ internal fun ConversationMessages(
         followLatest = followLatest,
         onFollowChange = { followLatest = it },
     )
-    val config = MessageDisplayConfig(textSize, collapsePrompts, sideMargins, canRetry)
+    val config = MessageDisplayConfig(textSize, collapsePrompts, sideMargins, processVisibility, canRetry)
     Box(modifier.fillMaxWidth()) {
         ConversationMessageList(
             list = list,
@@ -171,6 +174,7 @@ private fun ConversationMessageList(
                     modifier = Modifier.fillMaxWidth(),
                     textSize = config.textSize,
                     collapsePrompts = config.collapsePrompts,
+                    processVisibility = config.processVisibility,
                     runState = if (message.id == latest?.id) state.runState else AgentRunState.Idle,
                     canRetry = config.canRetry,
                     onRetry = onRetry,

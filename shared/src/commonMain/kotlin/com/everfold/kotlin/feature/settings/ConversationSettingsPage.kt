@@ -24,11 +24,16 @@ import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.collapse_long_prompts
 import everfold.shared.generated.resources.conversation_side_margins
 import everfold.shared.generated.resources.conversation_side_margins_hint
+import everfold.shared.generated.resources.expand_process_completed
+import everfold.shared.generated.resources.expand_process_completed_hint
+import everfold.shared.generated.resources.expand_process_running
+import everfold.shared.generated.resources.expand_process_running_hint
+import everfold.shared.generated.resources.process_visibility_section
 import everfold.shared.generated.resources.send_shortcut
 import everfold.shared.generated.resources.send_shortcut_enter
 import everfold.shared.generated.resources.send_shortcut_setting
 
-/** 会话偏好页：发送快捷键、长消息折叠与正文宽度。 */
+/** 会话偏好页：发送快捷键、执行过程默认展开策略、长消息折叠与正文宽度。 */
 @Composable
 internal fun ConversationSettingsPage(
     shortcut: SendShortcut,
@@ -37,16 +42,16 @@ internal fun ConversationSettingsPage(
     onCollapsePromptsChange: (Boolean) -> Unit,
     sideMargins: Boolean,
     onSideMarginsChange: (Boolean) -> Unit,
+    processVisibility: ProcessVisibility = ProcessVisibility(),
+    onProcessVisibilityChange: (ProcessVisibility) -> Unit = {},
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         if (desktopUi) {
-            // 发送快捷键
             Text(localizedString(Res.string.send_shortcut_setting), style = MaterialTheme.typography.titleMedium)
             SettingsChoices(
                 options = SendShortcut.entries,
                 selected = shortcut,
                 onSelect = onShortcutChange,
-                // Enter 发送 · Shift + Enter 换行 / Ctrl 或 Cmd + Enter 发送 · Enter 换行
                 label = {
                     if (it == SendShortcut.Enter) {
                         localizedString(Res.string.send_shortcut_enter)
@@ -56,30 +61,59 @@ internal fun ConversationSettingsPage(
                 },
             )
         }
-        Row(
-            Modifier.fillMaxWidth().toggleable(sideMargins, role = Role.Switch, onValueChange = onSideMarginsChange).padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(localizedString(Res.string.conversation_side_margins))
+        Text(localizedString(Res.string.process_visibility_section), style = MaterialTheme.typography.titleMedium)
+        SettingsToggleRow(
+            title = localizedString(Res.string.expand_process_running),
+            checked = processVisibility.expandWhileRunning,
+            onCheckedChange = { onProcessVisibilityChange(processVisibility.copy(expandWhileRunning = it)) },
+            hint = localizedString(Res.string.expand_process_running_hint),
+        )
+        SettingsToggleRow(
+            title = localizedString(Res.string.expand_process_completed),
+            checked = processVisibility.expandAfterCompletion,
+            onCheckedChange = { onProcessVisibilityChange(processVisibility.copy(expandAfterCompletion = it)) },
+            hint = localizedString(Res.string.expand_process_completed_hint),
+        )
+        SettingsToggleRow(
+            title = localizedString(Res.string.conversation_side_margins),
+            checked = sideMargins,
+            onCheckedChange = onSideMarginsChange,
+            hint = localizedString(Res.string.conversation_side_margins_hint),
+        )
+        SettingsToggleRow(
+            title = localizedString(Res.string.collapse_long_prompts),
+            checked = collapsePrompts,
+            onCheckedChange = onCollapsePromptsChange,
+        )
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    hint: String? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title)
+            if (hint != null) {
                 Text(
-                    localizedString(Res.string.conversation_side_margins_hint),
+                    hint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Switch(checked = sideMargins, onCheckedChange = null)
         }
-        Row(
-            Modifier.fillMaxWidth().toggleable(collapsePrompts, role = Role.Switch, onValueChange = onCollapsePromptsChange).padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // 自动折叠较长的用户消息
-            Text(localizedString(Res.string.collapse_long_prompts), Modifier.weight(1f))
-            Switch(checked = collapsePrompts, onCheckedChange = null)
-        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 

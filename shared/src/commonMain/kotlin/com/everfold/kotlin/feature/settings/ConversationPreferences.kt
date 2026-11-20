@@ -2,8 +2,16 @@ package com.everfold.kotlin.feature.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+
+/** 单次循环执行过程（思考、中间叙述、工具调用）在运行期与结束后的默认展开偏好。 */
+@Immutable
+data class ProcessVisibility(
+    val expandWhileRunning: Boolean = true,
+    val expandAfterCompletion: Boolean = false,
+)
 
 // 在系统无障碍字体缩放之上乘倍率而非覆盖系统设置
 enum class ConversationTextSize(

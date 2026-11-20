@@ -35,6 +35,7 @@ internal sealed interface StreamStageSpec {
         override val id: String,
         val durationMillis: Long,
         override val totalUnits: Int = DEFAULT_TEXT_SLICES,
+        val isFinalAnswer: Boolean = false,
         val textBuilder: (TaskRunContext) -> String,
     ) : StreamStageSpec
 

@@ -2,6 +2,7 @@ package com.everfold.kotlin.preferences
 
 import androidx.compose.ui.graphics.Color
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.theme.ThemeColorMode
@@ -15,20 +16,23 @@ import kotlin.test.assertTrue
 
 class UserPreferencesTest {
     @Test
-    fun freshStateStartsWithDefaultInMemoryPreferencesAndUncompletedOnboarding() {
+    fun freshStateDefaultsToExpandWhileRunningAndCollapseAfterCompletion() {
         val state = UserPreferencesState()
         assertEquals(UserPreferences(), state.value)
+        assertTrue(state.value.processVisibility.expandWhileRunning)
+        assertFalse(state.value.processVisibility.expandAfterCompletion)
         assertFalse(state.value.onboardingCompleted)
     }
 
     @Test
-    fun updateAppliesConversationAndLanguageChangesInMemory() {
+    fun updateAppliesConversationAndProcessVisibilityChangesInMemory() {
         val state = UserPreferencesState()
         val expected =
             UserPreferences(
                 language = AppLanguage.English,
                 textSize = ConversationTextSize.Large,
                 shortcut = SendShortcut.Enter,
+                processVisibility = ProcessVisibility(expandWhileRunning = false, expandAfterCompletion = true),
                 collapsePrompts = false,
                 sideMargins = false,
                 themeMode = ThemeMode.Dark,

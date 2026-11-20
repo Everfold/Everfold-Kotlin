@@ -115,6 +115,7 @@ private fun documentIndexCommitStages(workspacePath: String): List<StreamStageSp
             id = "index-summary",
             durationMillis = INDEX_SUMMARY_MS,
             totalUnits = SUMMARY_TEXT_SLICES,
+            isFinalAnswer = true,
             textBuilder = ::formatDocumentIndexReport,
         ),
     )
@@ -226,6 +227,7 @@ internal fun buildGenericWorkspaceScenario(workspacePath: String): ScenarioSpec 
                     id = "generic-summary",
                     durationMillis = GENERIC_SUMMARY_MS,
                     totalUnits = SUMMARY_TEXT_SLICES,
+                    isFinalAnswer = true,
                     textBuilder = ::formatGenericWorkspaceReport,
                 ),
             ),

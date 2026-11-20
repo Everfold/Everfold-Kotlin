@@ -31,6 +31,11 @@
     <string name="text_size_preview">Give every idea room to grow.\nPreview the text size used in messages and the composer.</string>
     <string name="send_shortcut_setting">Send shortcut</string>
     <string name="send_shortcut_enter">Enter to send · Shift + Enter for a new line</string>
+    <string name="process_visibility_section">Execution process</string>
+    <string name="expand_process_running">Expand process while running</string>
+    <string name="expand_process_running_hint">Turn off to collapse thinking and tool calls into a live summary line while running.</string>
+    <string name="expand_process_completed">Expand process after completion</string>
+    <string name="expand_process_completed_hint">Turn off to collapse intermediate steps once a loop finishes and show only the final answer.</string>
     <string name="collapse_long_prompts">Auto-collapse long messages</string>
 
     <string name="conversation_side_margins">Side margins</string>

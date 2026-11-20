@@ -31,6 +31,11 @@
     <string name="text_size_preview">让每一个想法清晰呈现。\n这里预览会话正文和输入框的文字大小。</string>
     <string name="send_shortcut_setting">发送快捷键</string>
     <string name="send_shortcut_enter">Enter 发送 · Shift + Enter 换行</string>
+    <string name="process_visibility_section">执行过程展示</string>
+    <string name="expand_process_running">运行中默认展开执行过程</string>
+    <string name="expand_process_running_hint">关闭后，单次循环执行期间默认收起思考与工具调用，仅展示实时进度摘要。</string>
+    <string name="expand_process_completed">结束后默认展开执行过程</string>
+    <string name="expand_process_completed_hint">关闭后，单次循环结束时自动折叠中间过程，仅展示最终回答。</string>
     <string name="collapse_long_prompts">自动折叠长消息</string>
 
     <string name="conversation_side_margins">两侧留白</string>

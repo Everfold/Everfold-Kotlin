@@ -70,6 +70,7 @@ internal fun ConversationSessionPane(
         shortcut = preferences.value.shortcut,
         collapsePrompts = preferences.value.collapsePrompts,
         sideMargins = preferences.value.sideMargins,
+        processVisibility = preferences.value.processVisibility,
         inputFocusRequest = appState.composerFocusRequest,
         compactNavigation = !wide,
         autoFocusInput = appState.focusComposer,

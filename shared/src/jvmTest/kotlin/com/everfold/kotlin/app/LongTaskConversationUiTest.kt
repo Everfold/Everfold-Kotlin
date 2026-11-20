@@ -3,11 +3,14 @@ package com.everfold.kotlin.app
 import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -23,7 +26,7 @@ class LongTaskConversationUiTest(
     private val width: Int,
 ) {
     @Test
-    fun preseededPausedStorageTaskStreamsLiveBlocksExpandsCollapsedLogsAndCompletes() =
+    fun preseededPausedStorageTaskAutoCollapsesProcessOnCompletionAndExpandsOnDemand() =
         workspaceUiTest(width = width, enableLongTasks = true) { fixture ->
             openSessionFromSidebar("本机存储与下载目录整理")
             onNodeWithText("fs.batchMove", substring = true).assertDoesNotExist()
@@ -42,9 +45,11 @@ class LongTaskConversationUiTest(
             waitForIdle()
 
             onNodeWithText("本机存储归档总结", substring = true).assertIsDisplayed()
-            onNodeWithText("已完成 · 累计运行", substring = true).assertIsDisplayed()
-            onNodeWithText("$ mv --journal --verify", substring = true).assertDoesNotExist()
-            onNodeWithText("fs.batchMove", substring = true).performClick()
+            onNodeWithText("已折叠中间过程 · 4 次工具调用").assertIsDisplayed()
+            onNodeWithText("fs.batchMove", substring = true).assertDoesNotExist()
+
+            onNodeWithContentDescription("切换执行过程详情").performClick()
+            onNodeWithText("fs.batchMove", substring = true).assertIsDisplayed().performClick()
             onNodeWithText("$ mv --journal --verify", substring = true).assertIsDisplayed()
         }
 
@@ -81,6 +86,34 @@ class LongTaskConversationUiTest(
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             waitForIdle()
             onNodeWithText("本机后台耗电与阻塞诊断结论", substring = true).assertIsDisplayed()
+            onNodeWithText("device.vitals", substring = true).assertDoesNotExist()
+        }
+
+    @Test
+    fun processVisibilitySettingsControlRunningAndCompletedDefaultExpansion() =
+        workspaceUiTest(width = width, enableLongTasks = true) { fixture ->
+            openConversationSettings()
+            onNodeWithText("运行中默认展开执行过程").performScrollTo().assertIsOn().performClick()
+            onNodeWithText("运行中默认展开执行过程").assertIsOff()
+            onNodeWithText("结束后默认展开执行过程").performScrollTo().assertIsOff().performClick()
+            onNodeWithText("结束后默认展开执行过程").assertIsOn()
+            returnToConversation()
+
+            onNodeWithText("为当前工作区文档构建离线全文检索索引").assertIsDisplayed().performClick()
+            onNodeWithContentDescription("发送").performClick()
+
+            runOnIdle {
+                fixture.scheduler.advanceTimeBy(6_000L)
+                fixture.scheduler.runCurrent()
+            }
+            waitForIdle()
+            onNodeWithContentDescription("切换执行过程详情").assertIsDisplayed()
+            onNodeWithText("$ git status --porcelain", substring = true).assertDoesNotExist()
+
+            runOnIdle { fixture.scheduler.advanceUntilIdle() }
+            waitForIdle()
+            onNodeWithText("本地离线全文索引构建完成", substring = true).assertIsDisplayed()
+            onNodeWithText("sqlite.fts5", substring = true).assertIsDisplayed()
         }
 
     private fun DesktopComposeUiTest.openSessionFromSidebar(title: String) {
@@ -88,6 +121,22 @@ class LongTaskConversationUiTest(
             onNodeWithContentDescription("打开工作台").performClick()
         }
         onNode(hasText(title) and hasClickAction()).performClick()
+    }
+
+    private fun DesktopComposeUiTest.openConversationSettings() {
+        if (width < EXPANDED_BREAKPOINT) {
+            onNodeWithContentDescription("打开工作台").performClick()
+        }
+        onNode(hasText("设置") and hasClickAction()).performClick()
+        onNode(hasText("会话") and hasClickAction()).performClick()
+    }
+
+    private fun DesktopComposeUiTest.returnToConversation() {
+        if (width < EXPANDED_BREAKPOINT) {
+            onNodeWithContentDescription("返回会话").performClick()
+        } else {
+            onNode(hasText("工作台") and hasClickAction()).performClick()
+        }
     }
 
     companion object {

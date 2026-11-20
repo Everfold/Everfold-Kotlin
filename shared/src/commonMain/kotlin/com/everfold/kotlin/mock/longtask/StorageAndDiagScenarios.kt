@@ -168,6 +168,7 @@ private fun storageExecutionStages(): List<StreamStageSpec> =
             id = "storage-summary",
             durationMillis = STORAGE_SUMMARY_MS,
             totalUnits = SUMMARY_TEXT_SLICES,
+            isFinalAnswer = true,
             textBuilder = ::formatStorageArchiveReport,
         ),
     )

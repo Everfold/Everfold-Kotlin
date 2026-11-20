@@ -53,6 +53,7 @@ sealed interface AgentStreamBlock {
         override val id: String,
         val text: String,
         val isStreaming: Boolean = false,
+        val isFinalAnswer: Boolean = false,
     ) : AgentStreamBlock
 
     @Immutable

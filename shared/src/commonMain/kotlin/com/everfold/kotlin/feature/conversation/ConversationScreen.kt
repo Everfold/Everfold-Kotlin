@@ -57,6 +57,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.settings.ConversationTextScale
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -108,6 +109,7 @@ fun ConversationScreen(
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
     collapsePrompts: Boolean = true,
     sideMargins: Boolean = true,
+    processVisibility: ProcessVisibility = ProcessVisibility(),
     onSelectGateOption: (String) -> Unit = {},
     composerTools: @Composable RowScope.() -> Unit = {},
     attachmentsContent: @Composable () -> Unit = {},
@@ -118,20 +120,18 @@ fun ConversationScreen(
     ConversationFocusEffect(state.id, autoFocusInput, inputFocusRequest, inputFocus)
     NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), expandedEditor) { expandedEditor = false }
     var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
-    val prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend)
+    val prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend, collapsePrompts, processVisibility)
     val actions =
         buildComposerActions(
             onDraftChange = onDraftChange,
-            onSend = {
+            onStop = onStop,
+            inputFocus = inputFocus,
+            onBeforeSend = {
                 scrollRequest++
                 expandedEditor = false
                 onSend()
             },
-            onStop = onStop,
-            onToggleExpanded = {
-                expandedEditor = !expandedEditor
-                inputFocus.requestFocus()
-            },
+            onFlipExpanded = { expandedEditor = !expandedEditor },
         )
     Column(modifier.fillMaxSize().collapseEditorOnEscape(expandedEditor) { expandedEditor = false }) {
         ConversationTopBar(
@@ -151,7 +151,6 @@ fun ConversationScreen(
                 scrollRequest,
                 canSend && state.workspace != null && state.model != null,
                 prefs,
-                collapsePrompts,
                 { onDraftChange(it).also { inputFocus.requestFocus() } },
                 { if (desktopUi) inputFocus.requestFocus() },
                 onRetry,
@@ -159,6 +158,7 @@ fun ConversationScreen(
                 Modifier.weight(1f),
             )
         }
+        val composerModifier = if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth()
         ConversationComposer(
             state,
             expandedEditor,
@@ -168,17 +168,27 @@ fun ConversationScreen(
             composerFeedback,
             composerTools,
             attachmentsContent,
-            if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth(),
+            composerModifier,
         )
     }
 }
 
 private fun buildComposerActions(
     onDraftChange: (String) -> Unit,
-    onSend: () -> Unit,
     onStop: () -> Unit,
-    onToggleExpanded: () -> Unit,
-): ComposerActions = ComposerActions(onDraftChange, onSend, onStop, onToggleExpanded)
+    inputFocus: FocusRequester,
+    onBeforeSend: () -> Unit,
+    onFlipExpanded: () -> Unit,
+): ComposerActions =
+    ComposerActions(
+        onDraftChange = onDraftChange,
+        onSend = onBeforeSend,
+        onStop = onStop,
+        onToggleExpanded = {
+            onFlipExpanded()
+            inputFocus.requestFocus()
+        },
+    )
 
 @Composable
 private fun ConversationFocusEffect(
@@ -269,7 +279,6 @@ private fun ConversationBody(
     scrollRequest: Int,
     canRetry: Boolean,
     prefs: ComposerPrefs,
-    collapsePrompts: Boolean,
     onSuggestion: (String) -> Unit,
     onJumpToLatest: () -> Unit,
     onRetry: () -> Unit,
@@ -291,8 +300,9 @@ private fun ConversationBody(
                 onRetry = onRetry,
                 canRetry = canRetry,
                 textSize = prefs.textSize,
-                collapsePrompts = collapsePrompts,
+                collapsePrompts = prefs.collapsePrompts,
                 sideMargins = prefs.sideMargins,
+                processVisibility = prefs.processVisibility,
                 onSelectGateOption = onSelectGateOption,
                 onJumpToLatest = onJumpToLatest,
                 modifier = modifier,
@@ -309,6 +319,7 @@ internal fun MessageItem(
     modifier: Modifier = Modifier,
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
+    processVisibility: ProcessVisibility = ProcessVisibility(),
     runState: AgentRunState = AgentRunState.Idle,
     canRetry: Boolean = true,
     onPromptHeightChange: (Int) -> Unit = {},
@@ -337,7 +348,15 @@ internal fun MessageItem(
         if (hasStream) {
             Spacer(Modifier.height(10.dp))
             MessageAttachments(message.attachments)
-            AgentStreamFlow(message.streamBlocks, textSize, status == AgentRunState.Waiting && canRetry, onSelectGateOption)
+            AgentStreamFlow(
+                messageId = message.id,
+                blocks = message.streamBlocks,
+                runState = status,
+                processVisibility = processVisibility,
+                textSize = textSize,
+                canInteract = status == AgentRunState.Waiting && canRetry,
+                onSelectGateOption = onSelectGateOption,
+            )
             StreamTurnFooter(status, message.elapsedMillis, canRetry, onRetry)
         } else {
             StandardMessageBody(message, user, status, textSize, collapsePrompts, canRetry, onPromptHeightChange, onRetry)

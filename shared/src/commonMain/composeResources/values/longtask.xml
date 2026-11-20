@@ -19,6 +19,12 @@
     <string name="stream_footer_failed">执行中断 · 已保留前置进度断点</string>
     <string name="stream_toggle_tool_logs">切换工具输出详情</string>
     <string name="stream_toggle_thinking">切换思考内容</string>
+    <string name="stream_toggle_process">切换执行过程详情</string>
+    <string name="stream_process_title">执行过程</string>
+    <string name="stream_process_running_count">正在执行（%1$d 项步骤）</string>
+    <string name="stream_process_done_tools">已折叠中间过程 · %1$d 次工具调用</string>
+    <string name="stream_process_done_simple">已折叠中间过程</string>
+    <string name="stream_process_expanded_tools">执行过程 · %1$d 次工具调用</string>
 
     <!-- 演示环境扰动注入 -->
     <string name="longtask_inject_throttle">模拟省电模式节流</string>

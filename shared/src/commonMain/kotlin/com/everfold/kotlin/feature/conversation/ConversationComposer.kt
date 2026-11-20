@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.settings.ConversationTextScale
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -79,6 +80,8 @@ internal data class ComposerPrefs(
     val shortcut: SendShortcut,
     val sideMargins: Boolean,
     val canSend: Boolean,
+    val collapsePrompts: Boolean = true,
+    val processVisibility: ProcessVisibility = ProcessVisibility(),
 )
 
 internal class ComposerActions(

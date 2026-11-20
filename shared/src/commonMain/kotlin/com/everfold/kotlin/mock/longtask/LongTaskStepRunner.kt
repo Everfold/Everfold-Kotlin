@@ -131,10 +131,18 @@ private fun commitCompletedTextStage(
     callbacks: StageLoopCallbacks,
 ): Boolean {
     val completedBlock =
-        if (stage is StreamStageSpec.ThinkStage) {
-            AgentStreamBlock.Thinking(stage.id, fullText, StreamRunStatus.Completed, current.currentStageElapsedMs)
-        } else {
-            AgentStreamBlock.Narration(stage.id, fullText, isStreaming = false)
+        when (stage) {
+            is StreamStageSpec.ThinkStage -> {
+                AgentStreamBlock.Thinking(stage.id, fullText, StreamRunStatus.Completed, current.currentStageElapsedMs)
+            }
+
+            is StreamStageSpec.NarrationStage -> {
+                AgentStreamBlock.Narration(stage.id, fullText, isStreaming = false, isFinalAnswer = stage.isFinalAnswer)
+            }
+
+            else -> {
+                AgentStreamBlock.Narration(stage.id, fullText, isStreaming = false)
+            }
         }
     val advanced =
         current.copy(
@@ -161,10 +169,18 @@ private fun buildStreamingTextBlock(
     val visibleSlice = sliceIndex.coerceIn(1, totalSlices)
     val charCount = ((fullText.length * visibleSlice) / totalSlices).coerceAtLeast(1)
     val partial = fullText.take(charCount)
-    return if (stage is StreamStageSpec.ThinkStage) {
-        AgentStreamBlock.Thinking(id = stage.id, text = partial, status = StreamRunStatus.Running, durationMillis = stageElapsedMs)
-    } else {
-        AgentStreamBlock.Narration(id = stage.id, text = partial, isStreaming = true)
+    return when (stage) {
+        is StreamStageSpec.ThinkStage -> {
+            AgentStreamBlock.Thinking(id = stage.id, text = partial, status = StreamRunStatus.Running, durationMillis = stageElapsedMs)
+        }
+
+        is StreamStageSpec.NarrationStage -> {
+            AgentStreamBlock.Narration(id = stage.id, text = partial, isStreaming = true, isFinalAnswer = stage.isFinalAnswer)
+        }
+
+        else -> {
+            AgentStreamBlock.Narration(id = stage.id, text = partial, isStreaming = true)
+        }
     }
 }
 

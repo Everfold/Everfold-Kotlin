@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.feature.settings.SendShortcut
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.theme.AppearancePreferences
@@ -47,6 +48,7 @@ internal data class UserPreferences(
     val language: AppLanguage = AppLanguage.System,
     val textSize: ConversationTextSize = ConversationTextSize.System,
     val shortcut: SendShortcut = SendShortcut.ModifiedEnter,
+    val processVisibility: ProcessVisibility = ProcessVisibility(),
     val collapsePrompts: Boolean = true,
     val sideMargins: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.System,

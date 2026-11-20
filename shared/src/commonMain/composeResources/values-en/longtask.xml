@@ -19,6 +19,12 @@
     <string name="stream_footer_failed">Interrupted · Checkpoint preserved</string>
     <string name="stream_toggle_tool_logs">Toggle tool output logs</string>
     <string name="stream_toggle_thinking">Toggle thinking details</string>
+    <string name="stream_toggle_process">Toggle execution process details</string>
+    <string name="stream_process_title">Execution process</string>
+    <string name="stream_process_running_count">Running (%1$d steps)</string>
+    <string name="stream_process_done_tools">Intermediate process · %1$d tool calls</string>
+    <string name="stream_process_done_simple">Intermediate process</string>
+    <string name="stream_process_expanded_tools">Execution process · %1$d tool calls</string>
 
     <!-- 演示环境扰动注入 -->
     <string name="longtask_inject_throttle">Simulate battery saver throttling</string>

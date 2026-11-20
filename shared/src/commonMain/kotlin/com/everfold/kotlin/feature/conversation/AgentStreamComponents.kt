@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,9 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.feature.settings.ConversationTextScale
 import com.everfold.kotlin.feature.settings.ConversationTextSize
+import com.everfold.kotlin.feature.settings.ProcessVisibility
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.localization.localizedString
@@ -48,25 +51,161 @@ import everfold.shared.generated.resources.stream_approval_custom_hint
 import everfold.shared.generated.resources.stream_footer_completed
 import everfold.shared.generated.resources.stream_footer_failed
 import everfold.shared.generated.resources.stream_footer_stopped
+import everfold.shared.generated.resources.stream_process_done_simple
+import everfold.shared.generated.resources.stream_process_done_tools
+import everfold.shared.generated.resources.stream_process_expanded_tools
+import everfold.shared.generated.resources.stream_process_running_count
+import everfold.shared.generated.resources.stream_process_title
 import everfold.shared.generated.resources.stream_seconds_short
 import everfold.shared.generated.resources.stream_thinking_active
 import everfold.shared.generated.resources.stream_thinking_done
 import everfold.shared.generated.resources.stream_thinking_paused
+import everfold.shared.generated.resources.stream_toggle_process
 import everfold.shared.generated.resources.stream_toggle_thinking
 
 private const val MILLIS_PER_SEC = 1000L
 private const val CHEVRON_OPEN_DEG = 180f
+private const val PROCESS_RAIL_ALPHA = 0.6f
 
 @Composable
 internal fun AgentStreamFlow(
+    messageId: String,
     blocks: List<AgentStreamBlock>,
+    runState: AgentRunState,
+    processVisibility: ProcessVisibility,
     textSize: ConversationTextSize,
     canInteract: Boolean,
     onSelectGateOption: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val finalAnswer = blocks.lastOrNull { it is AgentStreamBlock.Narration && it.isFinalAnswer } as? AgentStreamBlock.Narration
+    val handoffApproval = if (finalAnswer == null) blocks.lastOrNull() as? AgentStreamBlock.Approval else null
+    val processBlocks =
+        remember(blocks, finalAnswer, handoffApproval) {
+            blocks.filterNot { it === finalAnswer || it === handoffApproval }
+        }
+    val isLoopFinished = runState == AgentRunState.Completed || runState == AgentRunState.Idle
+    val defaultExpanded = if (isLoopFinished) processVisibility.expandAfterCompletion else processVisibility.expandWhileRunning
+    var manualExpanded by rememberSaveable(messageId, isLoopFinished, defaultExpanded) { mutableStateOf<Boolean?>(null) }
+    val processExpanded = manualExpanded ?: defaultExpanded
+
     Column(
         modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (processBlocks.isNotEmpty()) {
+            StreamProcessHeader(
+                processBlocks = processBlocks,
+                runState = runState,
+                isLoopFinished = isLoopFinished,
+                expanded = processExpanded,
+                onToggle = { manualExpanded = !processExpanded },
+            )
+            if (processExpanded) {
+                StreamProcessBlockList(processBlocks, textSize, canInteract, onSelectGateOption)
+            }
+        }
+        if (handoffApproval != null) {
+            StreamApprovalBlock(handoffApproval, enabled = canInteract, onSelectOption = onSelectGateOption)
+        }
+        if (finalAnswer != null && finalAnswer.text.isNotEmpty()) {
+            ConversationTextScale(textSize) {
+                SelectionContainer { MessageMarkdown(finalAnswer.text) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StreamProcessHeader(
+    processBlocks: List<AgentStreamBlock>,
+    runState: AgentRunState,
+    isLoopFinished: Boolean,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+) {
+    val toggleDesc = localizedString(Res.string.stream_toggle_process)
+    val label = resolveProcessHeaderLabel(processBlocks, isLoopFinished, expanded)
+    val failedCollapsed = runState == AgentRunState.Failed && !expanded
+    val tint = if (failedCollapsed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(role = Role.Button, onClick = onToggle)
+                .semantics { contentDescription = toggleDesc }
+                .padding(vertical = 4.dp, horizontal = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (runState == AgentRunState.Running && !expanded) {
+            CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp)
+        } else {
+            CompositionLocalProvider(LocalContentColor provides tint) {
+                AppIcon(if (failedCollapsed) AppSymbol.Close else AppSymbol.Spark, Modifier.size(14.dp))
+            }
+        }
+        Text(
+            label,
+            modifier = Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.labelMedium,
+            color = tint,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        AppIcon(AppSymbol.ChevronDown, Modifier.size(14.dp).rotate(if (expanded) CHEVRON_OPEN_DEG else 0f))
+    }
+}
+
+@Composable
+private fun resolveProcessHeaderLabel(
+    processBlocks: List<AgentStreamBlock>,
+    isLoopFinished: Boolean,
+    expanded: Boolean,
+): String {
+    val toolCount = processBlocks.count { it is AgentStreamBlock.ToolCall }
+    return when {
+        isLoopFinished && !expanded -> {
+            if (toolCount > 0) {
+                localizedString(Res.string.stream_process_done_tools, toolCount)
+            } else {
+                localizedString(Res.string.stream_process_done_simple)
+            }
+        }
+
+        !isLoopFinished && !expanded -> {
+            val title = localizedString(Res.string.stream_process_title)
+            when (val active = processBlocks.lastOrNull()) {
+                is AgentStreamBlock.ToolCall -> "$title · ${active.toolName} · ${active.summary.resolve()}"
+                is AgentStreamBlock.Thinking -> "$title · ${localizedString(Res.string.stream_thinking_active)}"
+                else -> localizedString(Res.string.stream_process_running_count, processBlocks.size)
+            }
+        }
+
+        toolCount > 0 -> {
+            localizedString(Res.string.stream_process_expanded_tools, toolCount)
+        }
+
+        else -> {
+            localizedString(Res.string.stream_process_title)
+        }
+    }
+}
+
+@Composable
+private fun StreamProcessBlockList(
+    blocks: List<AgentStreamBlock>,
+    textSize: ConversationTextSize,
+    canInteract: Boolean,
+    onSelectGateOption: (String) -> Unit,
+) {
+    val railColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = PROCESS_RAIL_ALPHA)
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .leftQuoteLine(railColor)
+                .padding(start = 12.dp, top = 2.dp, bottom = 2.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         blocks.forEach { block ->

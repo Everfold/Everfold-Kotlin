@@ -95,6 +95,7 @@ private fun completedBlockForStage(
                 id = stage.id,
                 text = stage.textBuilder(context),
                 isStreaming = false,
+                isFinalAnswer = stage.isFinalAnswer,
             )
         }
 

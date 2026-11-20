@@ -159,6 +159,7 @@ private fun diagnosticsCorrelationStages(): List<StreamStageSpec> =
             id = "diag-summary",
             durationMillis = DIAG_SUMMARY_MS,
             totalUnits = SUMMARY_TEXT_SLICES,
+            isFinalAnswer = true,
             textBuilder = ::formatDiagnosticsReport,
         ),
     )

@@ -56,6 +56,8 @@ fun SettingsScreen(
     sideMargins: Boolean,
     onSideMarginsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    processVisibility: ProcessVisibility = ProcessVisibility(),
+    onProcessVisibilityChange: (ProcessVisibility) -> Unit = {},
     onBack: (() -> Unit)? = null,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.Theme) }
@@ -85,12 +87,14 @@ fun SettingsScreen(
 
             SettingsPage.Conversation -> {
                 ConversationSettingsPage(
-                    shortcut,
-                    onShortcutChange,
-                    collapsePrompts,
-                    onCollapsePromptsChange,
-                    sideMargins,
-                    onSideMarginsChange,
+                    shortcut = shortcut,
+                    onShortcutChange = onShortcutChange,
+                    collapsePrompts = collapsePrompts,
+                    onCollapsePromptsChange = onCollapsePromptsChange,
+                    sideMargins = sideMargins,
+                    onSideMarginsChange = onSideMarginsChange,
+                    processVisibility = processVisibility,
+                    onProcessVisibilityChange = onProcessVisibilityChange,
                 )
             }
 

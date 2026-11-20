@@ -318,6 +318,8 @@ private fun AppDestinationContent(
                 onCollapsePromptsChange = { value -> preferences.update { it.copy(collapsePrompts = value) } },
                 sideMargins = preferences.value.sideMargins,
                 onSideMarginsChange = { value -> preferences.update { it.copy(sideMargins = value) } },
+                processVisibility = preferences.value.processVisibility,
+                onProcessVisibilityChange = { value -> preferences.update { it.copy(processVisibility = value) } },
                 language = bindings.language,
                 onLanguageChange = bindings.onLanguageChange,
                 themeMode = preferences.themeMode,
