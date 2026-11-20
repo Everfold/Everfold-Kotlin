@@ -13,7 +13,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import com.everfold.kotlin.preferences.UserPreferencesState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -40,7 +39,6 @@ class ConversationLayoutSettingsTest(
 
             openConversationSettings()
             onNodeWithText("两侧留白").performScrollTo().assertIsOn().performClick()
-            runOnIdle { fixture.preferences = UserPreferencesState(fixture.preferenceStore) }
             onNodeWithText("两侧留白").assertIsOff()
             returnToConversation()
             val fullReply = onNodeWithText(reply).assertIsDisplayed().fetchSemanticsNode().boundsInRoot

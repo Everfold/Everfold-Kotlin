@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.everfold.kotlin.app.EverfoldApp
@@ -15,7 +14,6 @@ import com.everfold.kotlin.feature.onboarding.OnboardingScreen
 import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.longtask.rememberAppWorkspace
 import com.everfold.kotlin.preferences.UserPreferencesState
-import com.everfold.kotlin.preferences.rememberPreferenceStore
 import com.everfold.kotlin.ui.files.FilePicker
 import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
@@ -27,9 +25,7 @@ import everfold.shared.generated.resources.sample_reply
 
 @Composable
 fun App(modifier: Modifier = Modifier) {
-    val store = rememberPreferenceStore()
-    val persistScope = rememberCoroutineScope()
-    val preferences = remember(store, persistScope) { UserPreferencesState(store, persistScope) }
+    val preferences = remember { UserPreferencesState() }
     val workspace = rememberAppWorkspace()
     EverfoldRoot(
         workspace = workspace,

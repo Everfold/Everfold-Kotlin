@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModelStore
 import com.everfold.kotlin.EverfoldRoot
 import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.MockWorkspace
-import com.everfold.kotlin.preferences.MemoryPreferenceStore
 import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.ui.localization.AppLanguage
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +51,7 @@ class OnboardingFlowTest(
     private val width: Int,
 ) {
     @Test
-    fun localOnboardingCompletesAndPersistsAcrossReentry() =
+    fun localOnboardingCompletesInSessionAndStartsFreshOnColdRelaunch() =
         onboardingUiTest { harness ->
             onNodeWithText("“下一步，交给智能体。”").assertIsDisplayed()
             advanceToModeStep()
@@ -64,10 +63,10 @@ class OnboardingFlowTest(
                 assertTrue(harness.preferences.value.onboardingCompleted)
             }
 
-            harness.remountWithFreshWorkspace()
+            harness.remountColdLaunch()
             waitForIdle()
-            onNodeWithContentDescription("新建会话").assertIsDisplayed()
-            onNodeWithText("“下一步，交给智能体。”").assertDoesNotExist()
+            onNodeWithText("“下一步，交给智能体。”").assertIsDisplayed()
+            onNodeWithContentDescription("新建会话").assertDoesNotExist()
         }
 
     @Test
@@ -169,7 +168,6 @@ class OnboardingFlowTest(
         private val viewModelStore: ViewModelStore,
         val scheduler: TestCoroutineScheduler,
     ) {
-        private val preferenceStore = MemoryPreferenceStore()
         var generation by mutableIntStateOf(1)
             private set
         var workspace by mutableStateOf(createWorkspace(generation))
@@ -177,17 +175,17 @@ class OnboardingFlowTest(
         var preferences by mutableStateOf(createPreferences())
             private set
 
-        fun remountWithFreshWorkspace() {
+        fun remountColdLaunch() {
             val next = generation + 1
             workspace = createWorkspace(next)
-            preferences = UserPreferencesState(preferenceStore)
+            preferences = createPreferences()
             generation = next
         }
 
         private fun createWorkspace(index: Int): MockWorkspace = MockWorkspace().also { viewModelStore.put("onboarding-$index", it) }
 
         private fun createPreferences(): UserPreferencesState =
-            UserPreferencesState(preferenceStore).apply {
+            UserPreferencesState().apply {
                 update { it.copy(language = AppLanguage.Chinese) }
             }
     }
