@@ -78,7 +78,9 @@ import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.description
 import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.components.WindowBreakpoints
+import com.everfold.kotlin.ui.components.backShortcutModifier
 import com.everfold.kotlin.ui.components.desktopUi
+import com.everfold.kotlin.ui.components.primaryShortcutModifier
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.AppearancePreferences
@@ -430,17 +432,29 @@ private fun OnboardingFooter(
             finish -> Res.string.enter_home
             else -> Res.string.next_step
         }
+    val backTooltip =
+        if (desktopUi) {
+            localizedString(Res.string.previous_step_shortcut, backShortcutModifier)
+        } else {
+            localizedString(Res.string.previous_step)
+        }
+    val advanceTooltip =
+        if (desktopUi) {
+            localizedString(Res.string.continue_setup_shortcut, primaryShortcutModifier)
+        } else {
+            localizedString(actionLabel)
+        }
     Row(
         Modifier.fillMaxWidth().padding(top = 12.dp),
         horizontalArrangement = if (wide) Arrangement.spacedBy(12.dp, Alignment.End) else Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppTooltip(localizedString(if (desktopUi) Res.string.previous_step_shortcut else Res.string.previous_step)) {
+        AppTooltip(backTooltip) {
             TextButton(onClick = onBack, enabled = wizard.step != SetupStep.Welcome) {
                 Text(localizedString(Res.string.previous_step))
             }
         }
-        AppTooltip(localizedString(if (desktopUi) Res.string.continue_setup_shortcut else actionLabel)) {
+        AppTooltip(advanceTooltip) {
             Button(onClick = onAdvance, enabled = wizard.test != ConnectionTest.Testing) {
                 Text(localizedString(actionLabel))
             }

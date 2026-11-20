@@ -38,7 +38,7 @@
     <string name="enter_home">Open workspace</string>
 
     <!-- 按钮悬停提示 -->
-    <string name="previous_step_shortcut">Back · Alt + ←</string>
-    <string name="continue_setup_shortcut">Continue · Ctrl + Enter</string>
+    <string name="previous_step_shortcut">Back · %1$s + ←</string>
+    <string name="continue_setup_shortcut">Continue · %1$s + Enter</string>
 
 </resources>

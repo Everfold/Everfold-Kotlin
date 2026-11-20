@@ -26,8 +26,13 @@ internal fun AppLanguageEnvironment(
     language: AppLanguage,
     content: @Composable () -> Unit,
 ) {
-    val resolved = language.resolve(systemLanguageTag())
-    applyResourceLocale(if (resolved == AppLanguage.English) "en" else "zh")
+    val overrideTag =
+        when (language) {
+            AppLanguage.System -> null
+            AppLanguage.Chinese -> "zh"
+            AppLanguage.English -> "en"
+        }
+    val resolved = language.resolve(applyAndResolveSystemLanguageTag(overrideTag))
     CompositionLocalProvider(LocalAppLanguage provides resolved, content = content)
 }
 
@@ -42,6 +47,4 @@ fun localizedString(
     }
 
 @Composable
-internal expect fun systemLanguageTag(): String
-
-internal expect fun applyResourceLocale(languageTag: String)
+internal expect fun applyAndResolveSystemLanguageTag(overrideTag: String?): String

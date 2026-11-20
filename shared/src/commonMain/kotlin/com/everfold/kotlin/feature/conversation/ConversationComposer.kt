@@ -56,6 +56,7 @@ import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.components.desktopUi
+import com.everfold.kotlin.ui.components.primaryShortcutModifier
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.collapse_composer
@@ -227,15 +228,15 @@ private fun ComposerSubmitButton(
     canSend: Boolean,
     actions: ComposerActions,
 ) {
-    val tooltipRes =
+    val tooltip =
         when {
-            state.isResponding -> Res.string.stop_reply
-            desktopUi && shortcut == SendShortcut.Enter -> Res.string.send_shortcut_enter
-            desktopUi -> Res.string.send_shortcut
-            else -> Res.string.send_message
+            state.isResponding -> localizedString(Res.string.stop_reply)
+            desktopUi && shortcut == SendShortcut.Enter -> localizedString(Res.string.send_shortcut_enter)
+            desktopUi -> localizedString(Res.string.send_shortcut, primaryShortcutModifier)
+            else -> localizedString(Res.string.send_message)
         }
     val actionDescription = localizedString(if (state.isResponding) Res.string.stop_reply else Res.string.send_message)
-    AppTooltip(localizedString(tooltipRes)) {
+    AppTooltip(tooltip) {
         FilledIconButton(
             onClick = if (state.isResponding) actions.onStop else actions.onSend,
             enabled = state.isResponding || (canSend && state.hasSendableContent),

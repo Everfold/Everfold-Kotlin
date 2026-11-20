@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.desktopUi
+import com.everfold.kotlin.ui.components.primaryShortcutModifier
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.collapse_long_prompts
@@ -45,8 +46,14 @@ internal fun ConversationSettingsPage(
                 options = SendShortcut.entries,
                 selected = shortcut,
                 onSelect = onShortcutChange,
-                // Enter 发送 · Shift + Enter 换行 / Ctrl/Cmd + Enter 发送 · Enter 换行
-                label = { localizedString(if (it == SendShortcut.Enter) Res.string.send_shortcut_enter else Res.string.send_shortcut) },
+                // Enter 发送 · Shift + Enter 换行 / Ctrl 或 Cmd + Enter 发送 · Enter 换行
+                label = {
+                    if (it == SendShortcut.Enter) {
+                        localizedString(Res.string.send_shortcut_enter)
+                    } else {
+                        localizedString(Res.string.send_shortcut, primaryShortcutModifier)
+                    }
+                },
             )
         }
         Row(

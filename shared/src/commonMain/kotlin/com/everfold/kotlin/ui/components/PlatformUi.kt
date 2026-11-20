@@ -5,4 +5,12 @@ import androidx.compose.ui.Modifier
 /** 平台交互差异入口桌面判定及侧栏横向调整光标由各平台实现 */
 internal expect val desktopUi: Boolean
 
+internal expect val macOsUi: Boolean
+
+internal val primaryShortcutModifier: String
+    get() = if (macOsUi) "⌘" else "Ctrl"
+
+internal val backShortcutModifier: String
+    get() = if (macOsUi) "⌥" else "Alt"
+
 internal expect fun Modifier.horizontalResizePointer(): Modifier

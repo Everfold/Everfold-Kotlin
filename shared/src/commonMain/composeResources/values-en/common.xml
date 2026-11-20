@@ -14,9 +14,9 @@
 
     <!-- 桌面操作 -->
     <string name="resize_sessions">Drag to resize</string>
-    <string name="new_session_shortcut">New conversation · Ctrl + N</string>
-    <string name="show_sessions">Show conversations · Ctrl + B</string>
-    <string name="hide_sessions">Hide conversations · Ctrl + B</string>
-    <string name="send_shortcut">Ctrl/Cmd + Enter to send · Enter for a new line</string>
+    <string name="new_session_shortcut">New conversation · %1$s + N</string>
+    <string name="show_sessions">Show conversations · %1$s + B</string>
+    <string name="hide_sessions">Hide conversations · %1$s + B</string>
+    <string name="send_shortcut">%1$s + Enter to send · Enter for a new line</string>
 
 </resources>

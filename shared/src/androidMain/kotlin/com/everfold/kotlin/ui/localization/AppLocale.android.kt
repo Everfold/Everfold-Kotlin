@@ -5,9 +5,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import java.util.Locale
 
 @Composable
-internal actual fun systemLanguageTag(): String = LocalConfiguration.current.locales[0].toLanguageTag()
-
-internal actual fun applyResourceLocale(languageTag: String) {
-    val locale = Locale.forLanguageTag(languageTag)
-    if (Locale.getDefault() != locale) Locale.setDefault(locale)
+internal actual fun applyAndResolveSystemLanguageTag(overrideTag: String?): String {
+    val locales = LocalConfiguration.current.locales
+    val systemLocale = if (locales.isEmpty) Locale.getDefault() else locales[0]
+    val target = overrideTag?.let(Locale::forLanguageTag) ?: systemLocale
+    if (Locale.getDefault() != target) Locale.setDefault(target)
+    return systemLocale.toLanguageTag()
 }

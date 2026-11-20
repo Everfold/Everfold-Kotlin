@@ -38,7 +38,7 @@
     <string name="enter_home">进入主页</string>
 
     <!-- 按钮悬停提示 -->
-    <string name="previous_step_shortcut">上一步 · Alt + ←</string>
-    <string name="continue_setup_shortcut">继续 · Ctrl + Enter</string>
+    <string name="previous_step_shortcut">上一步 · %1$s + ←</string>
+    <string name="continue_setup_shortcut">继续 · %1$s + Enter</string>
 
 </resources>

@@ -6,20 +6,22 @@ import platform.Foundation.NSLocale
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.preferredLanguages
 
-private val systemLanguage = NSLocale.preferredLanguages.firstOrNull() as? String ?: "zh"
-private var appliedLanguage: String? = null
+private const val APPLE_LANGUAGES_KEY = "AppleLanguages"
+private var appliedOverride: String? = null
 
 @Composable
-internal actual fun systemLanguageTag(): String = systemLanguage
-
-internal actual fun applyResourceLocale(languageTag: String) {
-    if (appliedLanguage != languageTag) {
-        // Volatile preferences affect resource lookup only for this process, not the next launch.
-        NSUserDefaults.standardUserDefaults.setVolatileDomain(
-            NSUserDefaults.standardUserDefaults.volatileDomainForName(NSArgumentDomain) +
-                mapOf<Any?, Any?>("AppleLanguages" to listOf(languageTag)),
-            forName = NSArgumentDomain,
-        )
-        appliedLanguage = languageTag
+internal actual fun applyAndResolveSystemLanguageTag(overrideTag: String?): String {
+    val defaults = NSUserDefaults.standardUserDefaults
+    if (overrideTag == null) {
+        if (appliedOverride != null) {
+            val updated = defaults.volatileDomainForName(NSArgumentDomain).filterKeys { it != APPLE_LANGUAGES_KEY }
+            defaults.setVolatileDomain(updated, forName = NSArgumentDomain)
+            appliedOverride = null
+        }
+    } else if (appliedOverride != overrideTag) {
+        val updated = defaults.volatileDomainForName(NSArgumentDomain) + mapOf<Any?, Any?>(APPLE_LANGUAGES_KEY to listOf(overrideTag))
+        defaults.setVolatileDomain(updated, forName = NSArgumentDomain)
+        appliedOverride = overrideTag
     }
+    return NSLocale.preferredLanguages.firstOrNull() as? String ?: "zh"
 }

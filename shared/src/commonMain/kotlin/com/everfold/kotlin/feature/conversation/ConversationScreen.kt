@@ -61,12 +61,14 @@ import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
 import com.everfold.kotlin.ui.components.AppTooltip
 import com.everfold.kotlin.ui.components.desktopUi
+import com.everfold.kotlin.ui.components.primaryShortcutModifier
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
 import everfold.shared.generated.resources.new_session
+import everfold.shared.generated.resources.new_session_shortcut
 import everfold.shared.generated.resources.open_workspace
 import everfold.shared.generated.resources.show_sessions
 import everfold.shared.generated.resources.suggestion_ideas
@@ -216,13 +218,11 @@ private fun ConversationTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val toggleLabel =
-            localizedString(
-                when {
-                    compactNavigation -> Res.string.open_workspace
-                    sessionsVisible -> Res.string.hide_sessions
-                    else -> Res.string.show_sessions
-                },
-            )
+            when {
+                compactNavigation -> localizedString(Res.string.open_workspace)
+                sessionsVisible -> localizedString(Res.string.hide_sessions, primaryShortcutModifier)
+                else -> localizedString(Res.string.show_sessions, primaryShortcutModifier)
+            }
         AppTooltip(toggleLabel) {
             IconButton(onClick = onToggleSessions) {
                 AppIcon(if (compactNavigation) AppSymbol.Menu else AppSymbol.Sidebar, description = toggleLabel)
@@ -243,7 +243,13 @@ private fun ConversationTopBar(
             )
         }
         val newConversationLabel = localizedString(Res.string.new_session)
-        AppTooltip(newConversationLabel) {
+        val newConversationTooltip =
+            if (desktopUi) {
+                localizedString(Res.string.new_session_shortcut, primaryShortcutModifier)
+            } else {
+                newConversationLabel
+            }
+        AppTooltip(newConversationTooltip) {
             IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
         }
         conversationMenu()

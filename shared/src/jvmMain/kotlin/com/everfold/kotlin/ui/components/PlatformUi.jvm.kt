@@ -7,5 +7,12 @@ import java.awt.Cursor
 
 internal actual val desktopUi: Boolean = true
 
+internal actual val macOsUi: Boolean =
+    System
+        .getProperty("os.name")
+        .orEmpty()
+        .lowercase()
+        .contains("mac")
+
 internal actual fun Modifier.horizontalResizePointer(): Modifier =
     pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)))
