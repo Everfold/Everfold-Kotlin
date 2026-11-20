@@ -71,9 +71,19 @@ import everfold.shared.generated.resources.session_name
 import everfold.shared.generated.resources.unpin_session
 
 private val HiddenRunStates = setOf(AgentRunState.Idle, AgentRunState.Completed)
+private val MenuButtonSize = 32.dp
+private val MenuIconSize = 20.dp
+
+private class SessionItemCallbacks(
+    val onSelect: (String) -> Unit,
+    val onMenuOpen: (String) -> Unit,
+    val onMenuDismiss: () -> Unit,
+    val onRequestRename: (String, String) -> Unit,
+    val onTogglePin: (String) -> Unit,
+    val onRequestDelete: (String) -> Unit,
+)
 
 /** 会话侧栏常驻标题搜索两行列表项以及重命名置顶和删除操作 */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SessionsScreen(
     sessions: List<ConversationUiState>,
@@ -90,15 +100,7 @@ fun SessionsScreen(
     connectionNames: Map<String, UiText> = emptyMap(),
 ) {
     val searchFocus = remember { FocusRequester() }
-    var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
-    // 等布局完成后响应新的搜索焦点请求避免切换布局时重复抢焦点
-    LaunchedEffect(searchRequest) {
-        if (searchRequest > handledSearchRequest) {
-            withFrameNanos { }
-            searchFocus.requestFocus()
-            handledSearchRequest = searchRequest
-        }
-    }
+    SessionSearchFocusEffect(searchRequest, searchFocus)
     var renaming by remember { mutableStateOf<String?>(null) }
     var deleting by remember { mutableStateOf<String?>(null) }
     var name by rememberSaveable { mutableStateOf("") }
@@ -113,225 +115,313 @@ fun SessionsScreen(
                     names[session.connectionId]?.contains(query, ignoreCase = true) == true
             }
         }
-    Column(modifier.padding(horizontal = 16.dp)) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            // 搜索
-            placeholder = { Text(localizedString(Res.string.search_sessions)) },
-            leadingIcon = { AppIcon(AppSymbol.Search) },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    TextButton(
-                        onClick = { onQueryChange("") },
-                    ) {
-                        // 清空搜索
-                        Text(localizedString(Res.string.clear_search))
-                    }
-                }
+    val callbacks =
+        SessionItemCallbacks(
+            onSelect = onSelect,
+            onMenuOpen = { menuId = it },
+            onMenuDismiss = { menuId = null },
+            onRequestRename = { id, currentTitle ->
+                name = currentTitle
+                renaming = id
+                menuId = null
             },
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).focusRequester(searchFocus),
+            onTogglePin = { id ->
+                onTogglePin(id)
+                menuId = null
+            },
+            onRequestDelete = { id ->
+                deleting = id
+                menuId = null
+            },
         )
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
-            items(filtered, key = { it.id }) { session ->
-                Surface(
-                    modifier =
-                        Modifier
-                            .combinedClickable(onClick = { onSelect(session.id) }, onLongClick = { menuId = session.id })
-                            .pointerInput(session.id) {
-                                awaitPointerEventScope {
-                                    while (true) {
-                                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
-                                            menuId = session.id
-                                            event.changes.forEach { it.consume() }
-                                        }
-                                    }
-                                }
-                            },
-                    shape = RoundedCornerShape(12.dp),
-                    color =
-                        if (session.id ==
-                            selectedId
-                        ) {
-                            MaterialTheme.colorScheme.secondaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        },
-                ) {
-                    // 第一行标题与菜单第二行状态与时间文字边缘按图标内留白对称对齐
-                    val menuButtonSize = 32.dp
-                    val menuIconSize = 20.dp
-                    val textEdgeInset = (menuButtonSize - menuIconSize) / 2
-                    Column(
-                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val title = session.title.resolve()
-                            Text(
-                                title,
-                                Modifier.weight(1f).padding(start = textEdgeInset),
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Box {
-                                // 只预留紧凑视觉空间Compose 可在布局外扩展触摸目标
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides menuButtonSize) {
-                                    IconButton(
-                                        onClick = { menuId = session.id },
-                                        modifier = Modifier.size(menuButtonSize),
-                                    ) {
-                                        AppIcon(
-                                            AppSymbol.More,
-                                            modifier = Modifier.size(menuIconSize),
-                                            // 会话操作
-                                            description = localizedString(Res.string.session_actions),
-                                        )
-                                    }
-                                }
-                                DropdownMenu(menuId == session.id, onDismissRequest = { menuId = null }) {
-                                    // 重命名
-                                    DropdownMenuItem(text = { Text(localizedString(Res.string.rename_session)) }, onClick = {
-                                        name = title
-                                        renaming = session.id
-                                        menuId = null
-                                    })
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                // 取消置顶 / 置顶
-                                                localizedString(if (session.isPinned) Res.string.unpin_session else Res.string.pin_session),
-                                            )
-                                        },
-                                        onClick = {
-                                            onTogglePin(session.id)
-                                            menuId = null
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                // 删除
-                                                localizedString(Res.string.delete_session),
-                                                color = MaterialTheme.colorScheme.error,
-                                            )
-                                        },
-                                        onClick = {
-                                            deleting = session.id
-                                            menuId = null
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            // 状态见 AgentRunState.label
-                            val status = localizedString(session.runState.label)
-                            Text(
-                                // 已置顶
-                                listOfNotNull(
-                                    if (session.isPinned) localizedString(Res.string.pinned_session) else null,
-                                    names[session.connectionId] ?: localizedString(Res.string.connection_removed),
-                                    status.takeIf { session.runState !in HiddenRunStates },
-                                ).joinToString(" · "),
-                                Modifier.weight(1f).padding(start = textEdgeInset),
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color =
-                                    when (session.runState) {
-                                        AgentRunState.Failed -> MaterialTheme.colorScheme.error
-                                        AgentRunState.Running -> MaterialTheme.colorScheme.primary
-                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                            )
-                            Text(
-                                session.updatedLabel.resolve(),
-                                Modifier.padding(end = textEdgeInset),
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+    Column(modifier.padding(horizontal = 16.dp)) {
+        SessionSearchField(query, onQueryChange, searchFocus)
+        SessionListContent(filtered, selectedId, menuId, names, query, onQueryChange, onCreate, callbacks, Modifier.weight(1f))
+    }
+    SessionDialogs(
+        renamingId = renaming,
+        deletingId = deleting,
+        name = name,
+        onNameChange = { name = it },
+        onDismissRename = { renaming = null },
+        onConfirmRename = { id ->
+            onRename(id, name)
+            renaming = null
+        },
+        onDismissDelete = { deleting = null },
+        onConfirmDelete = { id ->
+            onDelete(id)
+            deleting = null
+        },
+    )
+}
+
+@Composable
+private fun SessionSearchFocusEffect(
+    searchRequest: Int,
+    searchFocus: FocusRequester,
+) {
+    var handledSearchRequest by rememberSaveable { mutableIntStateOf(0) }
+    // 等布局完成后响应新的搜索焦点请求避免切换布局时重复抢焦点
+    LaunchedEffect(searchRequest) {
+        if (searchRequest > handledSearchRequest) {
+            withFrameNanos { }
+            searchFocus.requestFocus()
+            handledSearchRequest = searchRequest
+        }
+    }
+}
+
+@Composable
+private fun SessionDialogs(
+    renamingId: String?,
+    deletingId: String?,
+    name: String,
+    onNameChange: (String) -> Unit,
+    onDismissRename: () -> Unit,
+    onConfirmRename: (String) -> Unit,
+    onDismissDelete: () -> Unit,
+    onConfirmDelete: (String) -> Unit,
+) {
+    renamingId?.let { id ->
+        RenameSessionDialog(name, onNameChange, onDismissRename) { onConfirmRename(id) }
+    }
+    deletingId?.let { id ->
+        DeleteSessionDialog(onDismissDelete) { onConfirmDelete(id) }
+    }
+}
+
+@Composable
+private fun SessionSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    focusRequester: FocusRequester,
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        placeholder = { Text(localizedString(Res.string.search_sessions)) },
+        leadingIcon = { AppIcon(AppSymbol.Search) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                TextButton(onClick = { onQueryChange("") }) {
+                    Text(localizedString(Res.string.clear_search))
                 }
             }
-            if (filtered.isEmpty()) {
-                item {
-                    Text(
-                        localizedString(
-                            // 没有找到会话试试其他关键词 / 还没有会话要做点什么呢
-                            if (query.isNotBlank()) Res.string.no_sessions else Res.string.empty_sessions,
-                        ),
-                        Modifier.padding(vertical = 24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TextButton(onClick = { if (query.isBlank()) onCreate() else onQueryChange("") }) {
-                        // 新建会话 / 清空搜索
-                        Text(localizedString(if (query.isBlank()) Res.string.new_session else Res.string.clear_search))
-                    }
+        },
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).focusRequester(focusRequester),
+    )
+}
+
+@Composable
+private fun SessionListContent(
+    filtered: List<ConversationUiState>,
+    selectedId: String?,
+    menuId: String?,
+    names: Map<String, String>,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onCreate: () -> Unit,
+    callbacks: SessionItemCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier, verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
+        items(filtered, key = { it.id }) { session ->
+            SessionItemCard(
+                session = session,
+                selected = session.id == selectedId,
+                menuExpanded = menuId == session.id,
+                connectionName = names[session.connectionId],
+                callbacks = callbacks,
+            )
+        }
+        if (filtered.isEmpty()) {
+            item {
+                Text(
+                    localizedString(if (query.isNotBlank()) Res.string.no_sessions else Res.string.empty_sessions),
+                    Modifier.padding(vertical = 24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = { if (query.isBlank()) onCreate() else onQueryChange("") }) {
+                    Text(localizedString(if (query.isBlank()) Res.string.new_session else Res.string.clear_search))
                 }
             }
         }
     }
-    renaming?.let { id ->
-        AlertDialog(
-            onDismissRequest = { renaming = null },
-            // 重命名
-            title = { Text(localizedString(Res.string.rename_session)) },
-            text = {
-                OutlinedTextField(
-                    name,
-                    onValueChange = { name = it },
-                    singleLine = true,
-                    // 会话名称
-                    label = { Text(localizedString(Res.string.session_name)) },
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@Composable
+private fun SessionItemCard(
+    session: ConversationUiState,
+    selected: Boolean,
+    menuExpanded: Boolean,
+    connectionName: String?,
+    callbacks: SessionItemCallbacks,
+) {
+    Surface(
+        modifier =
+            Modifier
+                .combinedClickable(onClick = { callbacks.onSelect(session.id) }, onLongClick = { callbacks.onMenuOpen(session.id) })
+                .pointerInput(session.id) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                                callbacks.onMenuOpen(session.id)
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                },
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        val textEdgeInset = (MenuButtonSize - MenuIconSize) / 2
+        val title = session.title.resolve()
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    title,
+                    Modifier.weight(1f).padding(start = textEdgeInset),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onRename(id, name)
-                    renaming = null
-                }, enabled = name.isNotBlank()) {
-                    // 保存
-                    Text(localizedString(Res.string.save_session))
-                }
-            },
-            // 取消
-            dismissButton = { TextButton(onClick = { renaming = null }) { Text(localizedString(Res.string.cancel)) } },
+                SessionActionMenu(session, title, menuExpanded, callbacks)
+            }
+            SessionItemMetadataRow(session, connectionName, Modifier.padding(horizontal = textEdgeInset))
+        }
+    }
+}
+
+@Composable
+private fun SessionActionMenu(
+    session: ConversationUiState,
+    title: String,
+    expanded: Boolean,
+    callbacks: SessionItemCallbacks,
+) {
+    Box {
+        // 只预留紧凑视觉空间Compose 可在布局外扩展触摸目标
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides MenuButtonSize) {
+            IconButton(
+                onClick = { callbacks.onMenuOpen(session.id) },
+                modifier = Modifier.size(MenuButtonSize),
+            ) {
+                AppIcon(
+                    AppSymbol.More,
+                    modifier = Modifier.size(MenuIconSize),
+                    description = localizedString(Res.string.session_actions),
+                )
+            }
+        }
+        DropdownMenu(expanded, onDismissRequest = callbacks.onMenuDismiss) {
+            DropdownMenuItem(
+                text = { Text(localizedString(Res.string.rename_session)) },
+                onClick = { callbacks.onRequestRename(session.id, title) },
+            )
+            DropdownMenuItem(
+                text = { Text(localizedString(if (session.isPinned) Res.string.unpin_session else Res.string.pin_session)) },
+                onClick = { callbacks.onTogglePin(session.id) },
+            )
+            DropdownMenuItem(
+                text = { Text(localizedString(Res.string.delete_session), color = MaterialTheme.colorScheme.error) },
+                onClick = { callbacks.onRequestDelete(session.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SessionItemMetadataRow(
+    session: ConversationUiState,
+    connectionName: String?,
+    modifier: Modifier = Modifier,
+) {
+    val status = localizedString(session.runState.label)
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            listOfNotNull(
+                if (session.isPinned) localizedString(Res.string.pinned_session) else null,
+                connectionName ?: localizedString(Res.string.connection_removed),
+                status.takeIf { session.runState !in HiddenRunStates },
+            ).joinToString(" · "),
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color =
+                when (session.runState) {
+                    AgentRunState.Failed -> MaterialTheme.colorScheme.error
+                    AgentRunState.Running -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+        )
+        Text(
+            session.updatedLabel.resolve(),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    deleting?.let { id ->
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            // 删除
-            title = { Text(localizedString(Res.string.delete_session)) },
-            // 删除后本次运行中的会话内容将被移除
-            text = { Text(localizedString(Res.string.delete_session_notice)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    onDelete(id)
-                    deleting = null
-                }) {
-                    // 删除
-                    Text(localizedString(Res.string.delete_session), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            // 取消
-            dismissButton = { TextButton(onClick = { deleting = null }) { Text(localizedString(Res.string.cancel)) } },
-        )
-    }
+}
+
+@Composable
+private fun RenameSessionDialog(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(localizedString(Res.string.rename_session)) },
+        text = {
+            OutlinedTextField(
+                name,
+                onValueChange = onNameChange,
+                singleLine = true,
+                label = { Text(localizedString(Res.string.session_name)) },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = name.isNotBlank()) {
+                Text(localizedString(Res.string.save_session))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(localizedString(Res.string.cancel)) } },
+    )
+}
+
+@Composable
+private fun DeleteSessionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(localizedString(Res.string.delete_session)) },
+        text = { Text(localizedString(Res.string.delete_session_notice)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(localizedString(Res.string.delete_session), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(localizedString(Res.string.cancel)) } },
+    )
 }

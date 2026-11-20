@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.ui.components.WindowBreakpoints
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
@@ -162,7 +163,7 @@ private fun ConnectionFields(
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 ClusterConnectionForm(
                     draft.setup,
-                    wide = maxWidth >= 600.dp,
+                    wide = maxWidth >= WindowBreakpoints.Compact,
                     onChange = { onChange(draft.copy(setup = it)) },
                     showErrors = showErrors,
                 )

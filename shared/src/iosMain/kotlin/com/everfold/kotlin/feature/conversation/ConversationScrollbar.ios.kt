@@ -8,5 +8,4 @@ import androidx.compose.ui.Modifier
 internal actual fun ConversationScrollbar(
     state: LazyListState,
     modifier: Modifier,
-) {
-}
+) = Unit

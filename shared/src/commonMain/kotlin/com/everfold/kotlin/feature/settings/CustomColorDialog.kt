@@ -51,6 +51,12 @@ import everfold.shared.generated.resources.red_channel
 import everfold.shared.generated.resources.start_chat
 import kotlin.math.roundToInt
 
+private const val CHANNEL_SHIFT_RED = 16
+private const val CHANNEL_SHIFT_GREEN = 8
+private const val CHANNEL_SHIFT_BLUE = 0
+private const val CHANNEL_MASK = 0xFF
+private const val MAX_CHANNEL_VALUE = 255f
+
 /** 自定义主题色HEX 输入与 RGB 滑块联动同时预览浅色和深色配色 */
 @Composable
 internal fun CustomColorDialog(
@@ -66,7 +72,6 @@ internal fun CustomColorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        // 自定义主题色
         title = { Text(localizedString(Res.string.custom_color_title)) },
         text = {
             Column(
@@ -77,72 +82,82 @@ internal fun CustomColorDialog(
                     PalettePreview(preview, dark = false, Modifier.weight(1f))
                     PalettePreview(preview, dark = true, Modifier.weight(1f))
                 }
-                OutlinedTextField(
-                    value = hex,
+                HexColorInput(
+                    hex = hex,
+                    valid = parsed != null,
                     onValueChange = { value ->
                         hex = value
                         parseHexColor(value)?.let { previewArgb = it.toArgb() }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    // HEX 颜色
-                    label = { Text(localizedString(Res.string.hex_color)) },
-                    placeholder = { Text("#673AB7") },
-                    singleLine = true,
-                    isError = parsed == null,
-                    keyboardOptions =
-                        KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Characters,
-                            autoCorrectEnabled = false,
-                            keyboardType = KeyboardType.Ascii,
-                        ),
-                    supportingText = {
-                        Text(
-                            if (parsed ==
-                                null
-                            ) {
-                                // 请输入 6 位十六进制颜色如 #673AB7
-                                localizedString(Res.string.hex_error)
-                            } else {
-                                // 支持 RRGGBB 或 #RRGGBB
-                                localizedString(Res.string.hex_help)
-                            },
-                        )
-                    },
                 )
-                listOf(
-                    // 红色 R
-                    localizedString(Res.string.red_channel) to 16,
-                    // 绿色 G
-                    localizedString(Res.string.green_channel) to 8,
-                    // 蓝色 B
-                    localizedString(Res.string.blue_channel) to 0,
-                ).forEach { (label, shift) ->
-                    val channel = (previewArgb ushr shift) and 0xFF
-                    Column {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(label, style = MaterialTheme.typography.labelLarge)
-                            Text(channel.toString(), style = MaterialTheme.typography.labelMedium)
-                        }
-                        Slider(
-                            value = channel.toFloat(),
-                            valueRange = 0f..255f,
-                            modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
-                            onValueChange = { value ->
-                                previewArgb = (previewArgb and (0xFF shl shift).inv()) or (value.roundToInt() shl shift)
-                                hex = Color(previewArgb).toHexColor()
-                            },
-                        )
-                    }
+                RgbChannelSliders(previewArgb) { nextArgb ->
+                    previewArgb = nextArgb
+                    hex = Color(nextArgb).toHexColor()
                 }
             }
         },
         confirmButton = {
-            // 应用颜色
-            TextButton(enabled = parsed != null, onClick = { parsed?.let(onApply) }) { Text(localizedString(Res.string.apply_color)) }
+            TextButton(enabled = parsed != null, onClick = { parsed?.let(onApply) }) {
+                Text(localizedString(Res.string.apply_color))
+            }
         },
-        // 取消
         dismissButton = { TextButton(onClick = onDismiss) { Text(localizedString(Res.string.cancel)) } },
     )
+}
+
+@Composable
+private fun HexColorInput(
+    hex: String,
+    valid: Boolean,
+    onValueChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = hex,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(localizedString(Res.string.hex_color)) },
+        placeholder = { Text("#673AB7") },
+        singleLine = true,
+        isError = !valid,
+        keyboardOptions =
+            KeyboardOptions(
+                capitalization = KeyboardCapitalization.Characters,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Ascii,
+            ),
+        supportingText = {
+            Text(localizedString(if (valid) Res.string.hex_help else Res.string.hex_error))
+        },
+    )
+}
+
+@Composable
+private fun RgbChannelSliders(
+    previewArgb: Int,
+    onArgbChange: (Int) -> Unit,
+) {
+    listOf(
+        localizedString(Res.string.red_channel) to CHANNEL_SHIFT_RED,
+        localizedString(Res.string.green_channel) to CHANNEL_SHIFT_GREEN,
+        localizedString(Res.string.blue_channel) to CHANNEL_SHIFT_BLUE,
+    ).forEach { (label, shift) ->
+        val channel = (previewArgb ushr shift) and CHANNEL_MASK
+        Column {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(label, style = MaterialTheme.typography.labelLarge)
+                Text(channel.toString(), style = MaterialTheme.typography.labelMedium)
+            }
+            Slider(
+                value = channel.toFloat(),
+                valueRange = 0f..MAX_CHANNEL_VALUE,
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
+                onValueChange = { value ->
+                    val next = (previewArgb and (CHANNEL_MASK shl shift).inv()) or (value.roundToInt() shl shift)
+                    onArgbChange(next)
+                },
+            )
+        }
+    }
 }
 
 @Composable
@@ -156,13 +171,11 @@ private fun PalettePreview(
         Surface(modifier = modifier, shape = RoundedCornerShape(12.dp), color = colors.surfaceContainer) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    // 深色预览 / 浅色预览
                     if (dark) localizedString(Res.string.dark_preview) else localizedString(Res.string.light_preview),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Surface(shape = RoundedCornerShape(12.dp), color = colors.primary, contentColor = colors.onPrimary) {
                     Text(
-                        // 开始对话
                         localizedString(Res.string.start_chat),
                         Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,

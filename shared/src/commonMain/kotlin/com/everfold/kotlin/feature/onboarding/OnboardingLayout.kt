@@ -25,9 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.feature.settings.AppearanceSettings
+import com.everfold.kotlin.feature.settings.LanguageSettings
+import com.everfold.kotlin.feature.settings.ThemeColorSettings
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
+import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
+import com.everfold.kotlin.ui.theme.AppearancePreferences
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.cluster_hint
 import everfold.shared.generated.resources.feature_continuity
@@ -170,4 +175,41 @@ private fun FeatureIcon(symbol: AppSymbol) {
     Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
         Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) { AppIcon(symbol) }
     }
+}
+
+internal const val PREFERENCE_MEDIUM_COLUMNS = 2
+
+@Composable
+internal fun OnboardingPreferences(
+    appearance: AppearancePreferences,
+    language: AppLanguage,
+    onLanguageChange: (AppLanguage) -> Unit,
+    columns: Int,
+    appearanceHorizontal: Boolean,
+) {
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        maxItemsInEachRow = columns,
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            AppearanceSettings(appearance.themeMode, appearance::setTheme, appearanceHorizontal)
+            if (columns == PREFERENCE_MEDIUM_COLUMNS) OnboardingThemeColors(appearance)
+        }
+        if (columns != PREFERENCE_MEDIUM_COLUMNS) {
+            Column(Modifier.weight(1f)) { OnboardingThemeColors(appearance) }
+        }
+        Column(Modifier.weight(1f)) { LanguageSettings(language, onLanguageChange) }
+    }
+}
+
+@Composable
+private fun OnboardingThemeColors(appearance: AppearancePreferences) {
+    ThemeColorSettings(
+        appearance.themeColor,
+        appearance::useSystemThemeColor,
+        appearance::selectThemePreset,
+        appearance::applyCustomThemeColor,
+    )
 }

@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -64,6 +65,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -74,10 +76,8 @@ import com.everfold.kotlin.feature.connections.ClusterSetupSaver
 import com.everfold.kotlin.feature.connections.ConnectionPreviewOptions
 import com.everfold.kotlin.feature.connections.ConnectionPreviewResult
 import com.everfold.kotlin.feature.connections.description
-import com.everfold.kotlin.feature.settings.AppearanceSettings
-import com.everfold.kotlin.feature.settings.LanguageSettings
-import com.everfold.kotlin.feature.settings.ThemeColorSettings
 import com.everfold.kotlin.ui.components.AppTooltip
+import com.everfold.kotlin.ui.components.WindowBreakpoints
 import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
@@ -99,11 +99,60 @@ import everfold.shared.generated.resources.setup_preferences
 import everfold.shared.generated.resources.test_connection
 import everfold.shared.generated.resources.testing_connection
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.StringResource
+
+private const val CONNECTION_TEST_DELAY_MILLIS = 900L
+private const val STEP_PROGRESS_DURATION_MILLIS = 240
+private const val STEP_FADE_IN_DURATION_MILLIS = 160
+private const val STEP_FADE_IN_DELAY_MILLIS = 40
+private const val STEP_SLIDE_OUT_DURATION_MILLIS = 200
+private const val STEP_FADE_OUT_DURATION_MILLIS = 100
+private const val DISABLED_STEP_ALPHA = 0.38f
+private const val LOCAL_STEP_COUNT = 3f
+private const val CLUSTER_STEP_COUNT = 4f
+private const val PREFERENCE_WIDE_COLUMNS = 3
+private const val PREFERENCE_COMPACT_COLUMNS = 1
+private const val APPEARANCE_ROW_MIN_WIDTH = 380f
+private val PreferenceWideThreshold = 1200.dp
+private val PreferenceMediumThreshold = 720.dp
+private val WelcomeWideThreshold = 840.dp
+private val SidebarWidth = 280.dp
+private val SidebarContentReserve = 356.dp
+private val CompactContentReserve = 60.dp
+private val SlideOffsetDistance = 32.dp
 
 /** 首次设置步骤欢迎偏好模式以及可选的集群配置 */
-private enum class SetupStep { Welcome, Preferences, Mode, Cluster }
+private enum class SetupStep(
+    val navLabel: StringResource,
+    val title: StringResource,
+) {
+    Welcome(Res.string.setup_nav_welcome, Res.string.onboarding_welcome),
+    Preferences(Res.string.setup_nav_preferences, Res.string.setup_preferences),
+    Mode(Res.string.setup_mode, Res.string.setup_mode),
+    Cluster(Res.string.setup_cluster, Res.string.setup_cluster),
+}
 
 private enum class ConnectionTest { Idle, Testing, Success, Failure }
+
+private class OnboardingWizardState(
+    val step: SetupStep,
+    val furthestStep: Int,
+    val cluster: Boolean,
+    val form: ClusterSetup,
+    val test: ConnectionTest,
+    val previewResult: ConnectionPreviewResult,
+    val showError: Boolean,
+)
+
+private class OnboardingActions(
+    val onNavigate: (SetupStep) -> Unit,
+    val onBack: () -> Unit,
+    val onAdvance: () -> Unit,
+    val onClusterChange: (Boolean) -> Unit,
+    val onFormChange: (ClusterSetup) -> Unit,
+    val onPreviewSelect: (ConnectionPreviewResult) -> Unit,
+    val onLanguageChange: (AppLanguage) -> Unit,
+)
 
 /** 首次设置向导协调步骤偏好与模拟连接测试完成后回传配置 */
 @Composable
@@ -114,246 +163,322 @@ internal fun OnboardingScreen(
     onComplete: (ClusterSetup?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var step by rememberSaveable { mutableStateOf(SetupStep.Welcome) }
-    var furthestStep by rememberSaveable { mutableIntStateOf(0) }
+    val holder = rememberOnboardingWizardHolder(onComplete, onLanguageChange)
     val focusRequester = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = holder.wizard.step != SetupStep.Welcome,
+        onBackCompleted = holder.actions.onBack,
+    )
+    Surface(
+        modifier
+            .fillMaxSize()
+            .onboardingShortcuts(
+                canGoBack = holder.wizard.step != SetupStep.Welcome,
+                testing = holder.wizard.test == ConnectionTest.Testing,
+                onBack = holder.actions.onBack,
+                onAdvance = holder.actions.onAdvance,
+            ).onFocusChanged { hasFocus = it.hasFocus }
+            .focusRequester(focusRequester)
+            .focusable(),
+    ) {
+        OnboardingScaffold(holder.wizard, appearance, language, holder.actions, focusRequester, hasFocus)
+    }
+}
+
+private class OnboardingWizardHolder(
+    val wizard: OnboardingWizardState,
+    val actions: OnboardingActions,
+)
+
+@Composable
+private fun rememberOnboardingWizardHolder(
+    onComplete: (ClusterSetup?) -> Unit,
+    onLanguageChange: (AppLanguage) -> Unit,
+): OnboardingWizardHolder {
+    var step by rememberSaveable { mutableStateOf(SetupStep.Welcome) }
+    var furthestStep by rememberSaveable { mutableIntStateOf(0) }
     var cluster by rememberSaveable { mutableStateOf(false) }
     var form by rememberSaveable(stateSaver = ClusterSetupSaver) { mutableStateOf(ClusterSetup()) }
     var test by remember { mutableStateOf(ConnectionTest.Idle) }
     var previewResult by rememberSaveable { mutableStateOf(ConnectionPreviewResult.Success) }
     var showError by rememberSaveable { mutableStateOf(false) }
-    // 连接测试只延迟演示所选结果不创建真实连接
-    LaunchedEffect(test, form, previewResult, step) {
-        if (test == ConnectionTest.Testing) {
-            delay(900)
-            test = if (previewResult == ConnectionPreviewResult.Success) ConnectionTest.Success else ConnectionTest.Failure
-        }
-    }
+    OnboardingConnectionTestEffect(test, form, previewResult, step) { test = it }
     val navigate: (SetupStep) -> Unit = {
         if (test == ConnectionTest.Testing) test = ConnectionTest.Idle
         step = it
         furthestStep = maxOf(furthestStep, it.ordinal)
     }
     val back = { navigate(SetupStep.entries[(step.ordinal - 1).coerceAtLeast(0)]) }
-    val finish = step == SetupStep.Cluster || (step == SetupStep.Mode && !cluster)
-    // 集群配置先校验并通过模拟测试再允许完成本地模式直接完成
     val advance = {
-        when {
-            step == SetupStep.Cluster && test != ConnectionTest.Success -> {
-                showError = !form.isValid
-                if (form.isValid && test != ConnectionTest.Testing) test = ConnectionTest.Testing
-            }
+        advanceOnboardingStep(
+            step = step,
+            cluster = cluster,
+            form = form,
+            test = test,
+            onShowError = { showError = it },
+            onStartTest = { test = ConnectionTest.Testing },
+            onNavigateNext = { navigate(SetupStep.entries[step.ordinal + 1]) },
+            onComplete = { onComplete(if (cluster) form else null) },
+        )
+    }
+    val wizard = OnboardingWizardState(step, furthestStep, cluster, form, test, previewResult, showError)
+    val actions =
+        OnboardingActions(
+            onNavigate = navigate,
+            onBack = back,
+            onAdvance = advance,
+            onClusterChange = { cluster = it },
+            onFormChange = {
+                if (form.method != it.method || form.auth != it.auth) showError = false
+                form = it
+                test = ConnectionTest.Idle
+            },
+            onPreviewSelect = {
+                previewResult = it
+                test = ConnectionTest.Idle
+            },
+            onLanguageChange = onLanguageChange,
+        )
+    return OnboardingWizardHolder(wizard, actions)
+}
 
-            finish -> {
-                onComplete(if (cluster) form else null)
-            }
+@Composable
+private fun OnboardingConnectionTestEffect(
+    test: ConnectionTest,
+    form: ClusterSetup,
+    previewResult: ConnectionPreviewResult,
+    step: SetupStep,
+    onTestComplete: (ConnectionTest) -> Unit,
+) {
+    val currentOnTestComplete by rememberUpdatedState(onTestComplete)
+    LaunchedEffect(test, form, previewResult, step) {
+        if (test == ConnectionTest.Testing) {
+            delay(CONNECTION_TEST_DELAY_MILLIS)
+            currentOnTestComplete(if (previewResult == ConnectionPreviewResult.Success) ConnectionTest.Success else ConnectionTest.Failure)
+        }
+    }
+}
 
-            else -> {
-                navigate(SetupStep.entries[step.ordinal + 1])
+private fun advanceOnboardingStep(
+    step: SetupStep,
+    cluster: Boolean,
+    form: ClusterSetup,
+    test: ConnectionTest,
+    onShowError: (Boolean) -> Unit,
+    onStartTest: () -> Unit,
+    onNavigateNext: () -> Unit,
+    onComplete: () -> Unit,
+) {
+    val finish = step == SetupStep.Cluster || (step == SetupStep.Mode && !cluster)
+    when {
+        step == SetupStep.Cluster && test != ConnectionTest.Success -> {
+            onShowError(!form.isValid)
+            if (form.isValid && test != ConnectionTest.Testing) onStartTest()
+        }
+
+        finish -> {
+            onComplete()
+        }
+
+        else -> {
+            onNavigateNext()
+        }
+    }
+}
+
+@Composable
+private fun OnboardingScaffold(
+    wizard: OnboardingWizardState,
+    appearance: AppearancePreferences,
+    language: AppLanguage,
+    actions: OnboardingActions,
+    focusRequester: FocusRequester,
+    hasFocus: Boolean,
+) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val wide = maxWidth >= WindowBreakpoints.OnboardingWide
+        val progress by animateFloatAsState(
+            targetValue = (wizard.step.ordinal + 1) / (if (wizard.cluster) CLUSTER_STEP_COUNT else LOCAL_STEP_COUNT),
+            animationSpec = tween(STEP_PROGRESS_DURATION_MILLIS),
+            label = "setupProgress",
+        )
+        val contentWidth = maxWidth - (if (wide) SidebarContentReserve else CompactContentReserve)
+        LaunchedEffect(wide) {
+            withFrameNanos { }
+            if (!hasFocus) focusRequester.requestFocus()
+        }
+        val contentInsets =
+            WindowInsets.safeDrawing.only(
+                if (wide) WindowInsetsSides.Vertical + WindowInsetsSides.End else WindowInsetsSides.Vertical + WindowInsetsSides.Horizontal,
+            )
+        Row(Modifier.fillMaxSize()) {
+            if (wide) SetupSidebar(wizard.step, wizard.furthestStep, wizard.cluster, actions.onNavigate)
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .windowInsetsPadding(contentInsets)
+                    .padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp),
+            ) {
+                if (!wide) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                OnboardingStepContent(wizard, appearance, language, contentWidth, actions, Modifier.weight(1f).fillMaxWidth())
+                HorizontalDivider()
+                OnboardingFooter(wizard, wide, actions.onBack, actions.onAdvance)
             }
         }
     }
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = step != SetupStep.Welcome,
-        onBackCompleted = back,
-    )
-    Surface(
-        modifier
-            .fillMaxSize()
-            .onPreviewKeyEvent {
-                if (it.type != KeyEventType.KeyDown) {
-                    false
-                } else if ((it.isCtrlPressed || it.isMetaPressed) && it.key == Key.Enter) {
-                    if (test != ConnectionTest.Testing) advance()
-                    true
-                } else if (it.isAltPressed && it.key == Key.DirectionLeft && step != SetupStep.Welcome) {
-                    back()
-                    true
-                } else {
-                    false
+}
+
+@Composable
+private fun OnboardingStepContent(
+    wizard: OnboardingWizardState,
+    appearance: AppearancePreferences,
+    language: AppLanguage,
+    contentWidth: Dp,
+    actions: OnboardingActions,
+    modifier: Modifier = Modifier,
+) {
+    val slideDistance = with(LocalDensity.current) { SlideOffsetDistance.roundToPx() }
+    val preferenceColumns = preferenceColumnCount(contentWidth)
+    AnimatedContent(
+        targetState = wizard.step,
+        modifier = modifier,
+        transitionSpec = {
+            val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+            (
+                slideInHorizontally(tween(STEP_PROGRESS_DURATION_MILLIS)) { direction * slideDistance } +
+                    fadeIn(tween(STEP_FADE_IN_DURATION_MILLIS, delayMillis = STEP_FADE_IN_DELAY_MILLIS))
+            ).togetherWith(
+                slideOutHorizontally(tween(STEP_SLIDE_OUT_DURATION_MILLIS)) { -direction * slideDistance } +
+                    fadeOut(tween(STEP_FADE_OUT_DURATION_MILLIS)),
+            ).using(SizeTransform { _, _ -> tween(STEP_PROGRESS_DURATION_MILLIS) })
+        },
+        contentAlignment = Alignment.TopStart,
+        label = "setupStep",
+    ) { displayedStep ->
+        OnboardingScrollArea {
+            Text(localizedString(displayedStep.title), style = MaterialTheme.typography.headlineMedium)
+            when (displayedStep) {
+                SetupStep.Welcome -> {
+                    WelcomeFeatures(contentWidth >= WelcomeWideThreshold)
                 }
-            }.onFocusChanged { hasFocus = it.hasFocus }
-            .focusRequester(focusRequester)
-            .focusable(),
-    ) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            val wide = maxWidth >= 1000.dp
-            val slideDistance = with(LocalDensity.current) { 32.dp.roundToPx() }
-            val progress by animateFloatAsState(
-                targetValue = (step.ordinal + 1) / (if (cluster) 4f else 3f),
-                animationSpec = tween(240),
-                label = "setupProgress",
-            )
-            val contentWidth = maxWidth - (if (wide) 280.dp + 64.dp else 48.dp) - 12.dp
-            val preferenceColumns =
-                when {
-                    contentWidth >= 1200.dp -> 3
-                    contentWidth >= 720.dp -> 2
-                    else -> 1
+
+                SetupStep.Preferences -> {
+                    OnboardingPreferences(
+                        appearance = appearance,
+                        language = language,
+                        onLanguageChange = actions.onLanguageChange,
+                        columns = preferenceColumns,
+                        appearanceHorizontal =
+                            (contentWidth - 24.dp * (preferenceColumns - 1)) / preferenceColumns >=
+                                (APPEARANCE_ROW_MIN_WIDTH * LocalDensity.current.fontScale).dp,
+                    )
                 }
-            LaunchedEffect(wide) {
-                withFrameNanos { }
-                if (!hasFocus) focusRequester.requestFocus()
-            }
-            Row(Modifier.fillMaxSize()) {
-                if (wide) {
-                    SetupSidebar(step, furthestStep, cluster, navigate)
+
+                SetupStep.Mode -> {
+                    ModeSelection(wizard.cluster, actions.onClusterChange, contentWidth >= WindowBreakpoints.Compact)
                 }
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(
-                                if (wide) {
-                                    WindowInsetsSides.Vertical + WindowInsetsSides.End
-                                } else {
-                                    WindowInsetsSides.Vertical +
-                                        WindowInsetsSides.Horizontal
-                                },
-                            ),
-                        ).padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp),
-                ) {
-                    if (!wide) {
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    AnimatedContent(
-                        targetState = step,
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        transitionSpec = {
-                            val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                            (slideInHorizontally(tween(240)) { direction * slideDistance } + fadeIn(tween(160, delayMillis = 40)))
-                                .togetherWith(slideOutHorizontally(tween(200)) { -direction * slideDistance } + fadeOut(tween(100)))
-                                .using(SizeTransform { _, _ -> tween(240) })
-                        },
-                        contentAlignment = Alignment.TopStart,
-                        label = "setupStep",
-                    ) { displayedStep ->
-                        OnboardingScrollArea {
-                            val title =
-                                when (displayedStep) {
-                                    // 下一步交给智能体
-                                    SetupStep.Welcome -> Res.string.onboarding_welcome
 
-                                    // 个性化设置
-                                    SetupStep.Preferences -> Res.string.setup_preferences
-
-                                    // 使用模式
-                                    SetupStep.Mode -> Res.string.setup_mode
-
-                                    // 连接集群
-                                    SetupStep.Cluster -> Res.string.setup_cluster
-                                }
-                            Text(localizedString(title), style = MaterialTheme.typography.headlineMedium)
-                            when (displayedStep) {
-                                SetupStep.Welcome -> {
-                                    WelcomeFeatures(contentWidth >= 840.dp)
-                                }
-
-                                SetupStep.Preferences -> {
-                                    OnboardingPreferences(
-                                        appearance,
-                                        language,
-                                        onLanguageChange,
-                                        preferenceColumns,
-                                        appearanceHorizontal =
-                                            (contentWidth - 24.dp * (preferenceColumns - 1)) / preferenceColumns >=
-                                                (380 * LocalDensity.current.fontScale).dp,
-                                    )
-                                }
-
-                                SetupStep.Mode -> {
-                                    ModeSelection(cluster, { cluster = it }, contentWidth >= 600.dp)
-                                }
-
-                                SetupStep.Cluster -> {
-                                    ClusterConnectionForm(form, wide = contentWidth >= 600.dp, showErrors = showError, onChange = {
-                                        if (form.method != it.method || form.auth != it.auth) showError = false
-                                        form = it
-                                        test = ConnectionTest.Idle
-                                    })
-                                    ConnectionPreviewOptions(previewResult, onSelect = {
-                                        previewResult = it
-                                        test = ConnectionTest.Idle
-                                    })
-                                    when (test) {
-                                        ConnectionTest.Testing -> {
-                                            LinearProgressIndicator(Modifier.fillMaxWidth())
-                                        }
-
-                                        ConnectionTest.Success -> {
-                                            Text(
-                                                // 连接成功
-                                                localizedString(Res.string.connection_success),
-                                                color = MaterialTheme.colorScheme.primary,
-                                            )
-                                        }
-
-                                        ConnectionTest.Failure -> {
-                                            Text(
-                                                // 提示见 ConnectionPreviewResult.description
-                                                localizedString(previewResult.description),
-                                                color = MaterialTheme.colorScheme.error,
-                                            )
-                                        }
-
-                                        ConnectionTest.Idle -> {}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    HorizontalDivider()
-                    Row(
-                        Modifier.fillMaxWidth().padding(top = 12.dp),
-                        horizontalArrangement = if (wide) Arrangement.spacedBy(12.dp, Alignment.End) else Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // 上一步 · Alt + ← / 上一步
-                        AppTooltip(localizedString(if (desktopUi) Res.string.previous_step_shortcut else Res.string.previous_step)) {
-                            TextButton(
-                                onClick = back,
-                                enabled = step != SetupStep.Welcome,
-                            ) {
-                                // 上一步
-                                Text(localizedString(Res.string.previous_step))
-                            }
-                        }
-                        val actionLabel =
-                            when {
-                                // 正在测试连接
-                                step == SetupStep.Cluster && test == ConnectionTest.Testing -> Res.string.testing_connection
-
-                                // 重试连接
-                                step == SetupStep.Cluster && test == ConnectionTest.Failure -> Res.string.retry_connection
-
-                                // 测试连接
-                                step == SetupStep.Cluster && test != ConnectionTest.Success -> Res.string.test_connection
-
-                                // 进入主页
-                                finish -> Res.string.enter_home
-
-                                // 下一步
-                                else -> Res.string.next_step
-                            }
-
-                        // 继续 · Ctrl + Enter
-                        AppTooltip(localizedString(if (desktopUi) Res.string.continue_setup_shortcut else actionLabel)) {
-                            Button(onClick = advance, enabled = test != ConnectionTest.Testing) {
-                                Text(localizedString(actionLabel))
-                            }
-                        }
-                    }
+                SetupStep.Cluster -> {
+                    OnboardingClusterStep(wizard, contentWidth >= WindowBreakpoints.Compact, actions)
                 }
             }
         }
     }
 }
+
+@Composable
+private fun OnboardingClusterStep(
+    wizard: OnboardingWizardState,
+    wideForm: Boolean,
+    actions: OnboardingActions,
+) {
+    ClusterConnectionForm(wizard.form, wide = wideForm, showErrors = wizard.showError, onChange = actions.onFormChange)
+    ConnectionPreviewOptions(wizard.previewResult, onSelect = actions.onPreviewSelect)
+    when (wizard.test) {
+        ConnectionTest.Testing -> {
+            LinearProgressIndicator(Modifier.fillMaxWidth())
+        }
+
+        ConnectionTest.Success -> {
+            Text(localizedString(Res.string.connection_success), color = MaterialTheme.colorScheme.primary)
+        }
+
+        ConnectionTest.Failure -> {
+            Text(localizedString(wizard.previewResult.description), color = MaterialTheme.colorScheme.error)
+        }
+
+        ConnectionTest.Idle -> {}
+    }
+}
+
+@Composable
+private fun OnboardingFooter(
+    wizard: OnboardingWizardState,
+    wide: Boolean,
+    onBack: () -> Unit,
+    onAdvance: () -> Unit,
+) {
+    val finish = wizard.step == SetupStep.Cluster || (wizard.step == SetupStep.Mode && !wizard.cluster)
+    val actionLabel =
+        when {
+            wizard.step == SetupStep.Cluster && wizard.test == ConnectionTest.Testing -> Res.string.testing_connection
+            wizard.step == SetupStep.Cluster && wizard.test == ConnectionTest.Failure -> Res.string.retry_connection
+            wizard.step == SetupStep.Cluster && wizard.test != ConnectionTest.Success -> Res.string.test_connection
+            finish -> Res.string.enter_home
+            else -> Res.string.next_step
+        }
+    Row(
+        Modifier.fillMaxWidth().padding(top = 12.dp),
+        horizontalArrangement = if (wide) Arrangement.spacedBy(12.dp, Alignment.End) else Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppTooltip(localizedString(if (desktopUi) Res.string.previous_step_shortcut else Res.string.previous_step)) {
+            TextButton(onClick = onBack, enabled = wizard.step != SetupStep.Welcome) {
+                Text(localizedString(Res.string.previous_step))
+            }
+        }
+        AppTooltip(localizedString(if (desktopUi) Res.string.continue_setup_shortcut else actionLabel)) {
+            Button(onClick = onAdvance, enabled = wizard.test != ConnectionTest.Testing) {
+                Text(localizedString(actionLabel))
+            }
+        }
+    }
+}
+
+private fun preferenceColumnCount(contentWidth: Dp): Int =
+    when {
+        contentWidth >= PreferenceWideThreshold -> PREFERENCE_WIDE_COLUMNS
+        contentWidth >= PreferenceMediumThreshold -> PREFERENCE_MEDIUM_COLUMNS
+        else -> PREFERENCE_COMPACT_COLUMNS
+    }
+
+private fun Modifier.onboardingShortcuts(
+    canGoBack: Boolean,
+    testing: Boolean,
+    onBack: () -> Unit,
+    onAdvance: () -> Unit,
+): Modifier =
+    onPreviewKeyEvent { event ->
+        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+        when {
+            (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.Enter -> {
+                if (!testing) onAdvance()
+                true
+            }
+
+            event.isAltPressed && event.key == Key.DirectionLeft && canGoBack -> {
+                onBack()
+                true
+            }
+
+            else -> {
+                false
+            }
+        }
+    }
 
 @Composable
 private fun SetupSidebar(
@@ -362,88 +487,29 @@ private fun SetupSidebar(
     cluster: Boolean,
     onNavigate: (SetupStep) -> Unit,
 ) {
+    val stepCount = if (cluster) SetupStep.entries.size else SetupStep.entries.size - 1
     PermanentDrawerSheet(
-        Modifier.width(280.dp).fillMaxHeight(),
+        Modifier.width(SidebarWidth).fillMaxHeight(),
         drawerShape = RectangleShape,
         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start),
     ) {
         Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SetupStep.entries.take(if (cluster) 4 else 3).forEach { destination ->
-                val label =
-                    when (destination) {
-                        // 欢迎
-                        SetupStep.Welcome -> Res.string.setup_nav_welcome
-
-                        // 语言与外观
-                        SetupStep.Preferences -> Res.string.setup_nav_preferences
-
-                        // 使用模式
-                        SetupStep.Mode -> Res.string.setup_mode
-
-                        // 连接集群
-                        SetupStep.Cluster -> Res.string.setup_cluster
-                    }
+            SetupStep.entries.take(stepCount).forEach { destination ->
                 // 侧栏仅允许返回已到达的步骤避免绕过配置流程
                 val enabled = destination.ordinal <= furthestStep
                 NavigationDrawerItem(
-                    label = { Text(localizedString(label)) },
+                    label = { Text(localizedString(destination.navLabel)) },
                     selected = destination == step,
                     onClick = { if (enabled) onNavigate(destination) },
                     modifier =
-                        Modifier.alpha(if (enabled) 1f else 0.38f).focusProperties { canFocus = enabled }.semantics {
-                            if (!enabled) disabled()
-                        },
+                        Modifier
+                            .alpha(if (enabled) 1f else DISABLED_STEP_ALPHA)
+                            .focusProperties { canFocus = enabled }
+                            .semantics { if (!enabled) disabled() },
                     icon = { Text((destination.ordinal + 1).toString()) },
                 )
             }
         }
     }
-}
-
-@Composable
-private fun OnboardingPreferences(
-    appearance: AppearancePreferences,
-    language: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
-    columns: Int,
-    appearanceHorizontal: Boolean,
-) {
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        maxItemsInEachRow = columns,
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            OnboardingAppearance(appearance, appearanceHorizontal)
-            if (columns == 2) OnboardingThemeColors(appearance)
-        }
-        if (columns != 2) {
-            Column(Modifier.weight(1f)) {
-                OnboardingThemeColors(appearance)
-            }
-        }
-        Column(Modifier.weight(1f)) {
-            LanguageSettings(language, onLanguageChange)
-        }
-    }
-}
-
-@Composable
-private fun OnboardingThemeColors(appearance: AppearancePreferences) {
-    ThemeColorSettings(
-        appearance.themeColor,
-        appearance::useSystemThemeColor,
-        appearance::selectThemePreset,
-        appearance::applyCustomThemeColor,
-    )
-}
-
-@Composable
-private fun OnboardingAppearance(
-    appearance: AppearancePreferences,
-    horizontal: Boolean,
-) {
-    AppearanceSettings(appearance.themeMode, appearance::setTheme, horizontal)
 }

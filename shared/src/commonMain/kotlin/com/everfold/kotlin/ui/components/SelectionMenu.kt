@@ -45,7 +45,7 @@ internal fun SelectionMenu(
     val compact =
         with(LocalDensity.current) {
             LocalWindowInfo.current.containerSize.width
-                .toDp() < 600.dp
+                .toDp() < WindowBreakpoints.Compact
         }
     var query by remember(title, expanded) { mutableStateOf("") }
     val searchable = choices.count { it.searchable && !it.readOnly } >= SEARCH_THRESHOLD

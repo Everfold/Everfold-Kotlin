@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
+import com.everfold.kotlin.ui.components.WindowBreakpoints
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.connection_add
@@ -38,8 +39,9 @@ import everfold.shared.generated.resources.connection_back
 import everfold.shared.generated.resources.connection_select_hint
 import everfold.shared.generated.resources.nav_connections
 
+private val ConnectionListWidth = 300.dp
+
 /** 宽屏并列展示列表和详情窄屏逐级进入同一详情状态随连接 ID 保存 */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConnectionsScreen(
     connections: ConnectionManager,
@@ -52,51 +54,94 @@ internal fun ConnectionsScreen(
     val pages = rememberSaveableStateHolder()
     var query by rememberSaveable { mutableStateOf("") }
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val wide = maxWidth >= 900.dp
+        val wide = maxWidth >= WindowBreakpoints.Expanded
         val selected = connections.find(navigation.selectedId.orEmpty())
         val showingDetail = navigation.adding || selected != null
         Column {
-            TopAppBar(
-                title = { Text(localizedString(Res.string.nav_connections)) },
-                navigationIcon = {
-                    if (!wide || navigation.canGoBack) {
-                        IconButton(onClick = onBack) {
-                            AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
-                        }
-                    }
-                },
-                actions = {
-                    if (!navigation.adding) {
-                        TextButton(onClick = navigation::add) {
-                            AppIcon(AppSymbol.Plus)
-                            Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
-                        }
-                    }
-                },
+            ConnectionsTopBar(
+                showBack = !wide || navigation.canGoBack,
+                showAdd = !navigation.adding,
+                onBack = onBack,
+                onAdd = navigation::add,
             )
-            Row(
-                Modifier
-                    .weight(1f)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
-            ) {
-                if (wide || !showingDetail) {
-                    pages.SaveableStateProvider("list") {
-                        ConnectionList(
-                            connections.connections,
-                            selectedId = if (navigation.adding) null else navigation.selectedId,
-                            query = query,
-                            onQueryChange = { query = it },
-                            onSelect = navigation::open,
-                            modifier = if (wide) Modifier.width(300.dp) else Modifier.weight(1f),
-                        )
-                    }
-                    if (wide) VerticalDivider()
+            ConnectionsBody(
+                wide = wide,
+                showingDetail = showingDetail,
+                connections = connections,
+                navigation = navigation,
+                pages = pages,
+                selected = selected,
+                query = query,
+                onQueryChange = { query = it },
+                onNewConversation = onNewConversation,
+                overviewExtra = overviewExtra,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConnectionsTopBar(
+    showBack: Boolean,
+    showAdd: Boolean,
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(localizedString(Res.string.nav_connections)) },
+        navigationIcon = {
+            if (showBack) {
+                IconButton(onClick = onBack) {
+                    AppIcon(AppSymbol.Back, description = localizedString(Res.string.connection_back))
                 }
-                if (wide || showingDetail) {
-                    Box(Modifier.weight(1f).fillMaxSize()) {
-                        ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
-                    }
+            }
+        },
+        actions = {
+            if (showAdd) {
+                TextButton(onClick = onAdd) {
+                    AppIcon(AppSymbol.Plus)
+                    Text(localizedString(Res.string.connection_add), Modifier.padding(start = 8.dp))
                 }
+            }
+        },
+    )
+}
+
+@Composable
+private fun ConnectionsBody(
+    wide: Boolean,
+    showingDetail: Boolean,
+    connections: ConnectionManager,
+    navigation: ConnectionNavigationState,
+    pages: SaveableStateHolder,
+    selected: Connection?,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onNewConversation: (String) -> Unit,
+    overviewExtra: @Composable (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
+    ) {
+        if (wide || !showingDetail) {
+            pages.SaveableStateProvider("list") {
+                ConnectionList(
+                    connections.connections,
+                    selectedId = if (navigation.adding) null else navigation.selectedId,
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    onSelect = navigation::open,
+                    modifier = if (wide) Modifier.width(ConnectionListWidth) else Modifier.weight(1f),
+                )
+            }
+            if (wide) VerticalDivider()
+        }
+        if (wide || showingDetail) {
+            Box(Modifier.weight(1f).fillMaxSize()) {
+                ConnectionPane(connections, navigation, pages, selected, onNewConversation, overviewExtra)
             }
         }
     }

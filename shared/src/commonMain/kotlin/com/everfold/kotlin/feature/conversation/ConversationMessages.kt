@@ -15,12 +15,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -34,6 +36,14 @@ import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.jump_to_latest
 import everfold.shared.generated.resources.model_unavailable
 import kotlinx.coroutines.launch
+
+@Immutable
+private data class MessageDisplayConfig(
+    val textSize: ConversationTextSize,
+    val collapsePrompts: Boolean,
+    val sideMargins: Boolean,
+    val canRetry: Boolean,
+)
 
 /** 倒序消息列表按用户意愿跟随最新回复并保留长消息折叠时的位置 */
 @Composable
@@ -53,64 +63,26 @@ internal fun ConversationMessages(
     val scope = rememberCoroutineScope()
     var followLatest by rememberSaveable { mutableStateOf(true) }
     val atLatest by remember { derivedStateOf { list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 } }
-    // 仅用户滚动改变跟随模式流式回复引起的布局变化不能强制读者回到最新消息
-    LaunchedEffect(list) {
-        snapshotFlow { if (list.isScrollInProgress) list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 else null }
-            .collect { atBottom -> if (atBottom != null) followLatest = atBottom }
-    }
-    LaunchedEffect(scrollRequest) {
-        if (scrollRequest > 0) {
-            followLatest = true
-            list.scrollToItem(0)
-        }
-    }
-    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.id, state.runState) {
-        if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
-    }
-    val latest = state.messages.lastOrNull()
+    ConversationFollowEffects(
+        list = list,
+        state = state,
+        scrollRequest = scrollRequest,
+        followLatest = followLatest,
+        onFollowChange = { followLatest = it },
+    )
+    val config = MessageDisplayConfig(textSize, collapsePrompts, sideMargins, canRetry)
     Box(modifier.fillMaxWidth()) {
-        LazyColumn(
-            state = list,
-            reverseLayout = true,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            if (latest?.role != MessageRole.Assistant && state.runState != AgentRunState.Idle) {
-                item(key = "run-status") {
-                    MessageColumn(sideMargins) { AgentStatusBar(state.runState, onRetry, canRetry = canRetry) }
-                }
-            }
-            items(state.messages.asReversed(), key = { it.id }) { message ->
-                MessageColumn(sideMargins) {
-                    MessageItem(
-                        message,
-                        authorName = message.authorName(connectionName, state.model),
-                        modifier = Modifier.fillMaxWidth(),
-                        textSize = textSize,
-                        collapsePrompts = collapsePrompts,
-                        runState = if (message.id == latest?.id) state.runState else AgentRunState.Idle,
-                        onRetry = onRetry,
-                        canRetry = canRetry,
-                        onPromptHeightChange = { heightChange ->
-                            followLatest = false
-                            val info = list.layoutInfo
-                            val item = info.visibleItemsInfo.firstOrNull { it.key == message.id }
-                            if (item != null) {
-                                // 倒序列表从底部定位折叠时保留消息顶部或将其带回可视区域
-                                val top =
-                                    (info.viewportEndOffset - item.offset - item.size)
-                                        .coerceAtLeast(info.beforeContentPadding)
-                                list.requestScrollToItem(
-                                    item.index,
-                                    item.size + heightChange - info.viewportEndOffset + top,
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-        }
+        ConversationMessageList(
+            list = list,
+            state = state,
+            connectionName = connectionName,
+            config = config,
+            onRetry = onRetry,
+            onPromptHeightChange = { messageId, heightChange ->
+                followLatest = false
+                anchorCollapsedPrompt(list, messageId, heightChange)
+            },
+        )
         ConversationScrollbar(list, Modifier.align(Alignment.CenterEnd).padding(vertical = 8.dp))
         if (!atLatest) {
             FilledTonalButton(
@@ -123,11 +95,87 @@ internal fun ConversationMessages(
                 },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp),
             ) {
-                // 回到最新消息
                 Text(localizedString(Res.string.jump_to_latest))
             }
         }
     }
+}
+
+@Composable
+private fun ConversationFollowEffects(
+    list: LazyListState,
+    state: ConversationUiState,
+    scrollRequest: Int,
+    followLatest: Boolean,
+    onFollowChange: (Boolean) -> Unit,
+) {
+    val currentOnFollowChange by rememberUpdatedState(onFollowChange)
+    // 仅用户滚动改变跟随模式流式回复引起的布局变化不能强制读者回到最新消息
+    LaunchedEffect(list) {
+        snapshotFlow { if (list.isScrollInProgress) list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 else null }
+            .collect { atBottom -> if (atBottom != null) currentOnFollowChange(atBottom) }
+    }
+    LaunchedEffect(scrollRequest) {
+        if (scrollRequest > 0) {
+            currentOnFollowChange(true)
+            list.scrollToItem(0)
+        }
+    }
+    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.id, state.runState) {
+        if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
+    }
+}
+
+@Composable
+private fun ConversationMessageList(
+    list: LazyListState,
+    state: ConversationUiState,
+    connectionName: String,
+    config: MessageDisplayConfig,
+    onRetry: () -> Unit,
+    onPromptHeightChange: (String, Int) -> Unit,
+) {
+    val latest = state.messages.lastOrNull()
+    LazyColumn(
+        state = list,
+        reverseLayout = true,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        if (latest?.role != MessageRole.Assistant && state.runState != AgentRunState.Idle) {
+            item(key = "run-status") {
+                MessageColumn(config.sideMargins) { AgentStatusBar(state.runState, onRetry, canRetry = config.canRetry) }
+            }
+        }
+        items(state.messages.asReversed(), key = { it.id }) { message ->
+            MessageColumn(config.sideMargins) {
+                MessageItem(
+                    message,
+                    authorName = message.authorName(connectionName, state.model),
+                    modifier = Modifier.fillMaxWidth(),
+                    textSize = config.textSize,
+                    collapsePrompts = config.collapsePrompts,
+                    runState = if (message.id == latest?.id) state.runState else AgentRunState.Idle,
+                    onRetry = onRetry,
+                    canRetry = config.canRetry,
+                    onPromptHeightChange = { heightChange -> onPromptHeightChange(message.id, heightChange) },
+                )
+            }
+        }
+    }
+}
+
+private fun anchorCollapsedPrompt(
+    list: LazyListState,
+    messageId: String,
+    heightChange: Int,
+) {
+    val info = list.layoutInfo
+    val item = info.visibleItemsInfo.firstOrNull { it.key == messageId } ?: return
+    // 倒序列表从底部定位折叠时保留消息顶部或将其带回可视区域
+    val top = (info.viewportEndOffset - item.offset - item.size).coerceAtLeast(info.beforeContentPadding)
+    list.requestScrollToItem(item.index, item.size + heightChange - info.viewportEndOffset + top)
 }
 
 /** 与输入区共用最大宽度，滚动条仍保留在窗口边缘。 */

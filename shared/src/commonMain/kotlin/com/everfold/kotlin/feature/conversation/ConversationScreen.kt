@@ -1,11 +1,7 @@
 package com.everfold.kotlin.feature.conversation
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,15 +23,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,20 +42,12 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,26 +64,19 @@ import com.everfold.kotlin.ui.components.desktopUi
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.collapse_composer
-import everfold.shared.generated.resources.expand_composer
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
-import everfold.shared.generated.resources.message_placeholder
 import everfold.shared.generated.resources.new_session
 import everfold.shared.generated.resources.open_workspace
-import everfold.shared.generated.resources.send_message
-import everfold.shared.generated.resources.send_shortcut
-import everfold.shared.generated.resources.send_shortcut_enter
 import everfold.shared.generated.resources.show_sessions
-import everfold.shared.generated.resources.stop_reply
 import everfold.shared.generated.resources.suggestion_ideas
 import everfold.shared.generated.resources.suggestion_problem
 import everfold.shared.generated.resources.suggestion_week
 import everfold.shared.generated.resources.welcome_title
 import org.jetbrains.compose.resources.painterResource
 
-private const val EXPAND_EDITOR_LENGTH = 240
-private const val EXPAND_EDITOR_LINES = 3
+private const val DIVIDER_ALPHA = 0.5f
+private const val WELCOME_LOGO_ALPHA = 0.75f
 
 /** 会话页面组合导航执行状态消息与输入框具体动作交由外部回调处理 */
 @Composable
@@ -129,239 +107,178 @@ fun ConversationScreen(
 ) {
     // 按会话保留编辑状态仅在外部草稿改变时同步避免打断光标和输入法组合
     var expandedEditor by rememberSaveable(state.id) { mutableStateOf(false) }
-    var inputValue by remember(state.id) { mutableStateOf(TextFieldValue(state.draft, TextRange(state.draft.length))) }
-    LaunchedEffect(state.draft) {
-        if (inputValue.text != state.draft) inputValue = TextFieldValue(state.draft, TextRange(state.draft.length))
-    }
     val inputFocus = remember { FocusRequester() }
-    var inputFocused by remember { mutableStateOf(false) }
-    val inputBorderColor by animateColorAsState(
-        targetValue =
-            if (inputFocused) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
+    ConversationFocusEffect(state.id, autoFocusInput, inputFocusRequest, inputFocus)
+    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), expandedEditor) { expandedEditor = false }
+    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
+    val prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend)
+    val actions =
+        buildComposerActions(
+            onDraftChange = onDraftChange,
+            onSend = {
+                scrollRequest++
+                expandedEditor = false
+                onSend()
             },
-        animationSpec = tween(150),
-        label = "inputBorderColor",
-    )
-    LaunchedEffect(state.id, autoFocusInput, inputFocusRequest) {
+            onStop = onStop,
+            onToggleExpanded = {
+                expandedEditor = !expandedEditor
+                inputFocus.requestFocus()
+            },
+        )
+    Column(modifier.fillMaxSize().collapseEditorOnEscape(expandedEditor) { expandedEditor = false }) {
+        ConversationTopBar(
+            state.title.resolve(),
+            compactNavigation,
+            sessionsVisible,
+            onToggleSessions,
+            onNewConversation,
+            connectionIndicator,
+            conversationMenu,
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = DIVIDER_ALPHA))
+        if (!expandedEditor) {
+            ConversationBody(
+                state,
+                connectionName,
+                scrollRequest,
+                canSend && state.workspace != null && state.model != null,
+                prefs,
+                collapsePrompts,
+                { onDraftChange(it).also { inputFocus.requestFocus() } },
+                { if (desktopUi) inputFocus.requestFocus() },
+                onRetry,
+                Modifier.weight(1f),
+            )
+        }
+        ConversationComposer(
+            state,
+            expandedEditor,
+            inputFocus,
+            prefs,
+            actions,
+            composerFeedback,
+            composerTools,
+            attachmentsContent,
+            if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private fun buildComposerActions(
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onStop: () -> Unit,
+    onToggleExpanded: () -> Unit,
+): ComposerActions = ComposerActions(onDraftChange, onSend, onStop, onToggleExpanded)
+
+@Composable
+private fun ConversationFocusEffect(
+    conversationId: String,
+    autoFocusInput: Boolean,
+    inputFocusRequest: Int,
+    inputFocus: FocusRequester,
+) {
+    LaunchedEffect(conversationId, autoFocusInput, inputFocusRequest) {
         if (desktopUi && autoFocusInput) {
             withFrameNanos { }
             inputFocus.requestFocus()
         }
     }
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = expandedEditor,
-        onBackCompleted = { expandedEditor = false },
-    )
-    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
-    val send = {
-        scrollRequest++
-        expandedEditor = false
-        onSend()
+}
+
+private fun Modifier.collapseEditorOnEscape(
+    expandedEditor: Boolean,
+    onCollapse: () -> Unit,
+): Modifier =
+    onPreviewKeyEvent { event ->
+        val shouldCollapse = expandedEditor && event.type == KeyEventType.KeyDown && event.key == Key.Escape
+        if (shouldCollapse) onCollapse()
+        shouldCollapse
     }
-    Column(
-        modifier.fillMaxSize().onPreviewKeyEvent {
-            if (expandedEditor && it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
-                expandedEditor = false
-                true
-            } else {
-                false
-            }
-        },
+
+@Composable
+private fun ConversationTopBar(
+    title: String,
+    compactNavigation: Boolean,
+    sessionsVisible: Boolean,
+    onToggleSessions: () -> Unit,
+    onNewConversation: () -> Unit,
+    connectionIndicator: @Composable () -> Unit,
+    conversationMenu: @Composable () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        val toggleLabel =
+            localizedString(
+                when {
+                    compactNavigation -> Res.string.open_workspace
+                    sessionsVisible -> Res.string.hide_sessions
+                    else -> Res.string.show_sessions
+                },
+            )
+        AppTooltip(toggleLabel) {
+            IconButton(onClick = onToggleSessions) {
+                AppIcon(if (compactNavigation) AppSymbol.Menu else AppSymbol.Sidebar, description = toggleLabel)
+            }
+        }
         Row(
-            Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 12.dp),
+            Modifier.weight(1f).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            run {
-                val label =
-                    localizedString(
-                        if (compactNavigation) {
-                            // 打开工作台
-                            Res.string.open_workspace
-                        } else if (sessionsVisible) {
-                            // 折叠会话列表 · Ctrl + B
-                            Res.string.hide_sessions
-                        } else {
-                            // 展开会话列表 · Ctrl + B
-                            Res.string.show_sessions
-                        },
-                    )
-                AppTooltip(label) {
-                    IconButton(
-                        onClick = onToggleSessions,
-                    ) { AppIcon(if (compactNavigation) AppSymbol.Menu else AppSymbol.Sidebar, description = label) }
-                }
-            }
-            Row(
-                Modifier.weight(1f).padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                connectionIndicator()
-                Text(
-                    state.title.resolve(),
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            // 新建会话
-            val newConversationLabel = localizedString(Res.string.new_session)
-            AppTooltip(newConversationLabel) {
-                IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
-            }
-            conversationMenu()
+            connectionIndicator()
+            Text(
+                title,
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        if (!expandedEditor) {
-            if (state.messages.isEmpty()) {
-                WelcomeContent({
-                    onDraftChange(it)
-                    inputFocus.requestFocus()
-                }, Modifier.weight(1f))
-            } else {
-                key(state.id) {
-                    ConversationMessages(
-                        state,
-                        scrollRequest,
-                        connectionName = connectionName,
-                        onRetry = onRetry,
-                        canRetry = canSend && state.workspace != null && state.model != null,
-                        textSize = textSize,
-                        collapsePrompts = collapsePrompts,
-                        sideMargins = sideMargins,
-                        onJumpToLatest = { if (desktopUi) inputFocus.requestFocus() },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+        val newConversationLabel = localizedString(Res.string.new_session)
+        AppTooltip(newConversationLabel) {
+            IconButton(onClick = onNewConversation) { AppIcon(AppSymbol.Plus, description = newConversationLabel) }
         }
-        Box(
-            (if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth())
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                Modifier
-                    .conversationContentWidth(sideMargins)
-                    .then(if (expandedEditor) Modifier.fillMaxSize() else Modifier)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-            ) {
-                composerFeedback()
-                Surface(
-                    modifier = if (expandedEditor) Modifier.weight(1f) else Modifier,
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    border = BorderStroke(1.dp, inputBorderColor),
-                ) {
-                    Column(Modifier.fillMaxWidth().padding(8.dp)) {
-                        attachmentsContent()
-                        ConversationTextScale(textSize) {
-                            TextField(
-                                value = inputValue,
-                                onValueChange = {
-                                    inputValue = it
-                                    onDraftChange(it.text)
-                                },
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .then(if (expandedEditor) Modifier.weight(1f) else Modifier)
-                                        .focusRequester(inputFocus)
-                                        .onFocusChanged { inputFocused = it.isFocused }
-                                        .onPreviewKeyEvent {
-                                            if (it.type == KeyEventType.KeyDown && it.key == Key.Enter &&
-                                                shortcut.matches(
-                                                    ctrl = it.isCtrlPressed,
-                                                    meta = it.isMetaPressed,
-                                                    shift = it.isShiftPressed,
-                                                    alt = it.isAltPressed,
-                                                    desktop = desktopUi,
-                                                    composing =
-                                                        inputValue.composition != null,
-                                                )
-                                            ) {
-                                                if (canSend && !state.isResponding && state.hasSendableContent) send()
-                                                true
-                                            } else {
-                                                false
-                                            }
-                                        },
-                                // 输入消息
-                                placeholder = { Text(localizedString(Res.string.message_placeholder)) },
-                                maxLines = if (expandedEditor) Int.MAX_VALUE else 5,
-                                colors =
-                                    TextFieldDefaults.colors(
-                                        focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                    ),
-                            )
-                        }
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            composerTools()
-                            if (inputValue.text.length > EXPAND_EDITOR_LENGTH || inputValue.text.count {
-                                    it == '\n'
-                                } >= EXPAND_EDITOR_LINES ||
-                                expandedEditor
-                            ) {
-                                val editorLabel =
-                                    localizedString(if (expandedEditor) Res.string.collapse_composer else Res.string.expand_composer)
-                                AppTooltip(editorLabel) {
-                                    IconButton(onClick = {
-                                        expandedEditor = !expandedEditor
-                                        inputFocus.requestFocus()
-                                    }) {
-                                        AppIcon(if (expandedEditor) AppSymbol.Collapse else AppSymbol.Expand, description = editorLabel)
-                                    }
-                                }
-                            }
-                            AppTooltip(
-                                localizedString(
-                                    when {
-                                        // 暂停
-                                        state.isResponding -> Res.string.stop_reply
+        conversationMenu()
+    }
+}
 
-                                        // Enter 发送 · Shift + Enter 换行
-                                        desktopUi && shortcut == SendShortcut.Enter -> Res.string.send_shortcut_enter
-
-                                        // Ctrl/Cmd + Enter 发送 · Enter 换行
-                                        desktopUi -> Res.string.send_shortcut
-
-                                        // 发送
-                                        else -> Res.string.send_message
-                                    },
-                                ),
-                            ) {
-                                FilledIconButton(
-                                    onClick = if (state.isResponding) onStop else send,
-                                    enabled = state.isResponding || (canSend && state.hasSendableContent),
-                                    modifier = Modifier.padding(bottom = 4.dp),
-                                ) {
-                                    AppIcon(
-                                        if (state.isResponding) AppSymbol.Stop else AppSymbol.Send,
-                                        description =
-                                            localizedString(
-                                                // 暂停 / 发送
-                                                if (state.isResponding) Res.string.stop_reply else Res.string.send_message,
-                                            ),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+@Composable
+private fun ConversationBody(
+    state: ConversationUiState,
+    connectionName: String,
+    scrollRequest: Int,
+    canRetry: Boolean,
+    prefs: ComposerPrefs,
+    collapsePrompts: Boolean,
+    onSuggestion: (String) -> Unit,
+    onJumpToLatest: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (state.messages.isEmpty()) {
+        WelcomeContent(onSuggestion, modifier)
+    } else {
+        key(state.id) {
+            ConversationMessages(
+                state,
+                scrollRequest,
+                connectionName = connectionName,
+                onRetry = onRetry,
+                canRetry = canRetry,
+                textSize = prefs.textSize,
+                collapsePrompts = collapsePrompts,
+                sideMargins = prefs.sideMargins,
+                onJumpToLatest = onJumpToLatest,
+                modifier = modifier,
+            )
         }
     }
 }
@@ -403,10 +320,7 @@ internal fun MessageItem(
         ConversationTextScale(textSize) {
             if (user) {
                 if (message.text.isNotEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
+                    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
                         UserPrompt(message, onPromptHeightChange, collapsePrompts)
                     }
                 }
@@ -426,11 +340,8 @@ private fun WelcomeContent(
 ) {
     val suggestions =
         listOf(
-            // 帮我整理今天的想法
             localizedString(Res.string.suggestion_ideas),
-            // 一起制定这周的计划
             localizedString(Res.string.suggestion_week),
-            // 把一个复杂问题拆成小步骤
             localizedString(Res.string.suggestion_problem),
         )
     LazyColumn(
@@ -444,12 +355,11 @@ private fun WelcomeContent(
                 painter = painterResource(Res.drawable.logo),
                 contentDescription = null,
                 modifier = Modifier.size(75.dp),
-                alpha = 0.75f,
+                alpha = WELCOME_LOGO_ALPHA,
             )
         }
         item {
             Text(
-                // 千里之行 始于足下
                 localizedString(Res.string.welcome_title),
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,

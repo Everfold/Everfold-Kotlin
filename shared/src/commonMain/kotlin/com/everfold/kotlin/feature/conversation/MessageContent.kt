@@ -46,6 +46,11 @@ import everfold.shared.generated.resources.expand_prompt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val PROMPT_COLLAPSED_LINES = 6
+private const val PROMPT_COLLAPSE_THRESHOLD = 8
+private const val PROMPT_MEASURE_LINES = 9
+private const val COPIED_BADGE_DURATION_MILLIS = 1600L
+
 /** 长用户消息超过八行时可折叠为六行切换前回报高度差以维持列表位置 */
 @Composable
 internal fun UserPrompt(
@@ -61,14 +66,17 @@ internal fun UserPrompt(
     BoxWithConstraints(Modifier.padding(16.dp)) {
         val collapsible =
             remember(message.text, style, constraints, collapsePrompts, measurer, density) {
-                collapsePrompts && measurer.measure(message.text, style = style, maxLines = 9, constraints = constraints).lineCount > 8
+                collapsePrompts &&
+                    measurer
+                        .measure(message.text, style = style, maxLines = PROMPT_MEASURE_LINES, constraints = constraints)
+                        .lineCount > PROMPT_COLLAPSE_THRESHOLD
             }
         Column(horizontalAlignment = Alignment.End) {
             SelectionContainer {
                 Text(
                     message.text,
                     style = style,
-                    maxLines = if (collapsible && !expanded) 6 else Int.MAX_VALUE,
+                    maxLines = if (collapsible && !expanded) PROMPT_COLLAPSED_LINES else Int.MAX_VALUE,
                     overflow = TextOverflow.Ellipsis,
                     onTextLayout = { layout = it },
                 )
@@ -80,7 +88,7 @@ internal fun UserPrompt(
                             measurer.measure(
                                 message.text,
                                 style = style,
-                                maxLines = if (expanded) 6 else Int.MAX_VALUE,
+                                maxLines = if (expanded) PROMPT_COLLAPSED_LINES else Int.MAX_VALUE,
                                 overflow = TextOverflow.Ellipsis,
                                 constraints = current.layoutInput.constraints,
                             )
@@ -155,7 +163,7 @@ internal fun CopyTextButton(
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
         if (copied) {
-            delay(1600)
+            delay(COPIED_BADGE_DURATION_MILLIS)
             copied = false
         }
     }

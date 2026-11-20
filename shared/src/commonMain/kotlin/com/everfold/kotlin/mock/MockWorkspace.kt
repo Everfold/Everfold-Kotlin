@@ -24,6 +24,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val ActiveRunStates = setOf(AgentRunState.Running, AgentRunState.Waiting)
+private const val STREAM_INITIAL_DELAY_MILLIS = 350L
+private const val STREAM_CHAR_STEP = 3
+private const val STREAM_STEP_DELAY_MILLIS = 45L
 
 /** 内存模拟工作区驱动界面演示不创建 Agent连接网络或持久化数据 */
 internal class MockWorkspace :
@@ -223,13 +226,13 @@ internal class MockWorkspace :
     ) {
         replies[id] =
             viewModelScope.launch {
-                delay(350)
-                for (length in 1..reply.length step 3) {
-                    val text = reply.take((length + 2).coerceAtMost(reply.length))
+                delay(STREAM_INITIAL_DELAY_MILLIS)
+                for (length in 1..reply.length step STREAM_CHAR_STEP) {
+                    val text = reply.take((length + STREAM_CHAR_STEP - 1).coerceAtMost(reply.length))
                     update(id) { state ->
                         state.copy(messages = state.messages.map { if (it.id == messageId) it.copy(text = text) else it })
                     }
-                    delay(45)
+                    delay(STREAM_STEP_DELAY_MILLIS)
                 }
 
                 // 已完成

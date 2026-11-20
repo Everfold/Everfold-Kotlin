@@ -41,6 +41,8 @@ import everfold.shared.generated.resources.custom_color
 import everfold.shared.generated.resources.follow_system
 import everfold.shared.generated.resources.theme_color
 
+private const val PRESET_COLOR_COLUMNS = 3
+
 /** 主题色选择系统配色预设种子色与自定义颜色共用选择状态 */
 @Composable
 internal fun ThemeColorSettings(
@@ -51,75 +53,14 @@ internal fun ThemeColorSettings(
 ) {
     var showCustomDialog by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 主题色
         Text(localizedString(Res.string.theme_color), style = MaterialTheme.typography.titleMedium)
         Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .selectable(selection.mode == ThemeColorMode.System, role = Role.RadioButton, onClick = onSystemColorChange)
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    RadioButton(selection.mode == ThemeColorMode.System, onClick = null)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        // 跟随系统
-                        Text(localizedString(Res.string.follow_system), style = MaterialTheme.typography.titleSmall)
-                    }
-                }
+                SystemThemeColorOption(selection.mode == ThemeColorMode.System, onSystemColorChange)
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                ThemePreset.entries.chunked(3).forEach { presets ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        presets.forEach { preset ->
-                            val selected = selection.mode == ThemeColorMode.Preset && selection.preset == preset
-                            Column(
-                                Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
-                                    .selectable(selected, role = Role.RadioButton, onClick = { onPresetChange(preset) })
-                                    .padding(vertical = 12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                ColorSwatch(preset.seed, selected)
-
-                                // 标签见 ThemePreset
-                                Text(localizedString(preset.label), style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-                    }
-                }
+                PresetThemeColorGrid(selection, onPresetChange)
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .selectable(selection.mode == ThemeColorMode.Custom, role = Role.RadioButton, onClick = { showCustomDialog = true })
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    ColorSwatch(selection.customSeed, selection.mode == ThemeColorMode.Custom)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        // 自定义颜色
-                        Text(localizedString(Res.string.custom_color), style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            selection.customSeed.toHexColor(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Text(
-                        // 调整
-                        localizedString(Res.string.adjust),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                CustomThemeColorOption(selection) { showCustomDialog = true }
             }
         }
     }
@@ -131,6 +72,85 @@ internal fun ThemeColorSettings(
                 onCustomColorChange(it)
                 showCustomDialog = false
             },
+        )
+    }
+}
+
+@Composable
+private fun SystemThemeColorOption(
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .selectable(selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        RadioButton(selected, onClick = null)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(localizedString(Res.string.follow_system), style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}
+
+@Composable
+private fun PresetThemeColorGrid(
+    selection: ThemeColorSelection,
+    onPresetChange: (ThemePreset) -> Unit,
+) {
+    ThemePreset.entries.chunked(PRESET_COLOR_COLUMNS).forEach { presets ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            presets.forEach { preset ->
+                val selected = selection.mode == ThemeColorMode.Preset && selection.preset == preset
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                        .selectable(selected, role = Role.RadioButton, onClick = { onPresetChange(preset) })
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ColorSwatch(preset.seed, selected)
+                    Text(localizedString(preset.label), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomThemeColorOption(
+    selection: ThemeColorSelection,
+    onOpenDialog: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .selectable(selection.mode == ThemeColorMode.Custom, role = Role.RadioButton, onClick = onOpenDialog)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        ColorSwatch(selection.customSeed, selection.mode == ThemeColorMode.Custom)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(localizedString(Res.string.custom_color), style = MaterialTheme.typography.titleSmall)
+            Text(
+                selection.customSeed.toHexColor(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            localizedString(Res.string.adjust),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }

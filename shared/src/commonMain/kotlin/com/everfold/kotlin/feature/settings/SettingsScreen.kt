@@ -24,9 +24,17 @@ import everfold.shared.generated.resources.conversation_settings
 import everfold.shared.generated.resources.display_settings
 import everfold.shared.generated.resources.nav_settings
 import everfold.shared.generated.resources.theme_settings
+import org.jetbrains.compose.resources.StringResource
 
 /** 设置页签主题显示会话与关于 */
-private enum class SettingsPage { Theme, Display, Conversation, About }
+private enum class SettingsPage(
+    val label: StringResource,
+) {
+    Theme(Res.string.theme_settings),
+    Display(Res.string.display_settings),
+    Conversation(Res.string.conversation_settings),
+    About(Res.string.about),
+}
 
 /** 设置页入口分发偏好回调每个页签独立保存滚动位置 */
 @Composable
@@ -51,51 +59,13 @@ fun SettingsScreen(
     onBack: (() -> Unit)? = null,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.Theme) }
-    val themeScrollState = rememberScrollState()
-    val conversationScrollState = rememberScrollState()
-    val displayScrollState = rememberScrollState()
-    val aboutScrollState = rememberScrollState()
+    val scrollStates = SettingsPage.entries.associateWith { rememberScrollState() }
     SettingsLayout(
-        // 设置
         title = localizedString(Res.string.nav_settings),
         modifier = modifier,
         onBack = onBack,
-        scrollState =
-            when (page) {
-                SettingsPage.Theme -> themeScrollState
-                SettingsPage.Display -> displayScrollState
-                SettingsPage.Conversation -> conversationScrollState
-                SettingsPage.About -> aboutScrollState
-            },
-        navigation = {
-            SecondaryScrollableTabRow(selectedTabIndex = page.ordinal, edgePadding = 0.dp) {
-                SettingsPage.entries.forEach { item ->
-                    Tab(
-                        selected = page == item,
-                        onClick = { page = item },
-                        text = {
-                            Text(
-                                localizedString(
-                                    when (item) {
-                                        // 主题
-                                        SettingsPage.Theme -> Res.string.theme_settings
-
-                                        // 显示
-                                        SettingsPage.Display -> Res.string.display_settings
-
-                                        // 会话
-                                        SettingsPage.Conversation -> Res.string.conversation_settings
-
-                                        // 关于
-                                        SettingsPage.About -> Res.string.about
-                                    },
-                                ),
-                            )
-                        },
-                    )
-                }
-            }
-        },
+        scrollState = scrollStates.getValue(page),
+        navigation = { SettingsTabs(page) { page = it } },
     ) {
         when (page) {
             SettingsPage.Theme -> {
@@ -127,6 +97,22 @@ fun SettingsScreen(
             SettingsPage.About -> {
                 AboutSettingsPage()
             }
+        }
+    }
+}
+
+@Composable
+private fun SettingsTabs(
+    selectedPage: SettingsPage,
+    onSelect: (SettingsPage) -> Unit,
+) {
+    SecondaryScrollableTabRow(selectedTabIndex = selectedPage.ordinal, edgePadding = 0.dp) {
+        SettingsPage.entries.forEach { item ->
+            Tab(
+                selected = selectedPage == item,
+                onClick = { onSelect(item) },
+                text = { Text(localizedString(item.label)) },
+            )
         }
     }
 }

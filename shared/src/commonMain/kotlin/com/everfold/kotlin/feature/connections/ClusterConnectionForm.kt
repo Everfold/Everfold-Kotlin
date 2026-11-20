@@ -66,6 +66,23 @@ import everfold.shared.generated.resources.show_password
 import everfold.shared.generated.resources.use_sample
 import org.jetbrains.compose.resources.StringResource
 
+private val ClusterMethod.label: StringResource
+    get() =
+        when (this) {
+            ClusterMethod.Lan -> Res.string.cluster_lan
+            ClusterMethod.Central -> Res.string.cluster_central
+            ClusterMethod.Cloud -> Res.string.cluster_cloud
+        }
+
+private val ClusterAuth.label: StringResource
+    get() =
+        when (this) {
+            ClusterAuth.None -> Res.string.auth_none
+            ClusterAuth.Password -> Res.string.auth_password
+            ClusterAuth.Certificate -> Res.string.auth_certificate
+            ClusterAuth.Mtls -> Res.string.auth_mtls
+        }
+
 /** 根据连接方式和验证方式展示表单宽窄屏共用字段与校验反馈 */
 @Composable
 internal fun ClusterConnectionForm(
@@ -76,131 +93,160 @@ internal fun ClusterConnectionForm(
 ) {
     val errors = form.invalidFields
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ClusterMethod.entries.forEach { method ->
-                val label =
-                    when (method) {
-                        // 局域网
-                        ClusterMethod.Lan -> Res.string.cluster_lan
-
-                        // 中心节点
-                        ClusterMethod.Central -> Res.string.cluster_central
-
-                        // XX云
-                        ClusterMethod.Cloud -> Res.string.cluster_cloud
-                    }
-                FilterChip(
-                    method == form.method,
-                    onClick = { onChange(form.copy(method = method)) },
-                    label = { Text(localizedString(label)) },
-                )
-            }
-        }
+        ClusterMethodChips(form.method) { onChange(form.copy(method = it)) }
         if (form.method != ClusterMethod.Cloud) {
-            // 可留空以发现局域网节点或手动填写 IP 和端口
-            if (form.method == ClusterMethod.Lan) Text(localizedString(Res.string.lan_hint), style = MaterialTheme.typography.bodySmall)
-            SetupColumns(wide, first = {
-                SetupField(
-                    // IP 地址
-                    Res.string.ip_address,
-                    form.ip,
-                    { onChange(form.copy(ip = it)) },
-                    ClusterField.Ip in errors,
-                    // 请输入有效的 IPv4 或 IPv6 地址
-                    Res.string.error_ip,
-                    showErrors,
-                )
-            }, second = {
-                SetupField(
-                    // 端口
-                    Res.string.port,
-                    form.port,
-                    { onChange(form.copy(port = it)) },
-                    ClusterField.Port in errors,
-                    // 请输入 1-65535 范围内的端口
-                    Res.string.error_port,
-                    showErrors,
-                    keyboard = KeyboardType.Number,
-                )
-            })
+            ClusterEndpointFields(form, wide, errors, showErrors, onChange)
         }
         if (form.method == ClusterMethod.Central) {
-            // 验证方式
-            Text(localizedString(Res.string.auth_method), style = MaterialTheme.typography.titleMedium)
-            FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ClusterAuth.entries.forEach { auth ->
-                    val label =
-                        when (auth) {
-                            // 无
-                            ClusterAuth.None -> Res.string.auth_none
-
-                            // 账号密码
-                            ClusterAuth.Password -> Res.string.auth_password
-
-                            // 服务器验证
-                            ClusterAuth.Certificate -> Res.string.auth_certificate
-
-                            // mTLS
-                            ClusterAuth.Mtls -> Res.string.auth_mtls
-                        }
-                    FilterChip(form.auth == auth, onClick = { onChange(form.copy(auth = auth)) }, label = { Text(localizedString(label)) })
-                }
-            }
+            ClusterAuthChips(form.auth) { onChange(form.copy(auth = it)) }
         }
         if (form.method == ClusterMethod.Cloud || (form.method == ClusterMethod.Central && form.auth == ClusterAuth.Password)) {
-            SetupColumns(wide, first = {
-                // 用户名
-                SetupField(
-                    Res.string.account,
-                    form.account,
-                    {
-                        onChange(form.copy(account = it))
-                    },
-                    ClusterField.Account in errors,
-                    // 请输入用户名
-                    Res.string.error_account,
-                    showErrors,
-                )
-            }, second = {
-                SetupField(
-                    // 密码
-                    Res.string.password,
-                    form.password,
-                    { onChange(form.copy(password = it)) },
-                    ClusterField.Password in errors,
-                    // 请输入密码
-                    Res.string.error_password,
-                    showErrors,
-                    secret = true,
-                )
-            })
+            ClusterCredentialFields(form, wide, errors, showErrors, onChange)
         }
-        if (form.method == ClusterMethod.Central && form.auth == ClusterAuth.Certificate) {
-            // 服务器证书
-            FileImportField(Res.string.server_certificate, form.serverCertificate, "server.pem", {
-                onChange(form.copy(serverCertificate = it))
-            }, showErrors)
+        if (form.method == ClusterMethod.Central) {
+            ClusterCertificateFields(form, showErrors, onChange)
         }
-        if (form.method == ClusterMethod.Central && form.auth == ClusterAuth.Mtls) {
-            FileImportField(
-                // CA 证书
-                Res.string.ca_certificate,
-                form.caCertificate,
-                "ca.pem",
-                { onChange(form.copy(caCertificate = it)) },
+    }
+}
+
+@Composable
+private fun ClusterMethodChips(
+    selected: ClusterMethod,
+    onSelect: (ClusterMethod) -> Unit,
+) {
+    FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ClusterMethod.entries.forEach { method ->
+            FilterChip(
+                selected == method,
+                onClick = { onSelect(method) },
+                label = { Text(localizedString(method.label)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ClusterEndpointFields(
+    form: ClusterSetup,
+    wide: Boolean,
+    errors: Set<ClusterField>,
+    showErrors: Boolean,
+    onChange: (ClusterSetup) -> Unit,
+) {
+    if (form.method == ClusterMethod.Lan) {
+        Text(localizedString(Res.string.lan_hint), style = MaterialTheme.typography.bodySmall)
+    }
+    SetupColumns(
+        wide = wide,
+        first = {
+            SetupField(
+                Res.string.ip_address,
+                form.ip,
+                { onChange(form.copy(ip = it)) },
+                ClusterField.Ip in errors,
+                Res.string.error_ip,
                 showErrors,
             )
+        },
+        second = {
+            SetupField(
+                Res.string.port,
+                form.port,
+                { onChange(form.copy(port = it)) },
+                ClusterField.Port in errors,
+                Res.string.error_port,
+                showErrors,
+                keyboard = KeyboardType.Number,
+            )
+        },
+    )
+}
 
-            // 客户端证书
-            FileImportField(Res.string.client_public_key, form.clientPublicKey, "client-cert.pem", {
-                onChange(form.copy(clientPublicKey = it))
-            }, showErrors)
-
-            // 客户端私钥
-            FileImportField(Res.string.client_private_key, form.clientPrivateKey, "client-private.pem", {
-                onChange(form.copy(clientPrivateKey = it))
-            }, showErrors)
+@Composable
+private fun ClusterAuthChips(
+    selected: ClusterAuth,
+    onSelect: (ClusterAuth) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(localizedString(Res.string.auth_method), style = MaterialTheme.typography.titleMedium)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ClusterAuth.entries.forEach { auth ->
+                FilterChip(selected == auth, onClick = { onSelect(auth) }, label = { Text(localizedString(auth.label)) })
+            }
         }
+    }
+}
+
+@Composable
+private fun ClusterCredentialFields(
+    form: ClusterSetup,
+    wide: Boolean,
+    errors: Set<ClusterField>,
+    showErrors: Boolean,
+    onChange: (ClusterSetup) -> Unit,
+) {
+    SetupColumns(
+        wide = wide,
+        first = {
+            SetupField(
+                Res.string.account,
+                form.account,
+                { onChange(form.copy(account = it)) },
+                ClusterField.Account in errors,
+                Res.string.error_account,
+                showErrors,
+            )
+        },
+        second = {
+            SetupField(
+                Res.string.password,
+                form.password,
+                { onChange(form.copy(password = it)) },
+                ClusterField.Password in errors,
+                Res.string.error_password,
+                showErrors,
+                secret = true,
+            )
+        },
+    )
+}
+
+@Composable
+private fun ClusterCertificateFields(
+    form: ClusterSetup,
+    showErrors: Boolean,
+    onChange: (ClusterSetup) -> Unit,
+) {
+    if (form.auth == ClusterAuth.Certificate) {
+        FileImportField(
+            Res.string.server_certificate,
+            form.serverCertificate,
+            "server.pem",
+            { onChange(form.copy(serverCertificate = it)) },
+            showErrors,
+        )
+    } else if (form.auth == ClusterAuth.Mtls) {
+        FileImportField(
+            Res.string.ca_certificate,
+            form.caCertificate,
+            "ca.pem",
+            { onChange(form.copy(caCertificate = it)) },
+            showErrors,
+        )
+        FileImportField(
+            Res.string.client_public_key,
+            form.clientPublicKey,
+            "client-cert.pem",
+            { onChange(form.copy(clientPublicKey = it)) },
+            showErrors,
+        )
+        FileImportField(
+            Res.string.client_private_key,
+            form.clientPrivateKey,
+            "client-private.pem",
+            { onChange(form.copy(clientPrivateKey = it)) },
+            showErrors,
+        )
     }
 }
 
@@ -246,7 +292,6 @@ private fun SetupField(
         trailingIcon = {
             if (secret) {
                 TextButton(onClick = { reveal = !reveal }) {
-                    // 隐藏 / 显示
                     Text(localizedString(if (reveal) Res.string.hide_password else Res.string.show_password))
                 }
             }
@@ -268,22 +313,18 @@ private fun FileImportField(
     var touched by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(localizedString(label), style = MaterialTheme.typography.titleSmall)
-
-        // 尚未导入
         Text(value ?: localizedString(Res.string.no_file), style = MaterialTheme.typography.bodySmall)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = {
                 scanning = false
                 importing = true
             }) {
-                // 选择本地文件 / 替换文件
                 Text(localizedString(if (value == null) Res.string.choose_file else Res.string.replace_file))
             }
             OutlinedButton(onClick = {
                 scanning = true
                 importing = true
             }) {
-                // 扫描二维码
                 Text(localizedString(Res.string.scan_file))
             }
             if (value != null) {
@@ -291,16 +332,12 @@ private fun FileImportField(
                     touched = true
                     onImport(null)
                 }) {
-                    // 移除
                     Text(localizedString(Res.string.remove_file))
                 }
             }
         }
-        if ((showErrors || touched) &&
-            value.isNullOrBlank()
-        ) {
+        if ((showErrors || touched) && value.isNullOrBlank()) {
             Text(
-                // 请导入此项需要的文件
                 localizedString(Res.string.error_certificate),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
@@ -309,23 +346,17 @@ private fun FileImportField(
     }
     if (importing) {
         AlertDialog(
-            onDismissRequest = {
-                importing = false
-            },
-            // 模拟扫码导入 / 模拟文件导入
+            onDismissRequest = { importing = false },
             title = { Text(localizedString(if (scanning) Res.string.scan_preview else Res.string.import_preview)) },
-            // 当前为界面预览使用示例文件完成导入不读取设备文件或相机
             text = { Text(localizedString(Res.string.import_hint)) },
             confirmButton = {
                 TextButton(onClick = {
                     onImport(sampleName)
                     importing = false
                 }) {
-                    // 使用示例文件
                     Text(localizedString(Res.string.use_sample))
                 }
             },
-            // 取消
             dismissButton = { TextButton(onClick = { importing = false }) { Text(localizedString(Res.string.cancel)) } },
         )
     }
