@@ -37,6 +37,8 @@ import everfold.shared.generated.resources.jump_to_latest
 import everfold.shared.generated.resources.model_unavailable
 import kotlinx.coroutines.launch
 
+private const val AT_LATEST_OFFSET_TOLERANCE_PX = 48
+
 @Immutable
 private data class MessageDisplayConfig(
     val textSize: ConversationTextSize,
@@ -63,7 +65,9 @@ internal fun ConversationMessages(
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var followLatest by rememberSaveable { mutableStateOf(true) }
-    val atLatest by remember { derivedStateOf { list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset == 0 } }
+    val atLatest by remember {
+        derivedStateOf { list.firstVisibleItemIndex == 0 && list.firstVisibleItemScrollOffset <= AT_LATEST_OFFSET_TOLERANCE_PX }
+    }
     ConversationFollowEffects(
         list = list,
         state = state,

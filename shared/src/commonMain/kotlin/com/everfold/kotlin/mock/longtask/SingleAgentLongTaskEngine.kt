@@ -26,13 +26,12 @@ internal class SingleAgentLongTaskEngine(
     private val records = mutableMapOf<String, TaskRunRecord>()
     private val jobs = mutableMapOf<String, Job>()
 
-    fun seedRecord(
-        record: TaskRunRecord,
-        initialState: AgentRunState = AgentRunState.Stopped,
-    ) {
+    fun seedRecord(record: TaskRunRecord) {
         records[record.conversationId] = record
-        onTaskStateChanged(record, record.conversationId, initialState)
     }
+
+    val activeRunningIds: List<String>
+        get() = jobs.keys.toList()
 
     fun hasResumableRun(conversationId: String): Boolean = conversationId in records
 

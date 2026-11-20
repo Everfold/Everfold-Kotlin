@@ -1,17 +1,21 @@
 package com.everfold.kotlin.mock.longtask
 
 import androidx.lifecycle.ViewModelStore
+import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.DeviceTaskFault
 import com.everfold.kotlin.feature.conversation.StepStatus
 import com.everfold.kotlin.mock.MockWorkspace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
@@ -123,6 +127,78 @@ class SingleAgentLongTaskEngineTest {
             assertEquals(AgentRunState.Completed, finished.runState)
             assertTrue(assertNotNull(finished.messages.last().execution).elapsedMillis >= 60_000L)
         }
+
+    @Test
+    fun platformBridgePublishesOnlyBuiltInTasksAndHandlesNotificationCommands() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val store = ViewModelStore()
+            val bridge = RecordingLongTaskBridge()
+            try {
+                val workspace = MockWorkspace(enableLongTasks = true, taskBridge = bridge)
+                store.put("workspace", workspace)
+                runCurrent()
+                assertTrue(bridge.published.isEmpty(), "Pre-seeded paused task does not spam notification on startup")
+
+                workspace.updateNewConversationDraft("构建离线文档索引")
+                val localId = assertNotNull(workspace.submitNewConversation())
+                advanceTimeBy(2_000L)
+                runCurrent()
+                assertTrue(bridge.published.any { it.conversationId == localId && it.kind == TaskNotificationKind.Running })
+
+                bridge.commandFlow.tryEmit(DeviceTaskCommand.Pause(localId))
+                runCurrent()
+                assertEquals(AgentRunState.Stopped, workspace.conversations.first { it.id == localId }.runState)
+                assertEquals(TaskNotificationKind.Paused, bridge.published.last().kind)
+
+                bridge.commandFlow.tryEmit(DeviceTaskCommand.Resume(localId))
+                advanceTimeBy(1_000L)
+                runCurrent()
+                assertEquals(AgentRunState.Running, workspace.conversations.first { it.id == localId }.runState)
+
+                bridge.commandFlow.tryEmit(DeviceTaskCommand.TimeoutStopAll)
+                runCurrent()
+                assertEquals(AgentRunState.Stopped, workspace.conversations.first { it.id == localId }.runState)
+
+                val remoteConn = assertNotNull(workspace.connections.add("Cluster", ClusterSetup()))
+                workspace.connections.connect(remoteConn)
+                advanceUntilIdle()
+                workspace.selectNewConversationConnection(remoteConn)
+                workspace.updateNewConversationDraft("Remote task")
+                val remoteSessionId = assertNotNull(workspace.submitNewConversation())
+                advanceTimeBy(5_000L)
+                runCurrent()
+                assertTrue(bridge.published.none { it.conversationId == remoteSessionId })
+
+                workspace.deleteConversation(localId)
+                assertTrue(localId in bridge.dismissedIds)
+            } finally {
+                store.clear()
+                Dispatchers.resetMain()
+            }
+        }
+
+    private class RecordingLongTaskBridge : PlatformLongTaskBridge {
+        val commandFlow = MutableSharedFlow<DeviceTaskCommand>(extraBufferCapacity = 8)
+        override val commands = commandFlow
+        override val pendingOpenConversationId = MutableStateFlow<String?>(null)
+        val published = mutableListOf<TaskNotificationPayload>()
+        val dismissedIds = mutableListOf<String>()
+
+        override fun publish(payload: TaskNotificationPayload) {
+            published += payload
+        }
+
+        override fun dismiss(conversationId: String) {
+            dismissedIds += conversationId
+        }
+
+        override fun consumeOpenConversation(conversationId: String) {
+            if (pendingOpenConversationId.value == conversationId) {
+                pendingOpenConversationId.value = null
+            }
+        }
+    }
 
     private fun longTaskTest(block: suspend TestScope.(MockWorkspace) -> Unit) =
         runTest {

@@ -46,7 +46,7 @@ class LongTaskConversationUiTest(
             onNodeWithText("本机存储深度归档完成", substring = true).assertIsDisplayed()
             onNodeWithText("已完成 · 共 6 步", substring = true).assertIsDisplayed()
             onNodeWithContentDescription("执行详情").performScrollTo().performClick()
-            onNodeWithText("1. 探测挂载卷容量与分区权限").assertIsDisplayed()
+            onNodeWithText("1. 探测挂载卷容量与分区权限").performScrollTo().assertIsDisplayed()
         }
 
     @Test

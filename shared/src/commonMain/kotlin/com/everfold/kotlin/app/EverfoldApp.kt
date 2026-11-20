@@ -32,6 +32,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,11 +51,14 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.everfold.kotlin.app.navigation.AppDestination
+import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.feature.sessions.SessionsScreen
 import com.everfold.kotlin.feature.settings.SettingsScreen
+import com.everfold.kotlin.mock.longtask.PlatformLongTaskPermissionEffect
+import com.everfold.kotlin.mock.longtask.platformLongTaskBridge
 import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.WindowBreakpoints
@@ -92,6 +96,21 @@ internal fun EverfoldApp(
     preferences: UserPreferencesState = remember { UserPreferencesState() },
 ) {
     val appState = rememberEverfoldAppState()
+    val pendingOpenId by platformLongTaskBridge.pendingOpenConversationId.collectAsState()
+    LaunchedEffect(pendingOpenId) {
+        val targetId = pendingOpenId ?: return@LaunchedEffect
+        if (workspace.conversations.any { it.id == targetId }) {
+            appState.destination = AppDestination.Sessions
+            appState.selectedId = targetId
+        }
+        platformLongTaskBridge.consumeOpenConversation(targetId)
+    }
+    val hasActiveLocalTask =
+        workspace.conversations.any {
+            it.connectionId == BUILT_IN_CONNECTION_ID &&
+                (it.runState == AgentRunState.Running || it.runState == AgentRunState.Waiting)
+        }
+    PlatformLongTaskPermissionEffect(hasActiveLocalTask)
     val filePicker =
         filePickerProvider { result ->
             val target = appState.attachments.pendingTarget ?: return@filePickerProvider

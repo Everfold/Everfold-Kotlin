@@ -12,8 +12,12 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.feature.conversation.DeviceTaskController
 import com.everfold.kotlin.feature.conversation.MessageRole
+import com.everfold.kotlin.mock.longtask.DeviceTaskCommand
+import com.everfold.kotlin.mock.longtask.NoopLongTaskBridge
 import com.everfold.kotlin.mock.longtask.OnDeviceScenarioCatalog
+import com.everfold.kotlin.mock.longtask.PlatformLongTaskBridge
 import com.everfold.kotlin.mock.longtask.SingleAgentLongTaskEngine
+import com.everfold.kotlin.mock.longtask.publishBridgeSnapshot
 import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
@@ -22,6 +26,7 @@ import everfold.shared.generated.resources.new_conversation_hint
 import everfold.shared.generated.resources.new_session
 import everfold.shared.generated.resources.reply_complete
 import everfold.shared.generated.resources.reply_stopped
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -31,14 +36,17 @@ private const val STREAM_INITIAL_DELAY_MILLIS = 350L
 private const val STREAM_CHAR_STEP = 3
 private const val STREAM_STEP_DELAY_MILLIS = 45L
 
-/** 内存模拟工作区驱动界面演示，可选启用单智能体本机长程任务引擎。 */
+/** 内存模拟工作区驱动界面演示，可选启用单智能体本机长程任务引擎与平台通知桥接。 */
 internal class MockWorkspace(
     private val enableLongTasks: Boolean = false,
+    externalScope: CoroutineScope? = null,
+    private val taskBridge: PlatformLongTaskBridge = NoopLongTaskBridge,
 ) : ViewModel(),
     Workspace {
+    private val runtimeScope: CoroutineScope = externalScope ?: viewModelScope
     override var initialized by mutableStateOf(false)
         private set
-    override val connections = MockConnections(viewModelScope, ::stopConnectionSessions)
+    override val connections = MockConnections(runtimeScope, ::stopConnectionSessions)
 
     override fun completeSetup(setup: ClusterSetup?) {
         if (initialized) return
@@ -52,7 +60,7 @@ internal class MockWorkspace(
         initialized = true
     }
 
-    override val conversationOptions = MockConversationOptions(viewModelScope, connections, ::read, ::update)
+    override val conversationOptions = MockConversationOptions(runtimeScope, connections, ::read, ::update)
 
     override var conversations by mutableStateOf(
         sampleConversations(includePausedLongTask = enableLongTasks).map(MockConversationCatalog::initialize),
@@ -62,14 +70,33 @@ internal class MockWorkspace(
 
     private var nextId = 0
     private val replies = mutableMapOf<String, Job>()
-    private val longTaskEngine = SingleAgentLongTaskEngine(viewModelScope, ::read, ::update)
+    private val longTaskEngine =
+        SingleAgentLongTaskEngine(
+            scope = runtimeScope,
+            readConversation = ::read,
+            updateConversation = ::update,
+            onTaskStateChanged = { record, id, state ->
+                publishBridgeSnapshot(taskBridge, record, id, state)
+            },
+        )
 
     override val taskController: DeviceTaskController
         get() = if (enableLongTasks) longTaskEngine else DeviceTaskController.Noop
 
     init {
         if (enableLongTasks) {
-            longTaskEngine.seedRecord(OnDeviceScenarioCatalog.preseededPausedStorageRun(), AgentRunState.Stopped)
+            longTaskEngine.seedRecord(OnDeviceScenarioCatalog.preseededPausedStorageRun())
+            if (taskBridge !== NoopLongTaskBridge) {
+                runtimeScope.launch {
+                    taskBridge.commands.collect { command ->
+                        when (command) {
+                            is DeviceTaskCommand.Pause -> stop(command.conversationId)
+                            is DeviceTaskCommand.Resume -> retry(command.conversationId)
+                            DeviceTaskCommand.TimeoutStopAll -> longTaskEngine.activeRunningIds.forEach(::stop)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -264,7 +291,7 @@ internal class MockWorkspace(
     ) {
         replies.remove(id)?.cancel()
         val job =
-            viewModelScope.launch {
+            runtimeScope.launch {
                 delay(STREAM_INITIAL_DELAY_MILLIS)
                 for (length in 1..reply.length step STREAM_CHAR_STEP) {
                     val text = reply.take((length + STREAM_CHAR_STEP - 1).coerceAtMost(reply.length))

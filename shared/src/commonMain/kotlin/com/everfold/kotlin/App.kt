@@ -8,13 +8,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.everfold.kotlin.app.EverfoldApp
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.feature.onboarding.OnboardingScreen
 import com.everfold.kotlin.mock.MockConnectionOptions
-import com.everfold.kotlin.mock.MockWorkspace
+import com.everfold.kotlin.mock.longtask.rememberAppWorkspace
 import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.preferences.rememberPreferenceStore
 import com.everfold.kotlin.ui.files.FilePicker
@@ -31,7 +30,7 @@ fun App(modifier: Modifier = Modifier) {
     val store = rememberPreferenceStore()
     val persistScope = rememberCoroutineScope()
     val preferences = remember(store, persistScope) { UserPreferencesState(store, persistScope) }
-    val workspace = viewModel { MockWorkspace(enableLongTasks = true) }
+    val workspace = rememberAppWorkspace()
     EverfoldRoot(
         workspace = workspace,
         preferences = preferences,

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Everfold</string>
+    <string name="task_channel_ongoing">On-device task progress</string>
+    <string name="task_channel_attention">Task approvals &amp; completion</string>
+</resources>

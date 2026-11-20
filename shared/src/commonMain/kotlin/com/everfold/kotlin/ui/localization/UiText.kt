@@ -3,7 +3,6 @@ package com.everfold.kotlin.ui.localization
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 
 /** 界面文案字面量保留原样资源引用在渲染时按当前语言解析 */
 @Immutable
@@ -30,10 +29,4 @@ fun UiText.resolve(): String =
     when (this) {
         is UiText.Literal -> value
         is UiText.Resource -> if (args.isEmpty()) localizedString(value) else localizedString(value, *args.toTypedArray())
-    }
-
-internal suspend fun UiText.resolveSuspend(): String =
-    when (this) {
-        is UiText.Literal -> value
-        is UiText.Resource -> if (args.isEmpty()) getString(value) else getString(value, *args.toTypedArray())
     }
