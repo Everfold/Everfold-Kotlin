@@ -18,17 +18,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.ui.components.plainTextClipEntry
 import com.everfold.kotlin.ui.localization.localizedString
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownCodeBlock
@@ -42,6 +44,7 @@ import everfold.shared.generated.resources.copied
 import everfold.shared.generated.resources.copy_code
 import everfold.shared.generated.resources.expand_prompt
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** 长用户消息超过八行时可折叠为六行切换前回报高度差以维持列表位置 */
 @Composable
@@ -53,10 +56,13 @@ internal fun UserPrompt(
     var expanded by rememberSaveable(message.id, collapsePrompts) { mutableStateOf(false) }
     var layout by remember(message.id) { mutableStateOf<TextLayoutResult?>(null) }
     val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
     val style = MaterialTheme.typography.bodyLarge
     BoxWithConstraints(Modifier.padding(16.dp)) {
-        val measured = measurer.measure(message.text, style = style, maxLines = 9, constraints = constraints)
-        val collapsible = collapsePrompts && measured.lineCount > 8
+        val collapsible =
+            remember(message.text, style, constraints, collapsePrompts, measurer, density) {
+                collapsePrompts && measurer.measure(message.text, style = style, maxLines = 9, constraints = constraints).lineCount > 8
+            }
         Column(horizontalAlignment = Alignment.End) {
             SelectionContainer {
                 Text(
@@ -94,14 +100,17 @@ internal fun UserPrompt(
 @Composable
 internal fun MessageMarkdown(content: String) {
     val state = rememberMarkdownState(content, retainState = true)
-    Markdown(
-        markdownState = state,
-        modifier = Modifier.fillMaxWidth(),
-        components =
+    val components =
+        remember {
             markdownComponents(
                 codeFence = { block -> MarkdownCodeFence(block.content, block.node) { code, language, _ -> CodeSnippet(code, language) } },
                 codeBlock = { block -> MarkdownCodeBlock(block.content, block.node) { code, language, _ -> CodeSnippet(code, language) } },
-            ),
+            )
+        }
+    Markdown(
+        markdownState = state,
+        modifier = Modifier.fillMaxWidth(),
+        components = components,
         loading = { Text(content, style = MaterialTheme.typography.bodyLarge) },
         error = { Text(content, style = MaterialTheme.typography.bodyLarge) },
     )
@@ -141,8 +150,8 @@ internal fun CopyTextButton(
     text: String,
     label: String,
 ) {
-    @Suppress("DEPRECATION")
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
         if (copied) {
@@ -151,8 +160,10 @@ internal fun CopyTextButton(
         }
     }
     TextButton(onClick = {
-        clipboard.setText(AnnotatedString(text))
-        copied = true
+        scope.launch {
+            clipboard.setClipEntry(plainTextClipEntry(text))
+            copied = true
+        }
     }, enabled = text.isNotEmpty()) {
         // 已复制
         Text(if (copied) localizedString(Res.string.copied) else label)

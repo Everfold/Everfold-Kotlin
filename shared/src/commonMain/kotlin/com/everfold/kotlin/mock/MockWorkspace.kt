@@ -23,6 +23,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private val ActiveRunStates = setOf(AgentRunState.Running, AgentRunState.Waiting)
+
 /** 内存模拟工作区驱动界面演示不创建 Agent连接网络或持久化数据 */
 internal class MockWorkspace :
     ViewModel(),
@@ -145,7 +147,7 @@ internal class MockWorkspace :
             .filter { it.connectionId == connectionId }
             .forEach { conversationOptions.attachments.interrupt(it.id) }
         conversations
-            .filter { it.connectionId == connectionId && it.runState in listOf(AgentRunState.Running, AgentRunState.Waiting) }
+            .filter { it.connectionId == connectionId && it.runState in ActiveRunStates }
             .forEach { stop(it.id) }
     }
 

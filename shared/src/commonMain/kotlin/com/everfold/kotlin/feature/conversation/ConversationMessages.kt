@@ -64,7 +64,7 @@ internal fun ConversationMessages(
             list.scrollToItem(0)
         }
     }
-    LaunchedEffect(state.messages.lastOrNull(), state.runState) {
+    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.id, state.runState) {
         if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
     }
     val latest = state.messages.lastOrNull()

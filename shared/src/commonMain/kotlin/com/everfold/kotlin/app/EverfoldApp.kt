@@ -175,11 +175,15 @@ internal fun EverfoldApp(
             // 拖动调整宽度
             val resizeLabel = localizedString(Res.string.resize_sessions)
             val selected = workspace.conversations.firstOrNull { it.id == selectedId }
+            val connectionNames =
+                remember(workspace.connections.connections) {
+                    workspace.connections.connections.associate { it.id to it.profile.name }
+                }
             val sessions: @Composable (Modifier) -> Unit = { listModifier ->
                 sessionListState.SaveableStateProvider("sessions") {
                     SessionsScreen(
                         sessions = workspace.conversations,
-                        connectionNames = workspace.connections.connections.associate { it.id to it.profile.name },
+                        connectionNames = connectionNames,
                         selectedId = selected?.id,
                         searchRequest = searchRequest,
                         query = sessionQuery,

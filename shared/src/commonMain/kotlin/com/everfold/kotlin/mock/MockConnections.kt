@@ -23,6 +23,8 @@ import kotlin.time.Clock
 
 private const val CONNECT_DELAY_MILLIS = 900L
 private const val DISCONNECT_DELAY_MILLIS = 250L
+private val BusyConnectionStatuses =
+    setOf(ConnectionStatus.Connected, ConnectionStatus.Connecting, ConnectionStatus.Disconnecting)
 
 /** 连接任务随工作区存活每个 ID 独立取消模拟结果不会跨连接或配置覆盖 */
 internal class MockConnections(
@@ -95,9 +97,7 @@ internal class MockConnections(
         result: ConnectionPreviewResult,
     ) {
         val connection = find(id) ?: return
-        if (connection.runtime.status in
-            listOf(ConnectionStatus.Connected, ConnectionStatus.Connecting, ConnectionStatus.Disconnecting)
-        ) {
+        if (connection.runtime.status in BusyConnectionStatuses) {
             return
         }
         cancelOperation(id)

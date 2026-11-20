@@ -70,6 +70,8 @@ import everfold.shared.generated.resources.session_actions
 import everfold.shared.generated.resources.session_name
 import everfold.shared.generated.resources.unpin_session
 
+private val HiddenRunStates = setOf(AgentRunState.Idle, AgentRunState.Completed)
+
 /** 会话侧栏常驻标题搜索两行列表项以及重命名置顶和删除操作 */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -105,9 +107,11 @@ fun SessionsScreen(
     val names = connectionNames.mapValues { it.value.resolve() }
     // 同时按标题和连接名称搜索
     val filtered =
-        sessions.filterIndexed { index, _ ->
-            titles[index].contains(query, ignoreCase = true) ||
-                names[sessions[index].connectionId]?.contains(query, ignoreCase = true) == true
+        remember(sessions, titles, names, query) {
+            sessions.filterIndexed { index, session ->
+                titles[index].contains(query, ignoreCase = true) ||
+                    names[session.connectionId]?.contains(query, ignoreCase = true) == true
+            }
         }
     Column(modifier.padding(horizontal = 16.dp)) {
         OutlinedTextField(
@@ -170,8 +174,9 @@ fun SessionsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            val title = session.title.resolve()
                             Text(
-                                session.title.resolve(),
+                                title,
                                 Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
@@ -195,7 +200,7 @@ fun SessionsScreen(
                                 DropdownMenu(menuId == session.id, onDismissRequest = { menuId = null }) {
                                     // 重命名
                                     DropdownMenuItem(text = { Text(localizedString(Res.string.rename_session)) }, onClick = {
-                                        name = titles[sessions.indexOf(session)]
+                                        name = title
                                         renaming = session.id
                                         menuId = null
                                     })
@@ -239,7 +244,7 @@ fun SessionsScreen(
                                 listOfNotNull(
                                     if (session.isPinned) localizedString(Res.string.pinned_session) else null,
                                     names[session.connectionId] ?: localizedString(Res.string.connection_removed),
-                                    status.takeIf { session.runState !in listOf(AgentRunState.Idle, AgentRunState.Completed) },
+                                    status.takeIf { session.runState !in HiddenRunStates },
                                 ).joinToString(" · "),
                                 Modifier.weight(1f).padding(start = textEdgeInset),
                                 style = MaterialTheme.typography.labelSmall,

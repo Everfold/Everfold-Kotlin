@@ -195,13 +195,16 @@ private fun ConnectionInfo(
     }
 }
 
+private val DisconnectableStatuses =
+    setOf(ConnectionStatus.Connected, ConnectionStatus.Connecting, ConnectionStatus.Disconnecting)
+
 @Composable
 private fun ConnectionAction(
     status: ConnectionStatus,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
-    val disconnect = status in listOf(ConnectionStatus.Connected, ConnectionStatus.Connecting, ConnectionStatus.Disconnecting)
+    val disconnect = status in DisconnectableStatuses
     Button(onClick = if (disconnect) onDisconnect else onConnect, enabled = status != ConnectionStatus.Disconnecting) {
         Text(
             localizedString(
