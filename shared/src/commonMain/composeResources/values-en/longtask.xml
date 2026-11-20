@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 空会话本机长程任务建议 -->
+    <string name="longtask_suggestion_storage">Organize local Downloads &amp; Screenshots and clean duplicate APKs</string>
+    <string name="longtask_suggestion_diagnostics">Diagnose recent on-device battery drain and crash logs</string>
+    <string name="longtask_suggestion_index">Build an offline full-text index for workspace documents</string>
+
+    <!-- 状态栏摘要与执行时间线 -->
+    <string name="longtask_status_running">%1$s · %2$d/%3$d %4$s · %5$d%% · %6$s</string>
+    <string name="longtask_status_waiting">%1$s · %2$d/%3$d %4$s · %5$s</string>
+    <string name="longtask_status_stopped">%1$s · Checkpoint saved at step %2$d/%3$d (%4$d%%)</string>
+    <string name="longtask_status_failed">%1$s · Halted at step %2$d/%3$d (%4$d%%)</string>
+    <string name="longtask_status_completed">%1$s · %2$d steps · %3$s</string>
+    <string name="longtask_resumed_badge">Resumed</string>
+    <string name="longtask_step_duration">%1$ds</string>
+    <string name="longtask_gate_custom_hint">Choose an option above to continue, or type custom constraints in the composer below.</string>
+
+    <!-- 演示环境扰动注入 -->
+    <string name="longtask_inject_throttle">Simulate battery saver throttling</string>
+    <string name="longtask_inject_io_fault">Simulate storage I/O interrupt (resumable)</string>
+
+    <!-- 设备环境提示 -->
+    <string name="longtask_note_resumed">Resumed from checkpoint at step %1$d/%2$d (%3$d%%); completed steps were preserved.</string>
+    <string name="longtask_note_throttled">Battery Saver active: background I/O concurrency reduced to limit thermal load.</string>
+    <string name="longtask_note_thermal">Sustained compute load detected (simulated 39.2°C); pacing index chunks smoothly.</string>
+    <string name="longtask_note_io_fault">Storage chunk lock timed out under power restrictions (%1$d%% done, checkpoint saved). Tap Retry to resume.</string>
+    <string name="longtask_note_constraint_applied">Applied constraint: "%1$s". Continuing from checkpoint.</string>
+
+    <!-- 剧本 A：本机下载与截图目录深度归档 (~56s) -->
+    <string name="scenario_storage_headline">On-device Downloads &amp; Screenshots archive</string>
+    <string name="scenario_storage_step_1">Inspect storage volume capacity &amp; permissions</string>
+    <string name="scenario_storage_obs_1">/storage/emulated/0 18.4 GB free of 256 GB · Scoped Storage ready</string>
+    <string name="scenario_storage_step_2">Scan Download and Screenshots in chunks</string>
+    <string name="scenario_storage_obs_2">Scanned %1$d / %2$d files · 3.84 GB of media and packages cataloged</string>
+    <string name="scenario_storage_step_3">Compute SHA-256 digests &amp; detect duplicate packages</string>
+    <string name="scenario_storage_obs_3">Verified %1$d / %2$d hash batches · Found 14 duplicate APKs (612 MB) and 86 old screenshots</string>
+    <string name="scenario_storage_step_4">Confirm archive layout &amp; duplicate APK cleanup</string>
+    <string name="scenario_storage_gate_prompt">Found 14 duplicate historical APKs (612 MB reclaimable) and 86 screenshots older than 30 days. Choose a policy:</string>
+    <string name="scenario_storage_gate_risk">Deletion only targets byte-identical redundant APK copies; originals and documents are archived by month.</string>
+    <string name="scenario_storage_opt_clean_all">Archive &amp; remove duplicates</string>
+    <string name="scenario_storage_opt_archive_only">Archive by month only (no deletion)</string>
+    <string name="scenario_storage_step_5">Execute batch archive moves &amp; verify checksums</string>
+    <string name="scenario_storage_obs_5">Archived %1$d / %2$d batches into Archive/2026-11 · Checksums verified</string>
+    <string name="scenario_storage_step_6">Generate space reclamation report &amp; rollback manifest</string>
+
+    <!-- 剧本 B：本机后台耗电与异常崩溃日志诊断 (~62s) -->
+    <string name="scenario_diag_headline">On-device battery drain &amp; crash log diagnostics</string>
+    <string name="scenario_diag_step_1">Capture battery thermals, standby bucket &amp; memory pressure</string>
+    <string name="scenario_diag_obs_1">Battery 38.4°C · Standby Bucket: ACTIVE · 47 background wakeups in 24h</string>
+    <string name="scenario_diag_step_2">Index sandbox crash &amp; ANR log segments</string>
+    <string name="scenario_diag_obs_2">Parsed %1$d / %2$d log segments · Captured 3 main-thread I/O stalls</string>
+    <string name="scenario_diag_step_3">Aggregate main-thread stacks &amp; file-lock contention</string>
+    <string name="scenario_diag_obs_3">Correlated %1$d / %2$d stack samples · Isolated unbuffered write hotspot</string>
+    <string name="scenario_diag_step_4">Audit WakeLock &amp; foreground task lease durations</string>
+    <string name="scenario_diag_obs_4">Audited %1$d / %2$d wakeup sources · Missing exponential backoff on sync retry</string>
+    <string name="scenario_diag_step_5">Stream root-cause analysis &amp; coroutine fix report</string>
+
+    <!-- 剧本 C：本地工作区文档离线索引构建 (~50s) -->
+    <string name="scenario_index_headline">Offline workspace document index build</string>
+    <string name="scenario_index_step_1">Enumerate workspace tree &amp; incremental delta</string>
+    <string name="scenario_index_obs_1">Workspace %1$s · 64 documents and notes queued for indexing</string>
+    <string name="scenario_index_step_2">Extract Markdown sections &amp; attachment text chunks</string>
+    <string name="scenario_index_obs_2">Chunked %1$d / %2$d files · Produced 920 semantic passages</string>
+    <string name="scenario_index_step_3">Build local inverted lexicon &amp; summary cache</string>
+    <string name="scenario_index_obs_3">Committed %1$d / %2$d index pages · SQLite WAL healthy</string>
+    <string name="scenario_index_step_4">Verify offline query latency &amp; stream catalog summary</string>
+
+    <!-- 剧本 D：通用多阶段任务管线 (~48s) -->
+    <string name="scenario_generic_headline">Multi-stage task analysis &amp; execution</string>
+    <string name="scenario_generic_step_1">Decompose constraints &amp; plan sequential steps</string>
+    <string name="scenario_generic_obs_1">Bound workspace %1$s · Planned 4 sequential stages</string>
+    <string name="scenario_generic_step_2">Scan workspace context &amp; related local files</string>
+    <string name="scenario_generic_obs_2">Scanned %1$d / %2$d context chunks · Extracted key constraints</string>
+    <string name="scenario_generic_step_3">Synthesize solution steps &amp; run consistency checks</string>
+    <string name="scenario_generic_obs_3">Verified %1$d / %2$d check rules · No conflicting changes</string>
+    <string name="scenario_generic_step_4">Stream structured conclusions &amp; action checklist</string>
+
+</resources>

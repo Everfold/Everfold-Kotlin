@@ -4,6 +4,7 @@ import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.connections.ConnectionManager
 import com.everfold.kotlin.feature.conversation.ConversationOptions
 import com.everfold.kotlin.feature.conversation.ConversationUiState
+import com.everfold.kotlin.feature.conversation.DeviceTaskController
 
 /**
  * 工作台的可观察状态与用户动作实现持有任务生命周期页面不负责生成回复。
@@ -15,6 +16,8 @@ internal interface Workspace {
     val conversations: List<ConversationUiState>
     val newConversation: ConversationUiState
     val conversationOptions: ConversationOptions
+    val taskController: DeviceTaskController
+        get() = DeviceTaskController.Noop
 
     fun completeSetup(setup: ClusterSetup?)
 

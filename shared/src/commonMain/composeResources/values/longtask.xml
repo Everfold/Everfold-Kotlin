@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 空会话本机长程任务建议 -->
+    <string name="longtask_suggestion_storage">深度整理本机 Download 与截图目录并清理重复安装包</string>
+    <string name="longtask_suggestion_diagnostics">诊断本机近期后台耗电异常与崩溃日志</string>
+    <string name="longtask_suggestion_index">为当前工作区文档构建离线全文检索索引</string>
+
+    <!-- 状态栏摘要与执行时间线 -->
+    <string name="longtask_status_running">%1$s · %2$d/%3$d %4$s · %5$d%% · %6$s</string>
+    <string name="longtask_status_waiting">%1$s · %2$d/%3$d %4$s · %5$s</string>
+    <string name="longtask_status_stopped">%1$s · 已保存第 %2$d/%3$d 步断点 (%4$d%%)</string>
+    <string name="longtask_status_failed">%1$s · 停在第 %2$d/%3$d 步 (%4$d%%)</string>
+    <string name="longtask_status_completed">%1$s · 共 %2$d 步 · 耗时 %3$s</string>
+    <string name="longtask_resumed_badge">断点续跑</string>
+    <string name="longtask_step_duration">%1$ds</string>
+    <string name="longtask_gate_custom_hint">可直接点选上方策略继续，或在下方输入框补充自定义要求。</string>
+
+    <!-- 演示环境扰动注入 -->
+    <string name="longtask_inject_throttle">模拟省电模式节流</string>
+    <string name="longtask_inject_io_fault">模拟存储 I/O 中断 (可断点重试)</string>
+
+    <!-- 设备环境提示 -->
+    <string name="longtask_note_resumed">已从第 %1$d/%2$d 步断点 (%3$d%%) 接续执行，已完成步骤无需重跑。</string>
+    <string name="longtask_note_throttled">系统省电模式已激活：后台单步 I/O 并发已自动降速以控制温升。</string>
+    <string name="longtask_note_thermal">检测到持续高负载运算（模拟机身 39.2°C），已平滑限制索引分片速率。</string>
+    <string name="longtask_note_io_fault">设备省电限制导致文件分片锁超时（已完成 %1$d%%，Checkpoint 已落盘），点击重试可从断点继续。</string>
+    <string name="longtask_note_constraint_applied">已合并补充要求：「%1$s」，正在按更新后的约束继续执行。</string>
+
+    <!-- 剧本 A：本机下载与截图目录深度归档 (~56s) -->
+    <string name="scenario_storage_headline">本机存储与下载目录深度归档</string>
+    <string name="scenario_storage_step_1">探测挂载卷容量与分区权限</string>
+    <string name="scenario_storage_obs_1">/storage/emulated/0 可用 18.4 GB / 256 GB · Scoped Storage 读写就绪</string>
+    <string name="scenario_storage_step_2">分片扫描 Download 与 Screenshots 目录</string>
+    <string name="scenario_storage_obs_2">已扫描 %1$d / %2$d 个文件 · 累计识别 3.84 GB 待分类媒体与安装包</string>
+    <string name="scenario_storage_step_3">计算大文件 SHA-256 指纹并识别重复包</string>
+    <string name="scenario_storage_obs_3">已完成 %1$d / %2$d 组哈希校验 · 命中 14 个重复 APK (612 MB) 与 86 张旧截图</string>
+    <string name="scenario_storage_step_4">确认归档目录与重复安装包清理范围</string>
+    <string name="scenario_storage_gate_prompt">检测到 14 个重复历史 APK（可释放 612 MB）及 86 张超过 30 天的屏幕截图，请选择处理策略：</string>
+    <string name="scenario_storage_gate_risk">删除操作仅针对哈希完全一致的冗余副包，原版安装包与文档将按月份归档。</string>
+    <string name="scenario_storage_opt_clean_all">归档并清理重复包</string>
+    <string name="scenario_storage_opt_archive_only">仅按月归档，不删除文件</string>
+    <string name="scenario_storage_step_5">执行批量归档移动与校验和核对</string>
+    <string name="scenario_storage_obs_5">已归档 %1$d / %2$d 批文件至 Archive/2026-11 · 索引全部一致</string>
+    <string name="scenario_storage_step_6">生成空间释放报告与回滚清单</string>
+
+    <!-- 剧本 B：本机后台耗电与异常崩溃日志诊断 (~62s) -->
+    <string name="scenario_diag_headline">本机后台耗电与异常崩溃日志诊断</string>
+    <string name="scenario_diag_step_1">采集电池温控、待机桶与内存水位快照</string>
+    <string name="scenario_diag_obs_1">电池温度 38.4°C · Standby Bucket: ACTIVE · 最近 24h 后台唤醒 47 次</string>
+    <string name="scenario_diag_step_2">按时间窗口索引沙箱崩溃与 ANR 日志分片</string>
+    <string name="scenario_diag_obs_2">已解析 %1$d / %2$d 个日志分片 · 捕获 3 次主线程 I/O 阻塞超时</string>
+    <string name="scenario_diag_step_3">聚合主线程调用栈与文件锁竞争轨迹</string>
+    <string name="scenario_diag_obs_3">已比对 %1$d / %2$d 条采样轨迹 · 定位到未缓冲高频写入热点</string>
+    <string name="scenario_diag_step_4">审计 WakeLock 与前台任务持锁周期</string>
+    <string name="scenario_diag_obs_4">已核查 %1$d / %2$d 个唤醒源 · 发现离线同步重试退避缺失</string>
+    <string name="scenario_diag_step_5">生成根因定位与协程优化建议报告</string>
+
+    <!-- 剧本 C：本地工作区文档离线索引构建 (~50s) -->
+    <string name="scenario_index_headline">本地工作区文档离线索引构建</string>
+    <string name="scenario_index_step_1">枚举工作区文件树与增量变更集</string>
+    <string name="scenario_index_obs_1">工作区 %1$s · 识别 64 份文档与笔记待更新索引</string>
+    <string name="scenario_index_step_2">分片提取 Markdown 章节与附件文本块</string>
+    <string name="scenario_index_obs_2">已切分 %1$d / %2$d 份文档 · 生成 920 个语义段落块</string>
+    <string name="scenario_index_step_3">构建本地倒排词典与离线摘要缓存</string>
+    <string name="scenario_index_obs_3">已写入 %1$d / %2$d 批索引页 · SQLite WAL 提交正常</string>
+    <string name="scenario_index_step_4">校验离线查询延迟并输出目录概览</string>
+
+    <!-- 剧本 D：通用多阶段任务管线 (~48s) -->
+    <string name="scenario_generic_headline">本机多阶段任务分析与执行</string>
+    <string name="scenario_generic_step_1">拆解目标约束并制定单智能体执行步骤</string>
+    <string name="scenario_generic_obs_1">已绑定工作区 %1$s · 共规划 4 个顺序阶段</string>
+    <string name="scenario_generic_step_2">扫描工作区上下文与关联本地文件</string>
+    <string name="scenario_generic_obs_2">已检索 %1$d / %2$d 个上下文分片 · 提炼关键依赖与边界条件</string>
+    <string name="scenario_generic_step_3">逐步推演执行方案并完成一致性自检</string>
+    <string name="scenario_generic_obs_3">已完成 %1$d / %2$d 项校验规则 · 无冲突变更</string>
+    <string name="scenario_generic_step_4">输出结构化执行结论与下一步清单</string>
+
+</resources>
