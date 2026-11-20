@@ -1,21 +1,23 @@
 package com.everfold.kotlin.mock.longtask
 
 import com.everfold.kotlin.feature.conversation.AgentRunState
+import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
 import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
 import com.everfold.kotlin.feature.conversation.DeviceTaskController
 import com.everfold.kotlin.feature.conversation.DeviceTaskFault
-import com.everfold.kotlin.feature.conversation.TaskExecutionTrace
+import com.everfold.kotlin.feature.conversation.StreamRunStatus
 import com.everfold.kotlin.ui.localization.UiText
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.longtask_note_throttled
 import everfold.shared.generated.resources.reply_complete
+import everfold.shared.generated.resources.reply_stopped
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** 单智能体本机长程任务驱动器，按会话隔离运行协程并维护分片级 Checkpoint。 */
+/** 单智能体本机长程任务驱动器，按时序动态追加实时交错流节点并维护分片级断点。 */
 internal class SingleAgentLongTaskEngine(
     private val scope: CoroutineScope,
     private val readConversation: (String) -> ConversationUiState?,
@@ -26,12 +28,12 @@ internal class SingleAgentLongTaskEngine(
     private val records = mutableMapOf<String, TaskRunRecord>()
     private val jobs = mutableMapOf<String, Job>()
 
+    val activeRunningIds: List<String>
+        get() = jobs.keys.toList()
+
     fun seedRecord(record: TaskRunRecord) {
         records[record.conversationId] = record
     }
-
-    val activeRunningIds: List<String>
-        get() = jobs.keys.toList()
 
     fun hasResumableRun(conversationId: String): Boolean = conversationId in records
 
@@ -51,6 +53,11 @@ internal class SingleAgentLongTaskEngine(
                 workspacePath = workspacePath,
                 hasAttachments = attachmentNames.isNotEmpty(),
             )
+        val firstThink = scenario.stages.firstOrNull() as? StreamStageSpec.ThinkStage
+        val initialBlock =
+            firstThink?.let {
+                AgentStreamBlock.Thinking(id = it.id, text = "", status = StreamRunStatus.Running)
+            }
         val record =
             TaskRunRecord(
                 taskId = "longtask-${++nextTaskNumber}",
@@ -61,6 +68,7 @@ internal class SingleAgentLongTaskEngine(
                 workspacePath = workspacePath,
                 attachmentNames = attachmentNames,
                 scenario = scenario,
+                activeBlock = initialBlock,
             )
         records[conversationId] = record
         launchRunLoop(conversationId)
@@ -73,6 +81,20 @@ internal class SingleAgentLongTaskEngine(
         addedConstraint: String? = null,
     ): Boolean {
         val existing = records[conversationId] ?: return false
+        if (newAssistantMessageId != null) {
+            val resolvedApproval = existing.resolveActiveApprovalBlock(addedConstraint)
+            if (resolvedApproval != null) {
+                val lockedBlocks = existing.committedBlocks + resolvedApproval
+                updateConversation(conversationId) { state ->
+                    state.copy(
+                        messages =
+                            state.messages.map { msg ->
+                                if (msg.id == existing.assistantMessageId) msg.copy(streamBlocks = lockedBlocks) else msg
+                            },
+                    )
+                }
+            }
+        }
         records[conversationId] =
             existing.prepareForResume(
                 newAssistantMessageId = newAssistantMessageId,
@@ -100,34 +122,28 @@ internal class SingleAgentLongTaskEngine(
         val session = readConversation(conversationId) ?: return
         when (fault) {
             DeviceTaskFault.PowerSaverThrottle -> {
-                val throttled =
-                    existing.copy(
-                        throttled = true,
-                        deviceNote =
-                            DeviceEnvironmentNote(
-                                severity = DeviceNoteSeverity.Warning,
-                                message = UiText.Resource(Res.string.longtask_note_throttled),
-                            ),
-                    )
+                val note = DeviceEnvironmentNote(DeviceNoteSeverity.Warning, UiText.Resource(Res.string.longtask_note_throttled))
+                val throttled = existing.copy(throttled = true).appendNotice(note)
                 records[conversationId] = throttled
-                applySnapshotToConversation(throttled, session.runState, streamedText = null)
+                applySnapshotToConversation(throttled, session.runState)
             }
 
             DeviceTaskFault.StorageIoInterrupt -> {
                 jobs.remove(conversationId)?.cancel()
                 val failed = existing.withIoFault()
                 records[conversationId] = failed
-                applySnapshotToConversation(failed, AgentRunState.Failed, streamedText = null)
+                applySnapshotToConversation(failed, AgentRunState.Failed)
             }
         }
     }
 
-    fun pauseRun(conversationId: String): TaskExecutionTrace? {
+    fun pauseRun(conversationId: String): TaskRunRecord? {
         jobs.remove(conversationId)?.cancel()
         val existing = records[conversationId] ?: return null
-        val trace = existing.toTrace(AgentRunState.Stopped)
-        onTaskStateChanged(existing, conversationId, AgentRunState.Stopped)
-        return trace
+        val paused = existing.withPausedActiveBlock()
+        records[conversationId] = paused
+        onTaskStateChanged(paused, conversationId, AgentRunState.Stopped)
+        return paused
     }
 
     fun clearRun(conversationId: String) {
@@ -139,21 +155,19 @@ internal class SingleAgentLongTaskEngine(
     private fun launchRunLoop(conversationId: String) {
         jobs.remove(conversationId)?.cancel()
         val initial = records[conversationId] ?: return
-        applySnapshotToConversation(initial, AgentRunState.Running, streamedText = null)
+        applySnapshotToConversation(initial, AgentRunState.Running)
         val callbacks =
-            StepLoopCallbacks(
+            StageLoopCallbacks(
                 readRecord = { records[conversationId] },
                 writeRecord = { records[conversationId] = it },
-                publishProgress = ::applySnapshotToConversation,
+                publishSnapshot = ::applySnapshotToConversation,
             )
         val job =
             scope.launch {
-                val stepsFinished = runAllScenarioSteps(callbacks)
-                if (!stepsFinished) return@launch
-                val finishedRecord = streamScenarioReport(callbacks) ?: return@launch
-                val fullReport = finishedRecord.scenario.reportBuilder(finishedRecord.toContext())
-                records.remove(conversationId)
-                applySnapshotToConversation(finishedRecord, AgentRunState.Completed, streamedText = fullReport)
+                val finished = runAllScenarioStages(callbacks)
+                if (!finished) return@launch
+                val completedRecord = records.remove(conversationId) ?: return@launch
+                applySnapshotToConversation(completedRecord, AgentRunState.Completed)
             }
         jobs[conversationId] = job
         job.invokeOnCompletion { if (jobs[conversationId] === job) jobs.remove(conversationId) }
@@ -162,17 +176,13 @@ internal class SingleAgentLongTaskEngine(
     private fun applySnapshotToConversation(
         record: TaskRunRecord,
         runState: AgentRunState,
-        streamedText: String?,
     ) {
-        val trace = record.toTrace(runState)
-        val activeStepTitle =
-            record.scenario.steps
-                .getOrNull(record.currentStepIndex.coerceIn(0, record.scenario.steps.lastIndex))
-                ?.title
+        val visible = record.visibleBlocks()
         val preview =
             when (runState) {
                 AgentRunState.Completed -> UiText.Resource(Res.string.reply_complete)
-                else -> activeStepTitle ?: record.scenario.headline
+                AgentRunState.Stopped -> UiText.Resource(Res.string.reply_stopped)
+                else -> (record.activeBlock as? AgentStreamBlock.ToolCall)?.summary ?: record.scenario.headline
             }
         updateConversation(record.conversationId) { state ->
             state.copy(
@@ -182,8 +192,8 @@ internal class SingleAgentLongTaskEngine(
                     state.messages.map { msg ->
                         if (msg.id == record.assistantMessageId) {
                             msg.copy(
-                                text = streamedText ?: msg.text,
-                                execution = trace,
+                                streamBlocks = visible,
+                                elapsedMillis = record.elapsedMillis,
                             )
                         } else {
                             msg
@@ -191,16 +201,7 @@ internal class SingleAgentLongTaskEngine(
                     },
             )
         }
-        onTaskStateChanged(
-            if (runState ==
-                AgentRunState.Completed
-            ) {
-                record
-            } else {
-                records[record.conversationId]
-            },
-            record.conversationId,
-            runState,
-        )
+        val activeOrCompleted = if (runState == AgentRunState.Completed) record else records[record.conversationId]
+        onTaskStateChanged(activeOrCompleted, record.conversationId, runState)
     }
 }

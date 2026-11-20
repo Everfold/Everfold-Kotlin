@@ -133,8 +133,8 @@ private fun ConversationFollowEffects(
         state.runState,
         state.messages
             .lastOrNull()
-            ?.execution
-            ?.currentStepIndex,
+            ?.streamBlocks
+            ?.size,
     ) {
         if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
     }

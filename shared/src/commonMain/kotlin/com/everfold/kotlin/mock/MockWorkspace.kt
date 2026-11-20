@@ -36,7 +36,7 @@ private const val STREAM_INITIAL_DELAY_MILLIS = 350L
 private const val STREAM_CHAR_STEP = 3
 private const val STREAM_STEP_DELAY_MILLIS = 45L
 
-/** 内存模拟工作区驱动界面演示，可选启用单智能体本机长程任务引擎与平台通知桥接。 */
+/** 内存模拟工作区驱动界面演示，可选启用单智能体本机实时流式长程任务引擎与平台通知桥接。 */
 internal class MockWorkspace(
     private val enableLongTasks: Boolean = false,
     externalScope: CoroutineScope? = null,
@@ -206,14 +206,6 @@ internal class MockWorkspace(
         val attachmentNames = session.attachments.map { it.source.name }
         val resumingWaitingGate = enableLongTasks && session.runState == AgentRunState.Waiting && longTaskEngine.hasResumableRun(id)
         update(id) {
-            val clearedPriorMessages =
-                if (resumingWaitingGate) {
-                    it.messages.map { msg ->
-                        if (msg.execution?.activeGate != null) msg.copy(execution = msg.execution.copy(activeGate = null)) else msg
-                    }
-                } else {
-                    it.messages
-                }
             it.copy(
                 preview = UiText.Literal(input.ifBlank { attachmentNames.first() }),
                 // 刚刚
@@ -223,7 +215,7 @@ internal class MockWorkspace(
                 attachmentRevision = it.attachmentRevision + 1,
                 runState = AgentRunState.Running,
                 messages =
-                    clearedPriorMessages +
+                    it.messages +
                         listOf(
                             ChatMessage("$messageId-user", MessageRole.User, input, attachments = it.attachments, model = it.model),
                             ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
@@ -263,22 +255,27 @@ internal class MockWorkspace(
         }
     }
 
-    /** 切换演示状态前取消模拟回复并移除尚无内容与执行轨迹的助手占位消息 */
+    /** 切换演示状态前取消模拟回复并移除尚无内容与实时流节点的助手占位消息 */
     fun previewRunState(
         id: String,
         state: AgentRunState,
     ) {
         replies.remove(id)?.cancel()
-        if (enableLongTasks) longTaskEngine.pauseRun(id)
+        val pausedRecord = if (enableLongTasks) longTaskEngine.pauseRun(id) else null
         update(id) {
             it.copy(
                 runState = state,
                 messages =
-                    it.messages.filterNot { message ->
-                        message.role == MessageRole.Assistant &&
-                            message.text.isEmpty() &&
-                            message.execution == null
-                    },
+                    it.messages
+                        .map { msg ->
+                            if (pausedRecord != null && msg.id == pausedRecord.assistantMessageId) {
+                                msg.copy(streamBlocks = pausedRecord.visibleBlocks(), elapsedMillis = pausedRecord.elapsedMillis)
+                            } else {
+                                msg
+                            }
+                        }.filterNot { msg ->
+                            msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.streamBlocks.isEmpty()
+                        },
             )
         }
     }
@@ -310,14 +307,19 @@ internal class MockWorkspace(
 
     override fun stop(id: String) {
         replies.remove(id)?.cancel()
-        val pausedTrace = if (enableLongTasks) longTaskEngine.pauseRun(id) else null
+        val pausedRecord = if (enableLongTasks) longTaskEngine.pauseRun(id) else null
         update(id) {
-            val latestAssistantId = it.messages.lastOrNull { msg -> msg.role == MessageRole.Assistant }?.id
             val updatedMessages =
                 it.messages
                     .map { msg ->
-                        if (pausedTrace != null && msg.id == latestAssistantId) msg.copy(execution = pausedTrace) else msg
-                    }.filterNot { msg -> msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.execution == null }
+                        if (pausedRecord != null && msg.id == pausedRecord.assistantMessageId) {
+                            msg.copy(streamBlocks = pausedRecord.visibleBlocks(), elapsedMillis = pausedRecord.elapsedMillis)
+                        } else {
+                            msg
+                        }
+                    }.filterNot { msg ->
+                        msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.streamBlocks.isEmpty()
+                    }
             it.copy(
                 runState = AgentRunState.Stopped,
                 // 已停止

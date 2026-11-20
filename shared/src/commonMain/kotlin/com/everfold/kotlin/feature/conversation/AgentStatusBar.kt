@@ -45,25 +45,17 @@ import everfold.shared.generated.resources.execution_details
 
 private const val EXPANDED_CHEVRON_ROTATION = 180f
 
-/** 回复的执行状态，长程任务展示实时分片进度、可展开步骤时间线与确认门控。 */
+/** 普通短回复的执行状态栏；长程智能体任务使用实时交错信息流而非固定状态栏。 */
 @Composable
 internal fun AgentStatusBar(
     state: AgentRunState,
     onRetry: () -> Unit,
     canRetry: Boolean = true,
-    execution: TaskExecutionTrace? = null,
-    onSelectGateOption: (String) -> Unit = {},
 ) {
     if (state == AgentRunState.Idle) return
 
-    var manualExpanded by rememberSaveable(execution?.taskId) { mutableStateOf<Boolean?>(null) }
-    val expanded = manualExpanded ?: (execution != null && state != AgentRunState.Completed)
-    val summaryText =
-        if (execution != null) {
-            formatExecutionSummary(state, execution)
-        } else {
-            localizedString(state.label)
-        }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val summaryText = localizedString(state.label)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             Modifier.fillMaxWidth(),
@@ -74,7 +66,7 @@ internal fun AgentStatusBar(
                 state = state,
                 summaryText = summaryText,
                 expanded = expanded,
-                onClick = { manualExpanded = !expanded },
+                onClick = { expanded = !expanded },
                 modifier = Modifier.weight(1f, fill = false),
             )
             if (state == AgentRunState.Waiting || state == AgentRunState.Failed || state == AgentRunState.Stopped) {
@@ -83,28 +75,21 @@ internal fun AgentStatusBar(
                 }
             }
         }
-        val activeGate = execution?.activeGate?.takeIf { state == AgentRunState.Waiting }
-        if (activeGate != null) {
-            WaitingGateCard(gate = activeGate, enabled = canRetry, onSelectOption = onSelectGateOption)
-        } else if (state == AgentRunState.Waiting) {
+        if (state == AgentRunState.Waiting) {
             Text(
                 localizedString(Res.string.agent_waiting_hint),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
         if (expanded) {
-            if (execution != null) {
-                ExecutionTimelineCard(execution)
-            } else {
-                // 整理输入
-                Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
-                Text(
-                    // 生成回复中文状态见下方 AgentRunState.label 映射
-                    "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
-                    Modifier.padding(bottom = 12.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+            // 整理输入
+            Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
+            Text(
+                // 生成回复中文状态见下方 AgentRunState.label 映射
+                "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
+                Modifier.padding(bottom = 12.dp),
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }

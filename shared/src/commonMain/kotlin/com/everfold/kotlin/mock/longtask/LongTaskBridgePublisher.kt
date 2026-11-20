@@ -16,18 +16,12 @@ internal fun publishBridgeSnapshot(
         val english = isEnglishNotificationLocale()
         val kind = mapRunStateToNotificationKind(runState)
         val percent = record.progressPercent(runState)
-        val stepNumber = record.currentStepIndex.coerceIn(0, record.scenario.steps.lastIndex) + 1
-        val totalSteps = record.scenario.steps.size
-        val stepTool =
-            record.scenario.steps
-                .getOrNull(stepNumber - 1)
-                ?.toolName
-                .orEmpty()
+        val toolName = record.activeToolName()
         bridge.publish(
             TaskNotificationPayload(
                 conversationId = conversationId,
                 title = resolveScenarioTitle(record.scenario.kind, english),
-                body = formatNotificationBody(kind, stepNumber, totalSteps, stepTool, percent, english),
+                body = formatNotificationBody(kind, toolName, percent, english),
                 progressPercent = percent,
                 kind = kind,
                 actionLabel = resolveNotificationActionLabel(kind, english),
@@ -58,35 +52,35 @@ private fun resolveScenarioTitle(
 
 private fun formatNotificationBody(
     kind: TaskNotificationKind,
-    stepNumber: Int,
-    totalSteps: Int,
-    stepTool: String,
+    toolName: String,
     percent: Int,
     english: Boolean,
-): String {
-    val toolSuffix = if (stepTool.isBlank()) "" else " · $stepTool"
-    return when (kind) {
+): String =
+    when (kind) {
         TaskNotificationKind.Completed -> {
-            if (english) "Completed all $totalSteps steps" else "已完成全部 $totalSteps 个步骤"
+            if (english) "Task completed" else "任务已完成"
         }
 
         TaskNotificationKind.Waiting -> {
-            if (english) "Step $stepNumber/$totalSteps awaiting confirmation" else "第 $stepNumber/$totalSteps 步等待确认"
+            if (english) "Awaiting confirmation ($percent%)" else "等待确认处理方式 ($percent%)"
         }
 
         TaskNotificationKind.Paused -> {
-            if (english) "Paused at step $stepNumber/$totalSteps ($percent%)" else "已暂停在第 $stepNumber/$totalSteps 步 ($percent%)"
+            if (english) "Paused · checkpoint saved ($percent%)" else "已暂停 · 进度断点已保存 ($percent%)"
         }
 
         TaskNotificationKind.Failed -> {
-            if (english) "Interrupted at step $stepNumber/$totalSteps ($percent%)" else "中断于第 $stepNumber/$totalSteps 步 ($percent%)"
+            if (english) "Interrupted ($percent%) · tap Retry" else "执行中断 ($percent%) · 可断点重试"
         }
 
         TaskNotificationKind.Running -> {
-            if (english) "Step $stepNumber/$totalSteps$toolSuffix ($percent%)" else "第 $stepNumber/$totalSteps 步$toolSuffix ($percent%)"
+            if (toolName.isNotBlank()) {
+                if (english) "Running $toolName ($percent%)" else "正在执行 $toolName ($percent%)"
+            } else {
+                if (english) "Streaming analysis ($percent%)" else "正在分析与输出 ($percent%)"
+            }
         }
     }
-}
 
 private fun resolveNotificationActionLabel(
     kind: TaskNotificationKind,

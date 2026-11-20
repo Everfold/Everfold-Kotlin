@@ -1,204 +1,294 @@
 package com.everfold.kotlin.mock.longtask
 
 import com.everfold.kotlin.feature.conversation.AgentRunState
+import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
 import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
+import com.everfold.kotlin.feature.conversation.StreamRunStatus
 import com.everfold.kotlin.ui.localization.UiText
-import com.everfold.kotlin.ui.localization.uiResource
 import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.longtask_note_constraint_applied
-import everfold.shared.generated.resources.longtask_note_io_fault
-import everfold.shared.generated.resources.longtask_note_resumed
 import everfold.shared.generated.resources.longtask_note_thermal
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 private const val THROTTLE_NUMERATOR = 8L
 private const val THROTTLE_DENOMINATOR = 5L
-private const val REPORT_STREAM_SEGMENTS = 25
 
-internal fun TaskRunRecord.withIoFault(markAutoFault: Boolean = false): TaskRunRecord {
-    val pct = progressPercent(AgentRunState.Failed)
-    return copy(
-        pendingIoInterrupt = false,
-        autoFaultTriggered = autoFaultTriggered || markAutoFault,
-        deviceNote =
-            DeviceEnvironmentNote(
-                severity = DeviceNoteSeverity.Warning,
-                message = uiResource(Res.string.longtask_note_io_fault, pct),
-            ),
-    )
-}
-
-internal fun TaskRunRecord.prepareForResume(
-    newAssistantMessageId: String?,
-    selectedOptionId: String?,
-    addedConstraint: String?,
-): TaskRunRecord {
-    val activeStep = scenario.steps.getOrNull(currentStepIndex)
-    val gateToApprove = activeStep?.gate?.id
-    val updatedGates = if (gateToApprove != null) approvedGates + gateToApprove else approvedGates
-    val updatedResumed = if (currentChunkOffset > 0) resumedSteps + currentStepIndex else resumedSteps
-    val updatedConstraints = if (!addedConstraint.isNullOrBlank()) userConstraints + addedConstraint.trim() else userConstraints
-    val note =
-        when {
-            !addedConstraint.isNullOrBlank() -> {
-                DeviceEnvironmentNote(
-                    severity = DeviceNoteSeverity.Info,
-                    message = uiResource(Res.string.longtask_note_constraint_applied, addedConstraint.trim()),
-                )
-            }
-
-            currentStepIndex > 0 || currentChunkOffset > 0 -> {
-                DeviceEnvironmentNote(
-                    severity = DeviceNoteSeverity.Info,
-                    message =
-                        uiResource(
-                            Res.string.longtask_note_resumed,
-                            (currentStepIndex + 1).coerceAtMost(scenario.steps.size),
-                            scenario.steps.size,
-                            progressPercent(AgentRunState.Running),
-                        ),
-                )
-            }
-
-            else -> {
-                deviceNote
-            }
-        }
-    return copy(
-        assistantMessageId = newAssistantMessageId ?: assistantMessageId,
-        approvedGates = updatedGates,
-        selectedGateOptionId = selectedOptionId ?: selectedGateOptionId,
-        userConstraints = updatedConstraints,
-        resumedSteps = updatedResumed,
-        pendingIoInterrupt = false,
-        deviceNote = note,
-    )
-}
-
-internal class StepLoopCallbacks(
+internal class StageLoopCallbacks(
     val readRecord: () -> TaskRunRecord?,
     val writeRecord: (TaskRunRecord) -> Unit,
-    val publishProgress: (TaskRunRecord, AgentRunState, String?) -> Unit,
+    val publishSnapshot: (TaskRunRecord, AgentRunState) -> Unit,
 )
 
-internal suspend fun runAllScenarioSteps(callbacks: StepLoopCallbacks): Boolean {
+internal suspend fun runAllScenarioStages(callbacks: StageLoopCallbacks): Boolean {
     var outcome: Boolean? = null
     while (outcome == null) {
         val record = callbacks.readRecord()
         if (record == null) {
             outcome = false
-        } else if (record.currentStepIndex >= record.scenario.steps.size) {
+        } else if (record.currentStageIndex >= record.scenario.stages.size) {
             outcome = true
         } else {
-            val step = record.scenario.steps[record.currentStepIndex]
-            if (step.gate != null && step.gate.id !in record.approvedGates) {
-                callbacks.publishProgress(record, AgentRunState.Waiting, null)
+            val stage = record.scenario.stages[record.currentStageIndex]
+            if (!executeSingleStage(stage, record, callbacks)) {
                 outcome = false
-            } else if (!runSingleStepChunks(step, callbacks)) {
-                outcome = false
-            } else {
-                val afterChunks = callbacks.readRecord()
-                if (afterChunks == null) {
-                    outcome = false
-                } else {
-                    val advanced = afterChunks.copy(currentStepIndex = afterChunks.currentStepIndex + 1, currentChunkOffset = 0)
-                    callbacks.writeRecord(advanced)
-                    callbacks.publishProgress(advanced, AgentRunState.Running, null)
-                }
             }
         }
     }
     return outcome
 }
 
-private suspend fun runSingleStepChunks(
-    step: StepSpec,
-    callbacks: StepLoopCallbacks,
+private suspend fun executeSingleStage(
+    stage: StreamStageSpec,
+    record: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
+): Boolean =
+    when (stage) {
+        is StreamStageSpec.ApprovalStage -> {
+            if (stage.gate.id in record.approvedGates) {
+                callbacks.writeRecord(record.copy(currentStageIndex = record.currentStageIndex + 1, currentChunkOffset = 0))
+                true
+            } else {
+                val waiting = record.copy(activeBlock = AgentStreamBlock.Approval(id = stage.id, gate = stage.gate))
+                callbacks.writeRecord(waiting)
+                callbacks.publishSnapshot(waiting, AgentRunState.Waiting)
+                false
+            }
+        }
+
+        is StreamStageSpec.ThinkStage -> {
+            runTextSlicesStage(stage, stage.thought, stage.durationMillis, record, callbacks)
+        }
+
+        is StreamStageSpec.NarrationStage -> {
+            runTextSlicesStage(stage, stage.textBuilder(record.toContext()), stage.durationMillis, record, callbacks)
+        }
+
+        is StreamStageSpec.ToolStage -> {
+            runToolChunksStage(stage, record, callbacks)
+        }
+    }
+
+private suspend fun runTextSlicesStage(
+    stage: StreamStageSpec,
+    fullText: String,
+    durationMillis: Long,
+    initial: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
 ): Boolean {
+    val totalSlices = stage.totalUnits.coerceAtLeast(1)
+    val baseSliceDelay = (durationMillis / totalSlices).coerceAtLeast(1L)
+    val started =
+        initial.copy(
+            activeBlock = buildStreamingTextBlock(stage, fullText, initial.currentChunkOffset, totalSlices, initial.currentStageElapsedMs),
+        )
+    callbacks.writeRecord(started)
+    callbacks.publishSnapshot(started, AgentRunState.Running)
+
     var outcome: Boolean? = null
     while (outcome == null) {
         val current = callbacks.readRecord()
         if (current == null) {
             outcome = false
-        } else if (current.currentChunkOffset >= step.totalChunks) {
-            outcome = true
+        } else if (current.currentChunkOffset >= totalSlices) {
+            outcome = commitCompletedTextStage(stage, fullText, current, callbacks)
         } else {
-            val hitAutoFault =
-                step.autoFaultAtChunk != null &&
-                    !current.autoFaultTriggered &&
-                    current.currentChunkOffset == step.autoFaultAtChunk
-            if (current.pendingIoInterrupt || hitAutoFault) {
-                val failed = current.withIoFault(markAutoFault = hitAutoFault)
-                callbacks.writeRecord(failed)
-                callbacks.publishProgress(failed, AgentRunState.Failed, null)
-                outcome = false
-            } else {
-                outcome = advanceOneChunk(step, current, callbacks)
-            }
+            outcome = advanceTextSlice(stage, fullText, totalSlices, baseSliceDelay, current, callbacks)
         }
     }
     return outcome
 }
 
-private suspend fun advanceOneChunk(
-    step: StepSpec,
+private suspend fun advanceTextSlice(
+    stage: StreamStageSpec,
+    fullText: String,
+    totalSlices: Int,
+    baseSliceDelay: Long,
     current: TaskRunRecord,
-    callbacks: StepLoopCallbacks,
+    callbacks: StageLoopCallbacks,
 ): Boolean? {
-    val delayMs =
-        if (current.throttled) {
-            (step.chunkDelayMillis * THROTTLE_NUMERATOR) / THROTTLE_DENOMINATOR
-        } else {
-            step.chunkDelayMillis
-        }
+    val delayMs = throttledDelay(baseSliceDelay, current.throttled)
     delay(delayMs)
     val latest = callbacks.readRecord() ?: return false
-    val stepIndex = latest.currentStepIndex
-    val nextChunk = latest.currentChunkOffset + 1
-    val nextNote =
-        if (step.thermalNoteAtChunk == nextChunk && latest.deviceNote == null) {
-            DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_thermal))
-        } else {
-            latest.deviceNote
-        }
-    val progressed =
+    val nextSlice = latest.currentChunkOffset + 1
+    val nextStageElapsed = latest.currentStageElapsedMs + delayMs
+    val updated =
         latest.copy(
-            currentChunkOffset = nextChunk,
-            stepDurations = latest.stepDurations + (stepIndex to ((latest.stepDurations[stepIndex] ?: 0L) + delayMs)),
+            currentChunkOffset = nextSlice,
+            currentStageElapsedMs = nextStageElapsed,
             elapsedMillis = latest.elapsedMillis + delayMs,
-            deviceNote = nextNote,
+            activeBlock = buildStreamingTextBlock(stage, fullText, nextSlice, totalSlices, nextStageElapsed),
         )
-    callbacks.writeRecord(progressed)
-    callbacks.publishProgress(progressed, AgentRunState.Running, null)
+    callbacks.writeRecord(updated)
+    callbacks.publishSnapshot(updated, AgentRunState.Running)
     return null
 }
 
-internal suspend fun streamScenarioReport(callbacks: StepLoopCallbacks): TaskRunRecord? {
-    val startRecord = callbacks.readRecord() ?: return null
-    val fullReport = startRecord.scenario.reportBuilder(startRecord.toContext())
-    val totalSegments = REPORT_STREAM_SEGMENTS.coerceAtMost(fullReport.length.coerceAtLeast(1))
-    val segmentDelay = (startRecord.scenario.streamDurationMillis / totalSegments).coerceAtLeast(1L)
-    val lastStepIdx = startRecord.scenario.steps.lastIndex
-    var cancelled = false
-    for (segment in 1..totalSegments) {
-        if (!cancelled) {
-            delay(segmentDelay)
-            val current = callbacks.readRecord()
-            if (current == null) {
-                cancelled = true
-            } else {
-                val charCount = ((fullReport.length * segment) / totalSegments).coerceAtLeast(1)
-                val lastStepDuration = (current.stepDurations[lastStepIdx] ?: 0L) + segmentDelay
-                val updated =
-                    current.copy(
-                        elapsedMillis = current.elapsedMillis + segmentDelay,
-                        stepDurations = current.stepDurations + (lastStepIdx to lastStepDuration),
-                    )
-                callbacks.writeRecord(updated)
-                callbacks.publishProgress(updated, AgentRunState.Running, fullReport.take(charCount))
-            }
+private fun commitCompletedTextStage(
+    stage: StreamStageSpec,
+    fullText: String,
+    current: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
+): Boolean {
+    val completedBlock =
+        if (stage is StreamStageSpec.ThinkStage) {
+            AgentStreamBlock.Thinking(stage.id, fullText, StreamRunStatus.Completed, current.currentStageElapsedMs)
+        } else {
+            AgentStreamBlock.Narration(stage.id, fullText, isStreaming = false)
+        }
+    val advanced =
+        current.copy(
+            committedBlocks = current.committedBlocks + completedBlock,
+            activeBlock = null,
+            currentStageIndex = current.currentStageIndex + 1,
+            currentChunkOffset = 0,
+            currentStageElapsedMs = 0L,
+        )
+    callbacks.writeRecord(advanced)
+    if (advanced.currentStageIndex < advanced.scenario.stages.size) {
+        callbacks.publishSnapshot(advanced, AgentRunState.Running)
+    }
+    return true
+}
+
+private fun buildStreamingTextBlock(
+    stage: StreamStageSpec,
+    fullText: String,
+    sliceIndex: Int,
+    totalSlices: Int,
+    stageElapsedMs: Long,
+): AgentStreamBlock {
+    val visibleSlice = sliceIndex.coerceIn(1, totalSlices)
+    val charCount = ((fullText.length * visibleSlice) / totalSlices).coerceAtLeast(1)
+    val partial = fullText.take(charCount)
+    return if (stage is StreamStageSpec.ThinkStage) {
+        AgentStreamBlock.Thinking(id = stage.id, text = partial, status = StreamRunStatus.Running, durationMillis = stageElapsedMs)
+    } else {
+        AgentStreamBlock.Narration(id = stage.id, text = partial, isStreaming = true)
+    }
+}
+
+private suspend fun runToolChunksStage(
+    stage: StreamStageSpec.ToolStage,
+    initial: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
+): Boolean {
+    val startFraction = (initial.currentChunkOffset.toFloat() / stage.totalChunks).coerceIn(0f, 1f)
+    val startDone = (startFraction * stage.totalItems).roundToInt().coerceAtMost(stage.totalItems)
+    val startTool =
+        AgentStreamBlock.ToolCall(
+            id = stage.id,
+            toolName = stage.toolName,
+            command = stage.command,
+            status = StreamRunStatus.Running,
+            summary = stage.runningSummary(startDone, stage.totalItems),
+            logLines = initial.activeLogLines,
+            progress = startFraction,
+            durationMillis = initial.currentStageElapsedMs,
+            resumed = initial.currentStageIndex in initial.resumedStages,
+        )
+    val started = initial.copy(activeBlock = startTool)
+    callbacks.writeRecord(started)
+    callbacks.publishSnapshot(started, AgentRunState.Running)
+
+    var outcome: Boolean? = null
+    while (outcome == null) {
+        val current = callbacks.readRecord()
+        if (current == null) {
+            outcome = false
+        } else if (current.currentChunkOffset >= stage.totalChunks) {
+            outcome = commitCompletedToolStage(stage, current, callbacks)
+        } else if (stage.autoFaultAtChunk != null && !current.autoFaultTriggered && current.currentChunkOffset == stage.autoFaultAtChunk) {
+            val failed = current.withIoFault(markAutoFault = true)
+            callbacks.writeRecord(failed)
+            callbacks.publishSnapshot(failed, AgentRunState.Failed)
+            outcome = false
+        } else {
+            outcome = advanceToolChunk(stage, current, callbacks)
         }
     }
-    return if (cancelled) null else callbacks.readRecord()
+    return outcome
 }
+
+private suspend fun advanceToolChunk(
+    stage: StreamStageSpec.ToolStage,
+    current: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
+): Boolean? {
+    val delayMs = throttledDelay(stage.chunkDelayMillis, current.throttled)
+    delay(delayMs)
+    val latest = callbacks.readRecord() ?: return false
+    val nextChunk = latest.currentChunkOffset + 1
+    val nextStageElapsed = latest.currentStageElapsedMs + delayMs
+    val newLine = stage.logLineAtChunk(nextChunk, stage.totalChunks)
+    val nextLogs = if (newLine == null) latest.activeLogLines else latest.activeLogLines + newLine
+    val withThermal =
+        if (stage.thermalNoteAtChunk == nextChunk) {
+            latest.appendNotice(DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_thermal)))
+        } else {
+            latest
+        }
+    val fraction = (nextChunk.toFloat() / stage.totalChunks).coerceIn(0f, 1f)
+    val doneItems = (fraction * stage.totalItems).roundToInt().coerceAtMost(stage.totalItems)
+    val activeTool =
+        AgentStreamBlock.ToolCall(
+            id = stage.id,
+            toolName = stage.toolName,
+            command = stage.command,
+            status = StreamRunStatus.Running,
+            summary = stage.runningSummary(doneItems, stage.totalItems),
+            logLines = nextLogs,
+            progress = fraction,
+            durationMillis = nextStageElapsed,
+            resumed = withThermal.currentStageIndex in withThermal.resumedStages,
+        )
+    val progressed =
+        withThermal.copy(
+            currentChunkOffset = nextChunk,
+            currentStageElapsedMs = nextStageElapsed,
+            activeLogLines = nextLogs,
+            elapsedMillis = withThermal.elapsedMillis + delayMs,
+            activeBlock = activeTool,
+        )
+    callbacks.writeRecord(progressed)
+    callbacks.publishSnapshot(progressed, AgentRunState.Running)
+    return null
+}
+
+private fun commitCompletedToolStage(
+    stage: StreamStageSpec.ToolStage,
+    current: TaskRunRecord,
+    callbacks: StageLoopCallbacks,
+): Boolean {
+    val completedTool =
+        AgentStreamBlock.ToolCall(
+            id = stage.id,
+            toolName = stage.toolName,
+            command = stage.command,
+            status = StreamRunStatus.Completed,
+            summary = stage.completedSummary,
+            logLines = current.activeLogLines,
+            progress = 1f,
+            durationMillis = current.currentStageElapsedMs,
+            resumed = current.currentStageIndex in current.resumedStages,
+        )
+    val advanced =
+        current.copy(
+            committedBlocks = current.committedBlocks + completedTool,
+            activeBlock = null,
+            activeLogLines = emptyList(),
+            currentStageIndex = current.currentStageIndex + 1,
+            currentChunkOffset = 0,
+            currentStageElapsedMs = 0L,
+        )
+    callbacks.writeRecord(advanced)
+    if (advanced.currentStageIndex < advanced.scenario.stages.size) {
+        callbacks.publishSnapshot(advanced, AgentRunState.Running)
+    }
+    return true
+}
+
+private fun throttledDelay(
+    baseMillis: Long,
+    throttled: Boolean,
+): Long = if (throttled) (baseMillis * THROTTLE_NUMERATOR) / THROTTLE_DENOMINATOR else baseMillis

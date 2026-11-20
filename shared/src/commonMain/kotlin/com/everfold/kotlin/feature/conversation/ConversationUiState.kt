@@ -14,7 +14,8 @@ data class ChatMessage(
     val text: String,
     val attachments: List<ConversationAttachment> = emptyList(),
     val model: ConversationModel? = null,
-    val execution: TaskExecutionTrace? = null,
+    val streamBlocks: List<AgentStreamBlock> = emptyList(),
+    val elapsedMillis: Long? = null,
 )
 
 /** 会话界面的不可变快照资源文案到渲染时再解析保留动态语言切换能力 */

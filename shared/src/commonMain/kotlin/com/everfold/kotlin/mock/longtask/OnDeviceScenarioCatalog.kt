@@ -1,11 +1,8 @@
 package com.everfold.kotlin.mock.longtask
 
 import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
-import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
-import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
-import com.everfold.kotlin.ui.localization.uiResource
-import everfold.shared.generated.resources.Res
-import everfold.shared.generated.resources.longtask_note_resumed
+import com.everfold.kotlin.feature.conversation.AgentStreamBlock
+import com.everfold.kotlin.feature.conversation.StreamRunStatus
 
 private val StorageKeywords =
     listOf("download", "screenshot", "apk", "storage", "archive", "clean", "整理", "下载", "截图", "清理", "存储", "归档", "重复")
@@ -14,12 +11,10 @@ private val DiagnosticsKeywords =
 private val IndexKeywords =
     listOf("index", "search", "offline", "fts", "document", "索引", "离线", "检索", "知识库", "文档")
 
-private const val PRESEEDED_STEP_INDEX = 2
-private const val PRESEEDED_CHUNK_OFFSET = 15
-private const val PRESEEDED_STEP_0_MS = 4_000L
-private const val PRESEEDED_STEP_1_MS = 15_000L
-private const val PRESEEDED_ELAPSED_MS = 26_500L
-private const val PRESEEDED_PERCENT = 43
+private const val PRESEEDED_STAGE_INDEX = 6
+private const val PRESEEDED_CHUNK_OFFSET = 14
+private const val PRESEEDED_STAGE_ELAPSED_MS = 7_000L
+private const val PRESEEDED_TOTAL_ELAPSED_MS = 32_000L
 
 internal const val PAUSED_SAMPLE_CONVERSATION_ID = "android-storage-audit"
 internal const val PAUSED_SAMPLE_ASSISTANT_MESSAGE_ID = "android-storage-audit-assistant"
@@ -45,30 +40,79 @@ internal object OnDeviceScenarioCatalog {
 
     fun preseededPausedStorageRun(): TaskRunRecord {
         val scenario = buildStorageArchiveScenario()
+        val prompt = "深度整理本机 Download 与截图目录并清理重复安装包"
+        val context = TaskRunContext(prompt, "/workspace", emptyList(), null, emptyList(), PRESEEDED_TOTAL_ELAPSED_MS)
+        val completedBlocks = scenario.stages.take(PRESEEDED_STAGE_INDEX).mapNotNull { stage -> completedBlockForStage(stage, context) }
+        val hashStage = scenario.stages[PRESEEDED_STAGE_INDEX] as StreamStageSpec.ToolStage
+        val partialLogs = (1..PRESEEDED_CHUNK_OFFSET).mapNotNull { chunk -> hashStage.logLineAtChunk(chunk, hashStage.totalChunks) }
+        val pausedTool =
+            AgentStreamBlock.ToolCall(
+                id = hashStage.id,
+                toolName = hashStage.toolName,
+                command = hashStage.command,
+                status = StreamRunStatus.Paused,
+                summary = hashStage.runningSummary(PRESEEDED_CHUNK_OFFSET, hashStage.totalItems),
+                logLines = partialLogs,
+                progress = PRESEEDED_CHUNK_OFFSET.toFloat() / hashStage.totalChunks,
+                durationMillis = PRESEEDED_STAGE_ELAPSED_MS,
+            )
         return TaskRunRecord(
             taskId = "task-preseeded-storage",
             conversationId = PAUSED_SAMPLE_CONVERSATION_ID,
             connectionId = BUILT_IN_CONNECTION_ID,
             assistantMessageId = PAUSED_SAMPLE_ASSISTANT_MESSAGE_ID,
-            prompt = "深度整理本机 Download 与截图目录并清理重复安装包",
+            prompt = prompt,
             workspacePath = "/workspace",
             attachmentNames = emptyList(),
             scenario = scenario,
-            currentStepIndex = PRESEEDED_STEP_INDEX,
+            committedBlocks = completedBlocks,
+            activeBlock = pausedTool,
+            currentStageIndex = PRESEEDED_STAGE_INDEX,
             currentChunkOffset = PRESEEDED_CHUNK_OFFSET,
-            stepDurations = mapOf(0 to PRESEEDED_STEP_0_MS, 1 to PRESEEDED_STEP_1_MS),
-            elapsedMillis = PRESEEDED_ELAPSED_MS,
-            deviceNote =
-                DeviceEnvironmentNote(
-                    severity = DeviceNoteSeverity.Info,
-                    message =
-                        uiResource(
-                            Res.string.longtask_note_resumed,
-                            PRESEEDED_STEP_INDEX + 1,
-                            scenario.steps.size,
-                            PRESEEDED_PERCENT,
-                        ),
-                ),
+            currentStageElapsedMs = PRESEEDED_STAGE_ELAPSED_MS,
+            activeLogLines = partialLogs,
+            elapsedMillis = PRESEEDED_TOTAL_ELAPSED_MS,
         )
     }
 }
+
+private fun completedBlockForStage(
+    stage: StreamStageSpec,
+    context: TaskRunContext,
+): AgentStreamBlock? =
+    when (stage) {
+        is StreamStageSpec.ThinkStage -> {
+            AgentStreamBlock.Thinking(
+                id = stage.id,
+                text = stage.thought,
+                status = StreamRunStatus.Completed,
+                durationMillis = stage.durationMillis,
+            )
+        }
+
+        is StreamStageSpec.NarrationStage -> {
+            AgentStreamBlock.Narration(
+                id = stage.id,
+                text = stage.textBuilder(context),
+                isStreaming = false,
+            )
+        }
+
+        is StreamStageSpec.ToolStage -> {
+            val logs = (1..stage.totalChunks).mapNotNull { chunk -> stage.logLineAtChunk(chunk, stage.totalChunks) }
+            AgentStreamBlock.ToolCall(
+                id = stage.id,
+                toolName = stage.toolName,
+                command = stage.command,
+                status = StreamRunStatus.Completed,
+                summary = stage.completedSummary,
+                logLines = logs,
+                progress = 1f,
+                durationMillis = stage.totalChunks * stage.chunkDelayMillis,
+            )
+        }
+
+        is StreamStageSpec.ApprovalStage -> {
+            null
+        }
+    }

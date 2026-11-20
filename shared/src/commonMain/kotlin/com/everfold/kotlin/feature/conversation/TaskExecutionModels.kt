@@ -3,13 +3,11 @@ package com.everfold.kotlin.feature.conversation
 import androidx.compose.runtime.Immutable
 import com.everfold.kotlin.ui.localization.UiText
 
-enum class StepStatus {
-    Pending,
+enum class StreamRunStatus {
     Running,
     Paused,
-    WaitingApproval,
-    Completed,
     Failed,
+    Completed,
 }
 
 enum class DeviceNoteSeverity {
@@ -37,31 +35,52 @@ data class DeviceEnvironmentNote(
     val message: UiText,
 )
 
+/** 单智能体实时交错信息流中的原子节点，按执行时序动态追加，不预先生成未到达节点。 */
 @Immutable
-data class ExecutionStepSnapshot(
-    val id: String,
-    val title: UiText,
-    val status: StepStatus,
-    val toolName: String? = null,
-    val commandPreview: UiText? = null,
-    val observation: UiText? = null,
-    val stepProgress: Float? = null,
-    val durationMillis: Long? = null,
-    val resumedFromCheckpoint: Boolean = false,
-)
+sealed interface AgentStreamBlock {
+    val id: String
 
-@Immutable
-data class TaskExecutionTrace(
-    val taskId: String,
-    val headline: UiText,
-    val currentStepIndex: Int,
-    val totalSteps: Int,
-    val overallProgress: Float,
-    val elapsedMillis: Long,
-    val steps: List<ExecutionStepSnapshot>,
-    val deviceNote: DeviceEnvironmentNote? = null,
-    val activeGate: WaitingGate? = null,
-)
+    @Immutable
+    data class Thinking(
+        override val id: String,
+        val text: String,
+        val status: StreamRunStatus,
+        val durationMillis: Long = 0L,
+    ) : AgentStreamBlock
+
+    @Immutable
+    data class Narration(
+        override val id: String,
+        val text: String,
+        val isStreaming: Boolean = false,
+    ) : AgentStreamBlock
+
+    @Immutable
+    data class ToolCall(
+        override val id: String,
+        val toolName: String,
+        val command: String,
+        val status: StreamRunStatus,
+        val summary: UiText,
+        val logLines: List<String> = emptyList(),
+        val progress: Float? = null,
+        val durationMillis: Long = 0L,
+        val resumed: Boolean = false,
+    ) : AgentStreamBlock
+
+    @Immutable
+    data class Approval(
+        override val id: String,
+        val gate: WaitingGate,
+        val resolvedChoice: UiText? = null,
+    ) : AgentStreamBlock
+
+    @Immutable
+    data class SystemNotice(
+        override val id: String,
+        val note: DeviceEnvironmentNote,
+    ) : AgentStreamBlock
+}
 
 enum class DeviceTaskFault {
     PowerSaverThrottle,

@@ -301,7 +301,7 @@ private fun ConversationBody(
     }
 }
 
-/** 按角色展示消息用户提示可折叠助手回复支持 Markdown选择与复制 */
+/** 按角色展示消息用户提示可折叠助手回复支持实时交错流与 Markdown 选择复制 */
 @Composable
 internal fun MessageItem(
     message: ChatMessage,
@@ -316,13 +316,8 @@ internal fun MessageItem(
     onSelectGateOption: (String) -> Unit = {},
 ) {
     val user = message.role == MessageRole.User
-    val status =
-        when {
-            user -> AgentRunState.Idle
-            runState != AgentRunState.Idle -> runState
-            message.execution != null -> AgentRunState.Completed
-            else -> AgentRunState.Idle
-        }
+    val hasStream = !user && message.streamBlocks.isNotEmpty()
+    val status = resolveMessageRunState(user, hasStream, runState, message.streamBlocks)
     val modelName =
         message.model
             ?.takeIf { !user }
@@ -339,26 +334,56 @@ internal fun MessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (status == AgentRunState.Running) {
-            AgentStatusBar(status, onRetry, canRetry, message.execution, onSelectGateOption)
-        }
-        Spacer(Modifier.height(10.dp))
-        MessageAttachments(message.attachments)
-        ConversationTextScale(textSize) {
-            if (user) {
-                if (message.text.isNotEmpty()) {
-                    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-                        UserPrompt(message, onPromptHeightChange, collapsePrompts)
-                    }
-                }
-            } else if (message.text.isNotEmpty()) {
-                SelectionContainer { MessageMarkdown(message.text) }
-            }
-        }
-        if (status != AgentRunState.Running) {
-            AgentStatusBar(status, onRetry, canRetry, message.execution, onSelectGateOption)
+        if (hasStream) {
+            Spacer(Modifier.height(10.dp))
+            MessageAttachments(message.attachments)
+            AgentStreamFlow(message.streamBlocks, textSize, status == AgentRunState.Waiting && canRetry, onSelectGateOption)
+            StreamTurnFooter(status, message.elapsedMillis, canRetry, onRetry)
+        } else {
+            StandardMessageBody(message, user, status, textSize, collapsePrompts, canRetry, onPromptHeightChange, onRetry)
         }
     }
+}
+
+private fun resolveMessageRunState(
+    user: Boolean,
+    hasStream: Boolean,
+    runState: AgentRunState,
+    blocks: List<AgentStreamBlock>,
+): AgentRunState =
+    when {
+        user -> AgentRunState.Idle
+        runState != AgentRunState.Idle -> runState
+        hasStream && blocks.lastOrNull() !is AgentStreamBlock.Approval -> AgentRunState.Completed
+        else -> AgentRunState.Idle
+    }
+
+@Composable
+private fun StandardMessageBody(
+    message: ChatMessage,
+    user: Boolean,
+    status: AgentRunState,
+    textSize: ConversationTextSize,
+    collapsePrompts: Boolean,
+    canRetry: Boolean,
+    onPromptHeightChange: (Int) -> Unit,
+    onRetry: () -> Unit,
+) {
+    if (status == AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
+    Spacer(Modifier.height(10.dp))
+    MessageAttachments(message.attachments)
+    ConversationTextScale(textSize) {
+        if (user) {
+            if (message.text.isNotEmpty()) {
+                Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                    UserPrompt(message, onPromptHeightChange, collapsePrompts)
+                }
+            }
+        } else if (message.text.isNotEmpty()) {
+            SelectionContainer { MessageMarkdown(message.text) }
+        }
+    }
+    if (status != AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
 }
 
 /** 空会话欢迎页点击建议只填入草稿不自动发送 */

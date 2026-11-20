@@ -50,7 +50,12 @@ internal fun ConversationMenu(
     var page by remember(state.id) { mutableStateOf<MenuPage?>(null) }
     val currentPage = page ?: MenuPage.Overview
     val menuLabel = localizedString(Res.string.conversation_menu)
-    val canInjectFault = onInjectFault != null && state.messages.lastOrNull()?.execution != null
+    val canInjectFault =
+        onInjectFault != null &&
+            state.messages
+                .lastOrNull()
+                ?.streamBlocks
+                ?.isNotEmpty() == true
     Box {
         AppTooltip(menuLabel) {
             IconButton(onClick = { page = MenuPage.Overview }) { AppIcon(AppSymbol.More, description = menuLabel) }
