@@ -32,11 +32,11 @@ private const val STREAM_STEP_DELAY_MILLIS = 45L
 internal class MockWorkspace :
     ViewModel(),
     Workspace {
-    var initialized by mutableStateOf(false)
+    override var initialized by mutableStateOf(false)
         private set
     override val connections = MockConnections(viewModelScope, ::stopConnectionSessions)
 
-    fun completeSetup(setup: ClusterSetup?) {
+    override fun completeSetup(setup: ClusterSetup?) {
         if (initialized) return
         if (setup != null) {
             val id = connections.add(setup.ip.ifBlank { "Beamlet" }, setup, autoConnect = true)
@@ -188,7 +188,8 @@ internal class MockWorkspace :
 
     override fun retry(id: String) {
         val session = conversations.firstOrNull { it.id == id } ?: return
-        if (session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
+        val hasTarget = session.workspace != null && session.model != null
+        if (session.isResponding || !hasTarget || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
         update(id) {
             it.copy(
@@ -224,7 +225,8 @@ internal class MockWorkspace :
         messageId: String,
         reply: String,
     ) {
-        replies[id] =
+        replies.remove(id)?.cancel()
+        val job =
             viewModelScope.launch {
                 delay(STREAM_INITIAL_DELAY_MILLIS)
                 for (length in 1..reply.length step STREAM_CHAR_STEP) {
@@ -237,8 +239,9 @@ internal class MockWorkspace :
 
                 // 已完成
                 update(id) { it.copy(runState = AgentRunState.Completed, preview = UiText.Resource(Res.string.reply_complete)) }
-                replies.remove(id)
             }
+        replies[id] = job
+        job.invokeOnCompletion { if (replies[id] === job) replies.remove(id) }
     }
 
     override fun stop(id: String) {

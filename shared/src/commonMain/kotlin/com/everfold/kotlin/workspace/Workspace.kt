@@ -1,5 +1,6 @@
 package com.everfold.kotlin.workspace
 
+import com.everfold.kotlin.feature.connections.ClusterSetup
 import com.everfold.kotlin.feature.connections.ConnectionManager
 import com.everfold.kotlin.feature.conversation.ConversationOptions
 import com.everfold.kotlin.feature.conversation.ConversationUiState
@@ -9,10 +10,13 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
  * 会话始终绑定创建时的连接连接不可用时拒绝发送并保留消息与草稿。
  */
 internal interface Workspace {
+    val initialized: Boolean
     val connections: ConnectionManager
     val conversations: List<ConversationUiState>
     val newConversation: ConversationUiState
     val conversationOptions: ConversationOptions
+
+    fun completeSetup(setup: ClusterSetup?)
 
     fun updateNewConversationDraft(value: String)
 

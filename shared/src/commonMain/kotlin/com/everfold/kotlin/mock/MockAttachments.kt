@@ -48,20 +48,21 @@ internal class MockAttachments(
         val key = conversationId to attachmentId
         uploads.remove(key)?.cancel()
         change(conversationId, attachmentId) { it.copy(status = AttachmentStatus.Uploading, progress = 0f) }
-        uploads[key] =
+        val job =
             scope.launch {
                 repeat(UPLOAD_STEPS) { step ->
                     delay(UPLOAD_STEP_MILLIS)
-                    if (!connected(state.connectionId)) {
+                    val currentConnectionId = read(conversationId)?.connectionId
+                    if (currentConnectionId == null || !connected(currentConnectionId)) {
                         change(conversationId, attachmentId) { it.copy(status = AttachmentStatus.Failed) }
-                        uploads.remove(key)
                         return@launch
                     }
                     change(conversationId, attachmentId) { it.copy(progress = (step + 1).toFloat() / UPLOAD_STEPS) }
                 }
                 change(conversationId, attachmentId) { it.copy(status = AttachmentStatus.Ready) }
-                uploads.remove(key)
             }
+        uploads[key] = job
+        job.invokeOnCompletion { if (uploads[key] === job) uploads.remove(key) }
     }
 
     fun remove(

@@ -10,14 +10,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.everfold.kotlin.app.EverfoldApp
+import com.everfold.kotlin.feature.conversation.AgentRunState
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.feature.onboarding.OnboardingScreen
 import com.everfold.kotlin.mock.MockConnectionOptions
 import com.everfold.kotlin.mock.MockWorkspace
 import com.everfold.kotlin.preferences.UserPreferencesState
 import com.everfold.kotlin.preferences.rememberPreferenceStore
+import com.everfold.kotlin.ui.files.FilePicker
+import com.everfold.kotlin.ui.files.rememberFilePicker
 import com.everfold.kotlin.ui.localization.AppLanguageEnvironment
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.theme.EverfoldTheme
+import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.sample_reply
 
@@ -27,13 +32,33 @@ fun App(modifier: Modifier = Modifier) {
     val persistScope = rememberCoroutineScope()
     val preferences = remember(store, persistScope) { UserPreferencesState(store, persistScope) }
     val workspace = viewModel { MockWorkspace() }
+    EverfoldRoot(
+        workspace = workspace,
+        preferences = preferences,
+        modifier = modifier,
+        onSampleReply = { workspace.replyText = it },
+        onPreviewState = workspace::previewRunState,
+        connectionOverviewExtra = { MockConnectionOptions(workspace.connections, it) },
+    )
+}
+
+@Composable
+internal fun EverfoldRoot(
+    workspace: Workspace,
+    preferences: UserPreferencesState,
+    modifier: Modifier = Modifier,
+    onSampleReply: (String) -> Unit = {},
+    onPreviewState: ((String, AgentRunState) -> Unit)? = null,
+    connectionOverviewExtra: @Composable (String) -> Unit = {},
+    filePickerProvider: @Composable ((Result<List<AttachmentSource>>) -> Unit) -> FilePicker = { rememberFilePicker(it) },
+) {
     val language = preferences.value.language
     val themeMode = preferences.themeMode
     val themeColor = preferences.themeColor
     val initialized = preferences.value.onboardingCompleted || workspace.initialized
     AppLanguageEnvironment(language) {
         val reply = localizedString(Res.string.sample_reply)
-        SideEffect { workspace.replyText = reply }
+        SideEffect { onSampleReply(reply) }
         EverfoldTheme(mode = themeMode, color = themeColor) {
             Box(modifier.fillMaxSize()) {
                 if (initialized) {
@@ -42,8 +67,9 @@ fun App(modifier: Modifier = Modifier) {
                         language,
                         { value -> preferences.update { it.copy(language = value) } },
                         preferences = preferences,
-                        onPreviewState = workspace::previewRunState,
-                        connectionOverviewExtra = { MockConnectionOptions(workspace.connections, it) },
+                        onPreviewState = onPreviewState,
+                        connectionOverviewExtra = connectionOverviewExtra,
+                        filePickerProvider = filePickerProvider,
                     )
                 } else {
                     OnboardingScreen(

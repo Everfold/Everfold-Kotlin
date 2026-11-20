@@ -102,7 +102,7 @@ internal class MockConnections(
         }
         cancelOperation(id)
         update(id) { it.copy(runtime = it.runtime.copy(status = ConnectionStatus.Connecting, failure = null)) }
-        operations[id] =
+        val job =
             scope.launch {
                 delay(CONNECT_DELAY_MILLIS)
                 update(id) {
@@ -119,8 +119,9 @@ internal class MockConnections(
                             },
                     )
                 }
-                operations.remove(id)
             }
+        operations[id] = job
+        job.invokeOnCompletion { if (operations[id] === job) operations.remove(id) }
     }
 
     override fun disconnect(id: String) {
@@ -132,12 +133,13 @@ internal class MockConnections(
             return
         }
         update(id) { it.copy(runtime = it.runtime.copy(status = ConnectionStatus.Disconnecting)) }
-        operations[id] =
+        val job =
             scope.launch {
                 delay(DISCONNECT_DELAY_MILLIS)
                 update(id) { it.copy(runtime = it.runtime.copy(status = ConnectionStatus.Disconnected, failure = null)) }
-                operations.remove(id)
             }
+        operations[id] = job
+        job.invokeOnCompletion { if (operations[id] === job) operations.remove(id) }
     }
 
     override fun remove(id: String) {
