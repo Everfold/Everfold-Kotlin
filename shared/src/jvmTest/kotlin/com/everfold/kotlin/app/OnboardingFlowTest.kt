@@ -78,13 +78,13 @@ class OnboardingFlowTest(
             onNodeWithText("下一步").assertIsDisplayed().performClick()
             onNodeWithText("中心节点").assertIsDisplayed().performClick()
 
-            onNode(hasSetTextAction() and hasText("IP 地址")).performScrollTo().performTextReplacement("not-an-ip")
+            onNode(hasSetTextAction() and hasText("主机或 IP 地址")).performScrollTo().performTextReplacement("not-an-ip")
             onNode(hasSetTextAction() and hasText("端口")).performScrollTo().performTextReplacement("70000")
             onNodeWithText("测试连接").performClick()
-            onNodeWithText("请输入有效的 IPv4 或 IPv6 地址。").performScrollTo().assertIsDisplayed()
+            onNodeWithText("请输入有效的域名、IPv4 或 IPv6 地址。").performScrollTo().assertIsDisplayed()
             onNodeWithText("请输入 1-65535 范围内的端口。").performScrollTo().assertIsDisplayed()
 
-            onNode(hasSetTextAction() and hasText("IP 地址")).performScrollTo().performTextReplacement("127.0.0.1")
+            onNode(hasSetTextAction() and hasText("主机或 IP 地址")).performScrollTo().performTextReplacement("127.0.0.1")
             onNode(hasSetTextAction() and hasText("端口")).performScrollTo().performTextReplacement("8080")
             onNodeWithText("测试连接").performClick()
             mainClock.advanceTimeBy(CONNECTION_TEST_DELAY_ADVANCE_MS)

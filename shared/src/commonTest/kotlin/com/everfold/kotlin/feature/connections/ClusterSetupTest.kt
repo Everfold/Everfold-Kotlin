@@ -83,4 +83,28 @@ class ClusterSetupTest {
         assertEquals(setOf(ClusterField.ClientPrivateKey), form.copy(clientPrivateKey = null).invalidFields)
         assertEquals(setOf(ClusterField.CaCertificate), form.copy(caCertificate = " ").invalidFields)
     }
+
+    @Test
+    fun hostValidationAcceptsHostnamesAndRejectsMalformedAddresses() {
+        listOf("localhost", "LOCALHOST", "cluster.example.com", "node-1.internal.local.", "127.0.0.1", "2001:db8::1").forEach {
+            assertTrue(validHost(it), it)
+        }
+        listOf(
+            "not-an-ip",
+            "256.1.1.1",
+            "-bad.example.com",
+            "bad-.example.com",
+            "a..b.com",
+            "bad_host.example.com",
+            "01.02.03.04",
+        ).forEach {
+            assertFalse(validHost(it), it)
+        }
+        assertFalse(validIp("01.02.03.04"))
+        assertFalse(validIp("00.0.0.0"))
+        assertFalse(validIp("cluster.example.com"))
+        assertTrue(validIp("0.0.0.0"))
+        assertTrue(validIp("192.168.0.1"))
+        assertTrue(ClusterSetup(method = ClusterMethod.Central, ip = "node.example.com", port = "443").isValid)
+    }
 }

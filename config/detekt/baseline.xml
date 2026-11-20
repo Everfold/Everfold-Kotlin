@@ -2,12 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:ClusterSetup.kt:ClusterSetup$method != ClusterMethod.Cloud &amp;&amp; !(method == ClusterMethod.Lan &amp;&amp; ip.isBlank() &amp;&amp; port.isBlank())</ID>
     <ID>FunctionNaming:MainViewController.kt:@Suppress("ktlint:standard:function-naming") fun MainViewController</ID>
-    <ID>MagicNumber:ClusterSetup.kt:255</ID>
-    <ID>MagicNumber:ClusterSetup.kt:3</ID>
-    <ID>MagicNumber:ClusterSetup.kt:4</ID>
-    <ID>MagicNumber:ClusterSetup.kt:8</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.ExtraLarge$1.25f</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.Large$1.125f</ID>
     <ID>MagicNumber:ConversationPreferences.kt:ConversationTextSize.Small$0.875f</ID>
@@ -23,7 +18,6 @@
     <ID>MatchingDeclarationName:AppIcon.kt:AppSymbol</ID>
     <ID>MatchingDeclarationName:ConnectionPreviewOptions.kt:ConnectionPreviewResult</ID>
     <ID>MatchingDeclarationName:EverfoldTheme.kt:ThemeMode</ID>
-    <ID>ReturnCount:ClusterSetup.kt:internal fun validIp: Boolean</ID>
     <ID>ReturnCount:ThemeColor.kt:internal fun parseHexColor: Color?</ID>
     <ID>TooManyFunctions:MockWorkspace.kt:MockWorkspace : ViewModelWorkspace</ID>
   </CurrentIssues>

@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.ui.localization.formatLocalTimestamp
 import com.everfold.kotlin.ui.localization.localizedString
 import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
@@ -165,12 +166,7 @@ private fun ConnectionOverview(
             )
             ConnectionInfo(
                 localizedString(Res.string.connection_last_connected),
-                runtime.lastConnectedAt
-                    ?.toString()
-                    ?.substringBefore('.')
-                    ?.replace('T', ' ')
-                    ?.removeSuffix("Z")
-                    ?.plus(" UTC")
+                runtime.lastConnectedAt?.let(::formatLocalTimestamp)
                     ?: localizedString(Res.string.connection_never_connected),
             )
             HorizontalDivider()

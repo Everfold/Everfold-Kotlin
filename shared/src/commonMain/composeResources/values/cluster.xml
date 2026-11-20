@@ -5,8 +5,8 @@
     <string name="cluster_lan">局域网</string>
     <string name="cluster_central">中心节点</string>
     <string name="cluster_cloud">XX云</string>
-    <string name="lan_hint">可留空以发现局域网节点，或手动填写 IP 和端口。</string>
-    <string name="ip_address">IP 地址</string>
+    <string name="lan_hint">可留空以发现局域网节点，或手动填写地址和端口。</string>
+    <string name="ip_address">主机或 IP 地址</string>
     <string name="port">端口</string>
 
     <!-- 验证方式与凭据 -->
@@ -39,7 +39,7 @@
     <string name="simulate_failure">模拟连接失败</string>
 
     <!-- 表单校验与模拟结果 -->
-    <string name="error_ip">请输入有效的 IPv4 或 IPv6 地址。</string>
+    <string name="error_ip">请输入有效的域名、IPv4 或 IPv6 地址。</string>
     <string name="error_port">请输入 1-65535 范围内的端口。</string>
     <string name="error_account">请输入用户名。</string>
     <string name="error_password">请输入密码。</string>
