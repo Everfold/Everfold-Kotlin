@@ -68,6 +68,10 @@ and "$update_script"
 
 # Check dependency and plugin updates
 ./gradlew dependencyUpdates
+
+# Optional: enable Aliyun Maven mirrors
+./gradlew :check -PuseAliyunMirror=true
+# or: USE_ALIYUN_MIRROR=true ./gradlew :check
 ```
 
 ### Android Emulator

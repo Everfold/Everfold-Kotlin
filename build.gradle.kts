@@ -36,7 +36,12 @@ tasks.withType<DetektCreateBaselineTask>().configureEach {
 }
 
 tasks.named("check") {
-    dependsOn(":shared:jvmTest")
+    dependsOn(
+        ":shared:jvmTest",
+        ":shared:testAndroidHostTest",
+        ":androidApp:compileDebugKotlin",
+        ":desktopApp:compileKotlin",
+    )
 }
 
 tasks.named<DependencyUpdatesTask>("dependencyUpdates") {

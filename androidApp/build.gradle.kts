@@ -36,8 +36,12 @@ android {
             libs.versions.android.targetSdk
                 .get()
                 .toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode =
+            providers
+                .gradleProperty("everfold.versionCode")
+                .get()
+                .toInt()
+        versionName = providers.gradleProperty("everfold.versionName").get()
     }
     packaging {
         resources {

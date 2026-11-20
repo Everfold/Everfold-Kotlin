@@ -83,6 +83,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   gradleFlags = [
     "--no-configuration-cache"
     "-Pkotlin.compiler.execution.strategy=in-process"
+    "-PuseAliyunMirror=true"
   ];
 
   gradleBuildTask = ":desktopApp:packageUberJarForCurrentOS";
