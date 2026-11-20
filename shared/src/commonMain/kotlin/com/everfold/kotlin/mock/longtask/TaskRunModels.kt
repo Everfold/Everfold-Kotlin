@@ -178,6 +178,7 @@ internal data class TaskRunRecord(
             index > activeIndex -> StepStatus.Pending
             runState == AgentRunState.Waiting -> StepStatus.WaitingApproval
             runState == AgentRunState.Failed -> StepStatus.Failed
+            runState == AgentRunState.Stopped -> StepStatus.Paused
             runState == AgentRunState.Running -> StepStatus.Running
             else -> StepStatus.Pending
         }

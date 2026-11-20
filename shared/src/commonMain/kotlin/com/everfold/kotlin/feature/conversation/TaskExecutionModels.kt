@@ -6,6 +6,7 @@ import com.everfold.kotlin.ui.localization.UiText
 enum class StepStatus {
     Pending,
     Running,
+    Paused,
     WaitingApproval,
     Completed,
     Failed,

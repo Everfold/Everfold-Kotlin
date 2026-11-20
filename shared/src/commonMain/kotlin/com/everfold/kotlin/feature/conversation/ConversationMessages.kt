@@ -58,6 +58,7 @@ internal fun ConversationMessages(
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
     sideMargins: Boolean = true,
+    onSelectGateOption: (String) -> Unit = {},
 ) {
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -78,6 +79,7 @@ internal fun ConversationMessages(
             connectionName = connectionName,
             config = config,
             onRetry = onRetry,
+            onSelectGateOption = onSelectGateOption,
             onPromptHeightChange = { messageId, heightChange ->
                 followLatest = false
                 anchorCollapsedPrompt(list, messageId, heightChange)
@@ -121,7 +123,15 @@ private fun ConversationFollowEffects(
             list.scrollToItem(0)
         }
     }
-    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.id, state.runState) {
+    LaunchedEffect(
+        state.messages.size,
+        state.messages.lastOrNull()?.id,
+        state.runState,
+        state.messages
+            .lastOrNull()
+            ?.execution
+            ?.currentStepIndex,
+    ) {
         if (followLatest && !list.isScrollInProgress) list.scrollToItem(0)
     }
 }
@@ -133,6 +143,7 @@ private fun ConversationMessageList(
     connectionName: String,
     config: MessageDisplayConfig,
     onRetry: () -> Unit,
+    onSelectGateOption: (String) -> Unit,
     onPromptHeightChange: (String, Int) -> Unit,
 ) {
     val latest = state.messages.lastOrNull()
@@ -157,8 +168,9 @@ private fun ConversationMessageList(
                     textSize = config.textSize,
                     collapsePrompts = config.collapsePrompts,
                     runState = if (message.id == latest?.id) state.runState else AgentRunState.Idle,
-                    onRetry = onRetry,
                     canRetry = config.canRetry,
+                    onRetry = onRetry,
+                    onSelectGateOption = onSelectGateOption,
                     onPromptHeightChange = { heightChange -> onPromptHeightChange(message.id, heightChange) },
                 )
             }

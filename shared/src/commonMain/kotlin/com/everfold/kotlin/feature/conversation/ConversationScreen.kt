@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.settings.ConversationTextScale
 import com.everfold.kotlin.feature.settings.ConversationTextSize
 import com.everfold.kotlin.feature.settings.SendShortcut
@@ -67,6 +68,9 @@ import com.everfold.kotlin.ui.localization.resolve
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.hide_sessions
 import everfold.shared.generated.resources.logo
+import everfold.shared.generated.resources.longtask_suggestion_diagnostics
+import everfold.shared.generated.resources.longtask_suggestion_index
+import everfold.shared.generated.resources.longtask_suggestion_storage
 import everfold.shared.generated.resources.new_session
 import everfold.shared.generated.resources.new_session_shortcut
 import everfold.shared.generated.resources.open_workspace
@@ -104,6 +108,7 @@ fun ConversationScreen(
     shortcut: SendShortcut = SendShortcut.ModifiedEnter,
     collapsePrompts: Boolean = true,
     sideMargins: Boolean = true,
+    onSelectGateOption: (String) -> Unit = {},
     composerTools: @Composable RowScope.() -> Unit = {},
     attachmentsContent: @Composable () -> Unit = {},
 ) {
@@ -150,6 +155,7 @@ fun ConversationScreen(
                 { onDraftChange(it).also { inputFocus.requestFocus() } },
                 { if (desktopUi) inputFocus.requestFocus() },
                 onRetry,
+                onSelectGateOption,
                 Modifier.weight(1f),
             )
         }
@@ -267,10 +273,15 @@ private fun ConversationBody(
     onSuggestion: (String) -> Unit,
     onJumpToLatest: () -> Unit,
     onRetry: () -> Unit,
+    onSelectGateOption: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.messages.isEmpty()) {
-        WelcomeContent(onSuggestion, modifier)
+        WelcomeContent(
+            builtInConnection = state.connectionId == BUILT_IN_CONNECTION_ID,
+            onSuggestion = onSuggestion,
+            modifier = modifier,
+        )
     } else {
         key(state.id) {
             ConversationMessages(
@@ -282,6 +293,7 @@ private fun ConversationBody(
                 textSize = prefs.textSize,
                 collapsePrompts = collapsePrompts,
                 sideMargins = prefs.sideMargins,
+                onSelectGateOption = onSelectGateOption,
                 onJumpToLatest = onJumpToLatest,
                 modifier = modifier,
             )
@@ -295,15 +307,22 @@ internal fun MessageItem(
     message: ChatMessage,
     authorName: String,
     modifier: Modifier = Modifier,
-    onPromptHeightChange: (Int) -> Unit = {},
     textSize: ConversationTextSize = ConversationTextSize.System,
     collapsePrompts: Boolean = true,
     runState: AgentRunState = AgentRunState.Idle,
-    onRetry: () -> Unit = {},
     canRetry: Boolean = true,
+    onPromptHeightChange: (Int) -> Unit = {},
+    onRetry: () -> Unit = {},
+    onSelectGateOption: (String) -> Unit = {},
 ) {
     val user = message.role == MessageRole.User
-    val status = if (user) AgentRunState.Idle else runState
+    val status =
+        when {
+            user -> AgentRunState.Idle
+            runState != AgentRunState.Idle -> runState
+            message.execution != null -> AgentRunState.Completed
+            else -> AgentRunState.Idle
+        }
     val modelName =
         message.model
             ?.takeIf { !user }
@@ -320,7 +339,9 @@ internal fun MessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (status == AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
+        if (status == AgentRunState.Running) {
+            AgentStatusBar(status, onRetry, canRetry, message.execution, onSelectGateOption)
+        }
         Spacer(Modifier.height(10.dp))
         MessageAttachments(message.attachments)
         ConversationTextScale(textSize) {
@@ -334,22 +355,33 @@ internal fun MessageItem(
                 SelectionContainer { MessageMarkdown(message.text) }
             }
         }
-        if (status != AgentRunState.Running) AgentStatusBar(status, onRetry, canRetry)
+        if (status != AgentRunState.Running) {
+            AgentStatusBar(status, onRetry, canRetry, message.execution, onSelectGateOption)
+        }
     }
 }
 
 /** 空会话欢迎页点击建议只填入草稿不自动发送 */
 @Composable
 private fun WelcomeContent(
+    builtInConnection: Boolean,
     onSuggestion: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val suggestions =
-        listOf(
-            localizedString(Res.string.suggestion_ideas),
-            localizedString(Res.string.suggestion_week),
-            localizedString(Res.string.suggestion_problem),
-        )
+        if (builtInConnection) {
+            listOf(
+                localizedString(Res.string.longtask_suggestion_storage),
+                localizedString(Res.string.longtask_suggestion_diagnostics),
+                localizedString(Res.string.longtask_suggestion_index),
+            )
+        } else {
+            listOf(
+                localizedString(Res.string.suggestion_ideas),
+                localizedString(Res.string.suggestion_week),
+                localizedString(Res.string.suggestion_problem),
+            )
+        }
     LazyColumn(
         modifier.fillMaxWidth(),
         contentPadding = PaddingValues(28.dp),

@@ -105,6 +105,7 @@ internal fun ConversationSessionPane(
         },
         composerFeedback = { SessionComposerFeedback(session, sessionConnection, workspace, openSessionConnection) },
         onRetry = { selected?.let { workspace.retry(it.id) } },
+        onSelectGateOption = { optionId -> selected?.let { workspace.taskController.resolveGateOption(it.id, optionId) } },
         modifier = modifier,
     )
 }
@@ -129,6 +130,12 @@ private fun SessionConversationMenu(
                 { state ->
                     if (state == AgentRunState.Running) workspace.retry(selected.id) else onPreviewState(selected.id, state)
                 }
+            } else {
+                null
+            },
+        onInjectFault =
+            if (selected != null && onPreviewState != null) {
+                { fault -> workspace.taskController.injectFault(selected.id, fault) }
             } else {
                 null
             },

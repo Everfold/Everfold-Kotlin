@@ -23,12 +23,17 @@ import everfold.shared.generated.resources.connection_back
 import everfold.shared.generated.resources.connection_manage
 import everfold.shared.generated.resources.connection_removed
 import everfold.shared.generated.resources.conversation_menu
+import everfold.shared.generated.resources.longtask_inject_io_fault
+import everfold.shared.generated.resources.longtask_inject_throttle
 import everfold.shared.generated.resources.menu_connection
 import everfold.shared.generated.resources.menu_workspace
 import everfold.shared.generated.resources.preview_agent_states
 import everfold.shared.generated.resources.workspace_unavailable
 
 private enum class MenuPage { Overview, Connections, Workspaces, Preview }
+
+private const val FAULT_THROTTLE_ID = "fault:throttle"
+private const val FAULT_IO_ID = "fault:io"
 
 /** 标题栏共用一个菜单，详情与选择在同一个面板内切换。 */
 @Composable
@@ -40,46 +45,92 @@ internal fun ConversationMenu(
     onSelectConnection: (String) -> Unit,
     onOpenConnection: () -> Unit,
     onPreviewState: ((AgentRunState) -> Unit)? = null,
+    onInjectFault: ((DeviceTaskFault) -> Unit)? = null,
 ) {
     var page by remember(state.id) { mutableStateOf<MenuPage?>(null) }
     val currentPage = page ?: MenuPage.Overview
     val menuLabel = localizedString(Res.string.conversation_menu)
+    val canInjectFault = onInjectFault != null && state.messages.lastOrNull()?.execution != null
     Box {
         AppTooltip(menuLabel) {
             IconButton(onClick = { page = MenuPage.Overview }) { AppIcon(AppSymbol.More, description = menuLabel) }
         }
         SelectionMenu(
             title = localizedString(currentPage.title),
-            choices = menuChoices(currentPage, state, connections, options, canSelect, onPreviewState != null),
+            choices = menuChoices(currentPage, state, connections, options, canSelect, onPreviewState != null, canInjectFault),
             expanded = page != null,
             onDismiss = { page = null },
         ) { id ->
             if (id == "back") {
                 page = MenuPage.Overview
+            } else if (currentPage == MenuPage.Overview) {
+                page = resolveOverviewTarget(id, canSelect, onOpenConnection)
             } else {
                 page = null
-                when (currentPage) {
-                    MenuPage.Overview -> {
-                        when (id) {
-                            "connection" -> if (canSelect) page = MenuPage.Connections else onOpenConnection()
-                            "workspace" -> page = MenuPage.Workspaces
-                            "preview" -> page = MenuPage.Preview
-                        }
-                    }
-
-                    MenuPage.Connections -> {
-                        if (id == "manage") onOpenConnection() else onSelectConnection(id)
-                    }
-
-                    MenuPage.Workspaces -> {
-                        if (canSelect) options.selectWorkspace(state.id, id)
-                    }
-
-                    MenuPage.Preview -> {
-                        onPreviewState?.invoke(AgentRunState.valueOf(id))
-                    }
-                }
+                dispatchMenuSelection(
+                    currentPage,
+                    id,
+                    state,
+                    options,
+                    canSelect,
+                    onSelectConnection,
+                    onOpenConnection,
+                    onPreviewState,
+                    onInjectFault,
+                )
             }
+        }
+    }
+}
+
+private fun resolveOverviewTarget(
+    id: String,
+    canSelect: Boolean,
+    onOpenConnection: () -> Unit,
+): MenuPage? =
+    when (id) {
+        "connection" -> {
+            if (canSelect) {
+                MenuPage.Connections
+            } else {
+                onOpenConnection()
+                null
+            }
+        }
+
+        "workspace" -> {
+            MenuPage.Workspaces
+        }
+
+        "preview" -> {
+            MenuPage.Preview
+        }
+
+        else -> {
+            null
+        }
+    }
+
+private fun dispatchMenuSelection(
+    currentPage: MenuPage,
+    id: String,
+    state: ConversationUiState,
+    options: ConversationOptions,
+    canSelect: Boolean,
+    onSelectConnection: (String) -> Unit,
+    onOpenConnection: () -> Unit,
+    onPreviewState: ((AgentRunState) -> Unit)?,
+    onInjectFault: ((DeviceTaskFault) -> Unit)?,
+) {
+    if (currentPage == MenuPage.Connections) {
+        if (id == "manage") onOpenConnection() else onSelectConnection(id)
+    } else if (currentPage == MenuPage.Workspaces) {
+        if (canSelect) options.selectWorkspace(state.id, id)
+    } else if (currentPage == MenuPage.Preview) {
+        when (id) {
+            FAULT_THROTTLE_ID -> onInjectFault?.invoke(DeviceTaskFault.PowerSaverThrottle)
+            FAULT_IO_ID -> onInjectFault?.invoke(DeviceTaskFault.StorageIoInterrupt)
+            else -> onPreviewState?.invoke(AgentRunState.valueOf(id))
         }
     }
 }
@@ -101,6 +152,7 @@ private fun menuChoices(
     options: ConversationOptions,
     canSelect: Boolean,
     preview: Boolean,
+    canInjectFault: Boolean,
 ): List<SelectionChoice> {
     val choices =
         when (page) {
@@ -125,8 +177,18 @@ private fun menuChoices(
             }
 
             MenuPage.Preview -> {
-                AgentRunState.entries.map {
-                    SelectionChoice(it.name, localizedString(it.label), selected = it == state.runState)
+                val baseChoices =
+                    AgentRunState.entries.map {
+                        SelectionChoice(it.name, localizedString(it.label), selected = it == state.runState)
+                    }
+                if (canInjectFault) {
+                    baseChoices +
+                        listOf(
+                            SelectionChoice(FAULT_THROTTLE_ID, localizedString(Res.string.longtask_inject_throttle), searchable = false),
+                            SelectionChoice(FAULT_IO_ID, localizedString(Res.string.longtask_inject_io_fault), searchable = false),
+                        )
+                } else {
+                    baseChoices
                 }
             }
         }

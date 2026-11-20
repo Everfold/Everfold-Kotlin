@@ -28,6 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
 internal fun workspaceUiTest(
     width: Int,
+    enableLongTasks: Boolean = false,
     block: DesktopComposeUiTest.(WorkspaceFixture) -> Unit,
 ) {
     val originalLocale = Locale.getDefault()
@@ -35,7 +36,7 @@ internal fun workspaceUiTest(
     Dispatchers.setMain(StandardTestDispatcher(scheduler))
     val store = ViewModelStore()
     try {
-        val fixture = WorkspaceFixture(MockWorkspace(), scheduler)
+        val fixture = WorkspaceFixture(MockWorkspace(enableLongTasks = enableLongTasks), scheduler)
         store.put("workspace", fixture.workspace)
         runDesktopComposeUiTest(
             width = width,

@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +24,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.kotlin.ui.components.AppIcon
 import com.everfold.kotlin.ui.components.AppSymbol
@@ -45,41 +45,66 @@ import everfold.shared.generated.resources.execution_details
 
 private const val EXPANDED_CHEVRON_ROTATION = 180f
 
-/** 回复的执行状态，详情默认折叠，异常状态提供恢复入口。 */
+/** 回复的执行状态，长程任务展示实时分片进度、可展开步骤时间线与确认门控。 */
 @Composable
 internal fun AgentStatusBar(
     state: AgentRunState,
     onRetry: () -> Unit,
     canRetry: Boolean = true,
+    execution: TaskExecutionTrace? = null,
+    onSelectGateOption: (String) -> Unit = {},
 ) {
     if (state == AgentRunState.Idle) return
 
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    var manualExpanded by rememberSaveable(execution?.taskId) { mutableStateOf<Boolean?>(null) }
+    val expanded = manualExpanded ?: (execution != null && state != AgentRunState.Completed)
+    val summaryText =
+        if (execution != null) {
+            formatExecutionSummary(state, execution)
+        } else {
+            localizedString(state.label)
+        }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            StatusSummary(state, expanded) { expanded = !expanded }
-            Spacer(Modifier.weight(1f))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatusSummary(
+                state = state,
+                summaryText = summaryText,
+                expanded = expanded,
+                onClick = { manualExpanded = !expanded },
+                modifier = Modifier.weight(1f, fill = false),
+            )
             if (state == AgentRunState.Waiting || state == AgentRunState.Failed || state == AgentRunState.Stopped) {
                 TextButton(onClick = onRetry, enabled = canRetry) {
                     Text(localizedString(if (state == AgentRunState.Failed) Res.string.agent_retry else Res.string.agent_continue))
                 }
             }
         }
-        if (state == AgentRunState.Waiting) {
+        val activeGate = execution?.activeGate?.takeIf { state == AgentRunState.Waiting }
+        if (activeGate != null) {
+            WaitingGateCard(gate = activeGate, enabled = canRetry, onSelectOption = onSelectGateOption)
+        } else if (state == AgentRunState.Waiting) {
             Text(
                 localizedString(Res.string.agent_waiting_hint),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
         if (expanded) {
-            // 整理输入
-            Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
-            Text(
-                // 生成回复中文状态见下方 AgentRunState.label 映射
-                "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
-                Modifier.padding(bottom = 12.dp),
-                style = MaterialTheme.typography.bodySmall,
-            )
+            if (execution != null) {
+                ExecutionTimelineCard(execution)
+            } else {
+                // 整理输入
+                Text("1. " + localizedString(Res.string.agent_step_prepare), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    // 生成回复中文状态见下方 AgentRunState.label 映射
+                    "2. " + localizedString(Res.string.agent_step_reply) + " · " + localizedString(state.label),
+                    Modifier.padding(bottom = 12.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }
@@ -87,13 +112,15 @@ internal fun AgentStatusBar(
 @Composable
 private fun StatusSummary(
     state: AgentRunState,
+    summaryText: String,
     expanded: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val detailsLabel = localizedString(Res.string.execution_details)
     Row(
         modifier =
-            Modifier
+            modifier
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(role = Role.Button, onClick = onClick)
                 .semantics { contentDescription = detailsLabel }
@@ -105,12 +132,13 @@ private fun StatusSummary(
             CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp)
         }
         Text(
-            localizedString(state.label),
+            summaryText,
+            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             color =
-                if (state ==
-                    AgentRunState.Failed
-                ) {
+                if (state == AgentRunState.Failed) {
                     MaterialTheme.colorScheme.error
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
