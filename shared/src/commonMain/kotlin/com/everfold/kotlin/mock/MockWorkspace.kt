@@ -10,7 +10,10 @@ import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.ChatMessage
 import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
+import com.everfold.kotlin.feature.conversation.DeviceTaskController
 import com.everfold.kotlin.feature.conversation.MessageRole
+import com.everfold.kotlin.mock.longtask.OnDeviceScenarioCatalog
+import com.everfold.kotlin.mock.longtask.SingleAgentLongTaskEngine
 import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.workspace.Workspace
 import everfold.shared.generated.resources.Res
@@ -28,9 +31,10 @@ private const val STREAM_INITIAL_DELAY_MILLIS = 350L
 private const val STREAM_CHAR_STEP = 3
 private const val STREAM_STEP_DELAY_MILLIS = 45L
 
-/** 内存模拟工作区驱动界面演示不创建 Agent连接网络或持久化数据 */
-internal class MockWorkspace :
-    ViewModel(),
+/** 内存模拟工作区驱动界面演示，可选启用单智能体本机长程任务引擎。 */
+internal class MockWorkspace(
+    private val enableLongTasks: Boolean = false,
+) : ViewModel(),
     Workspace {
     override var initialized by mutableStateOf(false)
         private set
@@ -50,12 +54,24 @@ internal class MockWorkspace :
 
     override val conversationOptions = MockConversationOptions(viewModelScope, connections, ::read, ::update)
 
-    override var conversations by mutableStateOf(sampleConversations().map(MockConversationCatalog::initialize))
+    override var conversations by mutableStateOf(
+        sampleConversations(includePausedLongTask = enableLongTasks).map(MockConversationCatalog::initialize),
+    )
         private set
     var replyText: String = "Preview reply"
 
     private var nextId = 0
     private val replies = mutableMapOf<String, Job>()
+    private val longTaskEngine = SingleAgentLongTaskEngine(viewModelScope, ::read, ::update)
+
+    override val taskController: DeviceTaskController
+        get() = if (enableLongTasks) longTaskEngine else DeviceTaskController.Noop
+
+    init {
+        if (enableLongTasks) {
+            longTaskEngine.seedRecord(OnDeviceScenarioCatalog.preseededPausedStorageRun(), AgentRunState.Stopped)
+        }
+    }
 
     override var newConversation by mutableStateOf(
         MockConversationCatalog.initialize(
@@ -122,6 +138,7 @@ internal class MockWorkspace :
     override fun deleteConversation(id: String) {
         conversationOptions.attachments.interrupt(id)
         replies.remove(id)?.cancel()
+        longTaskEngine.clearRun(id)
         conversations = conversations.filterNot { it.id == id }
     }
 
@@ -159,16 +176,19 @@ internal class MockWorkspace :
         val input = session.draft.trim()
         if (!session.hasSendableContent || session.isResponding || connections.find(session.connectionId)?.isConnected != true) return
         val messageId = "message-${++nextId}"
+        val attachmentNames = session.attachments.map { it.source.name }
+        val resumingWaitingGate = enableLongTasks && session.runState == AgentRunState.Waiting && longTaskEngine.hasResumableRun(id)
         update(id) {
+            val clearedPriorMessages =
+                if (resumingWaitingGate) {
+                    it.messages.map { msg ->
+                        if (msg.execution?.activeGate != null) msg.copy(execution = msg.execution.copy(activeGate = null)) else msg
+                    }
+                } else {
+                    it.messages
+                }
             it.copy(
-                preview =
-                    UiText.Literal(
-                        input.ifBlank {
-                            session.attachments
-                                .first()
-                                .source.name
-                        },
-                    ),
+                preview = UiText.Literal(input.ifBlank { attachmentNames.first() }),
                 // 刚刚
                 updatedLabel = UiText.Resource(Res.string.just_now),
                 draft = "",
@@ -176,44 +196,61 @@ internal class MockWorkspace :
                 attachmentRevision = it.attachmentRevision + 1,
                 runState = AgentRunState.Running,
                 messages =
-                    it.messages +
+                    clearedPriorMessages +
                         listOf(
                             ChatMessage("$messageId-user", MessageRole.User, input, attachments = it.attachments, model = it.model),
                             ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
                         ),
             )
         }
-        streamReply(id, messageId, replyText)
+        when {
+            resumingWaitingGate -> longTaskEngine.resumeRun(id, newAssistantMessageId = messageId, addedConstraint = input)
+            enableLongTasks -> longTaskEngine.startNewRun(id, messageId, session, input, attachmentNames)
+            else -> streamReply(id, messageId, replyText)
+        }
     }
 
     override fun retry(id: String) {
         val session = conversations.firstOrNull { it.id == id } ?: return
         val hasTarget = session.workspace != null && session.model != null
         if (session.isResponding || !hasTarget || connections.find(session.connectionId)?.isConnected != true) return
-        val messageId = "message-${++nextId}"
-        update(id) {
-            it.copy(
-                runState = AgentRunState.Running,
-                messages =
-                    it.messages + ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
-            )
+        if (!enableLongTasks || !longTaskEngine.resumeRun(id)) {
+            val messageId = "message-${++nextId}"
+            val lastPrompt =
+                session.messages
+                    .lastOrNull { it.role == MessageRole.User }
+                    ?.text
+                    .orEmpty()
+            update(id) {
+                it.copy(
+                    runState = AgentRunState.Running,
+                    messages =
+                        it.messages + ChatMessage(messageId, MessageRole.Assistant, "", model = session.model),
+                )
+            }
+            if (enableLongTasks) {
+                longTaskEngine.startNewRun(id, messageId, session, lastPrompt, emptyList())
+            } else {
+                streamReply(id, messageId, replyText)
+            }
         }
-        streamReply(id, messageId, replyText)
     }
 
-    /** 切换演示状态前取消模拟回复并移除尚无内容的助手占位消息 */
+    /** 切换演示状态前取消模拟回复并移除尚无内容与执行轨迹的助手占位消息 */
     fun previewRunState(
         id: String,
         state: AgentRunState,
     ) {
         replies.remove(id)?.cancel()
+        if (enableLongTasks) longTaskEngine.pauseRun(id)
         update(id) {
             it.copy(
                 runState = state,
                 messages =
                     it.messages.filterNot { message ->
                         message.role == MessageRole.Assistant &&
-                            message.text.isEmpty()
+                            message.text.isEmpty() &&
+                            message.execution == null
                     },
             )
         }
@@ -246,12 +283,19 @@ internal class MockWorkspace :
 
     override fun stop(id: String) {
         replies.remove(id)?.cancel()
+        val pausedTrace = if (enableLongTasks) longTaskEngine.pauseRun(id) else null
         update(id) {
+            val latestAssistantId = it.messages.lastOrNull { msg -> msg.role == MessageRole.Assistant }?.id
+            val updatedMessages =
+                it.messages
+                    .map { msg ->
+                        if (pausedTrace != null && msg.id == latestAssistantId) msg.copy(execution = pausedTrace) else msg
+                    }.filterNot { msg -> msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.execution == null }
             it.copy(
                 runState = AgentRunState.Stopped,
                 // 已停止
                 preview = UiText.Resource(Res.string.reply_stopped),
-                messages = it.messages.filterNot { message -> message.role == MessageRole.Assistant && message.text.isEmpty() },
+                messages = updatedMessages,
             )
         }
     }

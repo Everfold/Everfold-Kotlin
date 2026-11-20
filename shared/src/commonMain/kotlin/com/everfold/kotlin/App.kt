@@ -31,7 +31,7 @@ fun App(modifier: Modifier = Modifier) {
     val store = rememberPreferenceStore()
     val persistScope = rememberCoroutineScope()
     val preferences = remember(store, persistScope) { UserPreferencesState(store, persistScope) }
-    val workspace = viewModel { MockWorkspace() }
+    val workspace = viewModel { MockWorkspace(enableLongTasks = true) }
     EverfoldRoot(
         workspace = workspace,
         preferences = preferences,
