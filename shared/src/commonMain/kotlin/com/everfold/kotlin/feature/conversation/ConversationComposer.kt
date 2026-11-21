@@ -126,8 +126,12 @@ internal fun ConversationComposer(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
             composerFeedback()
+            val dropTargetModifier =
+                rememberPlatformTextDropTargetModifier { dropped ->
+                    actions.onDraftChange(appendDroppedDraftText(state.draft, dropped))
+                }
             Surface(
-                modifier = if (expandedEditor) Modifier.weight(1f) else Modifier,
+                modifier = (if (expandedEditor) Modifier.weight(1f) else Modifier).then(dropTargetModifier),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 border = BorderStroke(1.dp, inputBorderColor),

@@ -142,6 +142,10 @@ internal fun CollapsibleConversationComposer(
                 sideMargins = prefs.sideMargins,
                 onOpenInput = onOpenInput,
                 onStop = actions.onStop,
+                onDropText = { dropped ->
+                    actions.onDraftChange(appendDroppedDraftText(state.draft, dropped))
+                    onOpenInput()
+                },
             )
         } else {
             ConversationComposer(
@@ -167,9 +171,11 @@ internal fun ExecutionComposerPill(
     onOpenInput: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    onDropText: (String) -> Unit = {},
 ) {
     val openLabel = localizedString(Res.string.composer_open_input)
     val stopLabel = localizedString(Res.string.stop_reply)
+    val dropModifier = rememberPlatformTextDropTargetModifier(onDropText)
     val haptic = LocalHapticFeedback.current
     val performOpen = {
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -189,7 +195,8 @@ internal fun ExecutionComposerPill(
             modifier =
                 Modifier
                     .conversationContentWidth(sideMargins)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .then(dropModifier),
             shape = RoundedCornerShape(999.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = PILL_BORDER_ALPHA)),
