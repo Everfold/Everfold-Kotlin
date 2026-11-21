@@ -15,7 +15,7 @@ materialKolor = "5.0.1"
 markdown = "0.46.0"
 spotless = "8.12.0"
 ktlint = "1.8.0"
-composeRules = "0.4.28"
+composeRules = "0.6.8"
 detekt = "2.0.0-alpha.6"
 
 [libraries]
