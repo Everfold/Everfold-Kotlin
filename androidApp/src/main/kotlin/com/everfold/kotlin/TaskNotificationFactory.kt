@@ -70,7 +70,7 @@ internal object TaskNotificationFactory {
     ): Notification {
         val channelId = if (payload.kind == TaskNotificationKind.Running) CHANNEL_ONGOING else CHANNEL_ATTENTION
         val builder = createBuilder(context, channelId)
-        val ongoing = payload.kind == TaskNotificationKind.Running || payload.kind == TaskNotificationKind.Waiting
+        val ongoing = payload.kind != TaskNotificationKind.Completed
         val clampedProgress = payload.progressPercent.coerceIn(0, MAX_NOTIFICATION_PROGRESS)
         builder
             .setSmallIcon(R.drawable.ic_stat_task)

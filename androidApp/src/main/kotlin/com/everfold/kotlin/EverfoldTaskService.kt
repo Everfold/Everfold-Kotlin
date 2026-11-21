@@ -8,11 +8,15 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import com.everfold.kotlin.mock.longtask.AndroidLongTaskRuntime
 import com.everfold.kotlin.mock.longtask.TaskNotificationKind
 import com.everfold.kotlin.mock.longtask.TaskNotificationPayload
 
-/** 承载本机单智能体长程任务的前台服务，维护进度通知与暂停/继续操作。 */
+private const val WAKE_LOCK_TAG = "Everfold:LongTaskWakeLock"
+private const val WAKE_LOCK_TIMEOUT_MS = 5 * 60 * 1_000L
+
+/** 承载本机单智能体长程任务的前台服务，维护后台协程唤醒锁、进度通知与暂停/继续操作。 */
 class EverfoldTaskService : Service() {
     override fun onCreate() {
         super.onCreate()
@@ -29,8 +33,8 @@ class EverfoldTaskService : Service() {
         when (intent?.action) {
             ACTION_PAUSE_TASK -> if (conversationId != null) AndroidLongTaskRuntime.dispatchPause(conversationId)
             ACTION_RESUME_TASK -> if (conversationId != null) AndroidLongTaskRuntime.dispatchResume(conversationId)
-            else -> applyPayload(AndroidLongTaskRuntime.currentNotification.value)
         }
+        applyPayload(AndroidLongTaskRuntime.currentNotification.value)
         return START_NOT_STICKY
     }
 
@@ -38,9 +42,17 @@ class EverfoldTaskService : Service() {
         startId: Int,
         fgsType: Int,
     ) {
+        isServiceForeground = false
+        syncWakeLock(this, shouldHold = false)
         AndroidLongTaskRuntime.dispatchTimeoutStop()
         stopForeground(STOP_FOREGROUND_DETACH)
         stopSelf(startId)
+    }
+
+    override fun onDestroy() {
+        isServiceForeground = false
+        syncWakeLock(this, shouldHold = false)
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -48,6 +60,8 @@ class EverfoldTaskService : Service() {
     private fun applyPayload(payload: TaskNotificationPayload?) {
         val manager = getSystemService(NotificationManager::class.java)
         if (payload == null) {
+            isServiceForeground = false
+            syncWakeLock(this, shouldHold = false)
             val placeholder =
                 TaskNotificationPayload(
                     conversationId = "",
@@ -64,13 +78,13 @@ class EverfoldTaskService : Service() {
         }
         val notification = TaskNotificationFactory.build(this, payload)
         promoteToForeground(notification)
+        isServiceForeground = true
+        syncWakeLock(this, shouldHold = payload.kind == TaskNotificationKind.Running)
         if (payload.kind == TaskNotificationKind.Completed) {
+            isServiceForeground = false
+            syncWakeLock(this, shouldHold = false)
             stopForeground(STOP_FOREGROUND_REMOVE)
             manager.notify(resultNotificationIdFor(payload.conversationId), notification)
-            stopSelf()
-        } else if (payload.kind != TaskNotificationKind.Running) {
-            stopForeground(STOP_FOREGROUND_DETACH)
-            manager.notify(ONGOING_NOTIFICATION_ID, notification)
             stopSelf()
         }
     }
@@ -84,35 +98,68 @@ class EverfoldTaskService : Service() {
     }
 
     companion object {
+        @Volatile
+        private var isServiceForeground: Boolean = false
+
+        @Volatile
+        private var activeWakeLock: PowerManager.WakeLock? = null
+
         fun sync(
             context: Context,
             payload: TaskNotificationPayload?,
         ) {
             val manager = context.getSystemService(NotificationManager::class.java)
             TaskNotificationFactory.ensureChannels(context, manager)
-            if (payload == null) {
-                manager.cancel(ONGOING_NOTIFICATION_ID)
-                context.stopService(Intent(context, EverfoldTaskService::class.java))
-                return
-            }
-            if (payload.kind == TaskNotificationKind.Completed) {
-                manager.notify(
-                    resultNotificationIdFor(payload.conversationId),
-                    TaskNotificationFactory.build(context, payload),
-                )
-                return
-            }
-            val serviceIntent =
-                Intent(context, EverfoldTaskService::class.java).apply {
-                    action = ACTION_SYNC_TASK
-                    putExtra(EXTRA_CONVERSATION_ID, payload.conversationId)
+            when {
+                payload == null -> {
+                    isServiceForeground = false
+                    syncWakeLock(context, shouldHold = false)
+                    manager.cancel(ONGOING_NOTIFICATION_ID)
+                    context.stopService(Intent(context, EverfoldTaskService::class.java))
                 }
-            if (payload.kind == TaskNotificationKind.Running) {
-                startServiceSafely(context, manager, payload, serviceIntent)
+
+                payload.kind == TaskNotificationKind.Completed -> {
+                    manager.notify(
+                        resultNotificationIdFor(payload.conversationId),
+                        TaskNotificationFactory.build(context, payload),
+                    )
+                }
+
+                isServiceForeground -> {
+                    // 服务已处于前台时直接通过 NotificationManager 原地刷新进度，避免后台高频调用 startForegroundService 被系统拦截
+                    syncWakeLock(context, shouldHold = payload.kind == TaskNotificationKind.Running)
+                    manager.notify(ONGOING_NOTIFICATION_ID, TaskNotificationFactory.build(context, payload))
+                }
+
+                else -> {
+                    syncWakeLock(context, shouldHold = payload.kind == TaskNotificationKind.Running)
+                    val serviceIntent =
+                        Intent(context, EverfoldTaskService::class.java).apply {
+                            action = ACTION_SYNC_TASK
+                            putExtra(EXTRA_CONVERSATION_ID, payload.conversationId)
+                        }
+                    startServiceSafely(context, manager, payload, serviceIntent)
+                }
+            }
+        }
+
+        private fun syncWakeLock(
+            context: Context,
+            shouldHold: Boolean,
+        ) {
+            if (shouldHold) {
+                val lock =
+                    activeWakeLock
+                        ?: context.applicationContext
+                            .getSystemService(PowerManager::class.java)
+                            ?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
+                            ?.apply { setReferenceCounted(false) }
+                            ?.also { activeWakeLock = it }
+                if (lock != null && !lock.isHeld) {
+                    lock.acquire(WAKE_LOCK_TIMEOUT_MS)
+                }
             } else {
-                // 非 Running 态若服务已在运行则通过服务降级前台状态，否则直接刷新普通通知避免后台拉起 FGS 异常
-                context.stopService(Intent(context, EverfoldTaskService::class.java))
-                manager.notify(ONGOING_NOTIFICATION_ID, TaskNotificationFactory.build(context, payload))
+                activeWakeLock?.takeIf { it.isHeld }?.release()
             }
         }
 
