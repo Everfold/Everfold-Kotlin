@@ -80,6 +80,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   env.JAVA_HOME = zulu25.home;
 
+  preConfigure = ''
+    export HOME="$(mktemp -d)"
+  '';
+
   gradleFlags = [
     "--no-configuration-cache"
     "-Pkotlin.compiler.execution.strategy=in-process"

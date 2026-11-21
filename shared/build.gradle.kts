@@ -24,6 +24,9 @@ kotlin {
             libs.versions.android.compileSdk
                 .get()
                 .toInt()
+        buildToolsVersion =
+            libs.versions.android.buildTools
+                .get()
         minSdk =
             libs.versions.android.minSdk
                 .get()
