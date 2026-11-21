@@ -6,6 +6,7 @@ import com.everfold.kotlin.ui.localization.UiText
 
 internal const val PERMISSION_ID_NOTIFICATIONS = "notifications"
 internal const val PERMISSION_ID_LIVE_UPDATES = "live_updates"
+internal const val PERMISSION_ID_BATTERY_OPTIMIZATION = "battery_optimization"
 
 /** 引导页展示的单条平台系统权限项。 */
 @Immutable

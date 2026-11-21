@@ -32,6 +32,9 @@
     <string name="permission_live_updates_title">实时活动 / 流体云胶囊</string>
     <string name="permission_live_updates_desc">允许在状态栏胶囊与锁屏实时卡片中显示进行中的智能体任务进度。</string>
     <string name="permission_live_updates_action">前往开启</string>
+    <string name="permission_battery_title">允许后台运行</string>
+    <string name="permission_battery_desc">忽略电池优化，避免系统省电与墓碑机制在切入后台数秒后冻结长程任务。</string>
+    <string name="permission_battery_action">允许后台</string>
     <string name="permission_granted">已开启</string>
     <string name="setup_mode">使用模式</string>
     <string name="setup_cluster">连接集群</string>

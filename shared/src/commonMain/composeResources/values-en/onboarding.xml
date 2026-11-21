@@ -32,6 +32,9 @@
     <string name="permission_live_updates_title">Live Updates capsule</string>
     <string name="permission_live_updates_desc">Show ongoing agent task progress in the status bar chip and lock screen.</string>
     <string name="permission_live_updates_action">Open settings</string>
+    <string name="permission_battery_title">Background execution</string>
+    <string name="permission_battery_desc">Ignore battery optimization so the system does not freeze long-running tasks in the background.</string>
+    <string name="permission_battery_action">Allow</string>
     <string name="permission_granted">Enabled</string>
     <string name="setup_mode">Run mode</string>
     <string name="setup_cluster">Connect to a cluster</string>

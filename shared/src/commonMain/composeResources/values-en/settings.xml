@@ -40,4 +40,7 @@
 
     <string name="conversation_side_margins">Side margins</string>
     <string name="conversation_side_margins_hint">Turn off to fill the available width with messages and the input box.</string>
+
+    <string name="permissions_settings">Permissions</string>
+    <string name="permissions_settings_hint">Check and re-request notifications, Live Updates capsule, and background execution permissions. Status refreshes automatically when you return.</string>
 </resources>

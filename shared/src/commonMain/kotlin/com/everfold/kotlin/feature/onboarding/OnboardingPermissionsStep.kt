@@ -44,12 +44,13 @@ internal fun OnboardingPermissionsStep(
 }
 
 @Composable
-private fun OnboardingPermissionCard(
+internal fun OnboardingPermissionCard(
     item: OnboardingPermissionItem,
     onRequest: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {

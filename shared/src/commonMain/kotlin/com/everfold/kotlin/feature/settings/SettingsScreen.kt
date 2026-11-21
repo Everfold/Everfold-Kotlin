@@ -7,11 +7,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.everfold.kotlin.feature.onboarding.rememberOnboardingPermissionsController
 import com.everfold.kotlin.ui.components.SettingsLayout
 import com.everfold.kotlin.ui.localization.AppLanguage
 import com.everfold.kotlin.ui.localization.localizedString
@@ -23,16 +25,18 @@ import everfold.shared.generated.resources.about
 import everfold.shared.generated.resources.conversation_settings
 import everfold.shared.generated.resources.display_settings
 import everfold.shared.generated.resources.nav_settings
+import everfold.shared.generated.resources.permissions_settings
 import everfold.shared.generated.resources.theme_settings
 import org.jetbrains.compose.resources.StringResource
 
-/** 设置页签主题显示会话与关于 */
+/** 设置页签主题显示会话权限与关于 */
 private enum class SettingsPage(
     val label: StringResource,
 ) {
     Theme(Res.string.theme_settings),
     Display(Res.string.display_settings),
     Conversation(Res.string.conversation_settings),
+    Permissions(Res.string.permissions_settings),
     About(Res.string.about),
 }
 
@@ -60,16 +64,26 @@ fun SettingsScreen(
     onProcessVisibilityChange: (ProcessVisibility) -> Unit = {},
     onBack: (() -> Unit)? = null,
 ) {
+    val permissions = rememberOnboardingPermissionsController()
+    val visiblePages =
+        remember(permissions.items.isNotEmpty()) {
+            if (permissions.items.isNotEmpty()) {
+                SettingsPage.entries
+            } else {
+                SettingsPage.entries.filterNot { it == SettingsPage.Permissions }
+            }
+        }
     var page by rememberSaveable { mutableStateOf(SettingsPage.Theme) }
+    val activePage = if (page in visiblePages) page else SettingsPage.Theme
     val scrollStates = SettingsPage.entries.associateWith { rememberScrollState() }
     SettingsLayout(
         title = localizedString(Res.string.nav_settings),
         modifier = modifier,
         onBack = onBack,
-        scrollState = scrollStates.getValue(page),
-        navigation = { SettingsTabs(page) { page = it } },
+        scrollState = scrollStates.getValue(activePage),
+        navigation = { SettingsTabs(visiblePages, activePage) { page = it } },
     ) {
-        when (page) {
+        when (activePage) {
             SettingsPage.Theme -> {
                 ThemeSettingsPage(
                     themeMode = themeMode,
@@ -98,6 +112,10 @@ fun SettingsScreen(
                 )
             }
 
+            SettingsPage.Permissions -> {
+                PermissionsSettingsPage(items = permissions.items, onRequest = permissions::request)
+            }
+
             SettingsPage.About -> {
                 AboutSettingsPage()
             }
@@ -107,11 +125,12 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsTabs(
+    pages: List<SettingsPage>,
     selectedPage: SettingsPage,
     onSelect: (SettingsPage) -> Unit,
 ) {
-    SecondaryScrollableTabRow(selectedTabIndex = selectedPage.ordinal, edgePadding = 0.dp) {
-        SettingsPage.entries.forEach { item ->
+    SecondaryScrollableTabRow(selectedTabIndex = pages.indexOf(selectedPage).coerceAtLeast(0), edgePadding = 0.dp) {
+        pages.forEach { item ->
             Tab(
                 selected = selectedPage == item,
                 onClick = { onSelect(item) },
