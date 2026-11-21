@@ -1,7 +1,7 @@
 pkgs:
 let
   jdk = pkgs.zulu25;
-  buildToolsVersion = "36.0.0";
+  buildToolsVersion = "37.0.0";
   androidSdk = pkgs.androidenv.composeAndroidPackages {
     platformVersions = [ "37.0" ];
     buildToolsVersions = [ buildToolsVersion ];

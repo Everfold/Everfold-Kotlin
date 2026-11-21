@@ -22,8 +22,8 @@
 let
   gradle =
     (gradle-packages.mkGradle {
-      version = "9.7.0";
-      hash = "sha256-hPu6Rcf0xkq8d0YOHAD1Qen5YOPH7SU48e3hnqzYc64=";
+      version = "9.9.2";
+      hash = "sha256-lx/NcVDKS6BIUsCyyg0tCrlGjhSwNHPqsZUogJkUx2s=";
       defaultJava = zulu25;
     }).wrapped;
 
