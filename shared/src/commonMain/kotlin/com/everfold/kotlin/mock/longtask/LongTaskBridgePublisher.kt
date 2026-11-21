@@ -2,6 +2,7 @@ package com.everfold.kotlin.mock.longtask
 
 import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.conversation.AgentRunState
+import com.everfold.kotlin.ui.localization.UiText
 
 internal fun publishBridgeSnapshot(
     bridge: PlatformLongTaskBridge,
@@ -29,8 +30,22 @@ internal fun publishBridgeSnapshot(
                 stageSegments = segments,
                 gatePointPercent = record.resolveGatePointPercent(segments),
                 activeStageKind = record.resolveActiveStageKind(),
+                gateOptions = if (runState == AgentRunState.Waiting) record.resolveGateOptions(english) else emptyList(),
             ),
         )
+    }
+}
+
+private fun TaskRunRecord.resolveGateOptions(english: Boolean): List<TaskNotificationGateOption> {
+    val approvalStage = scenario.stages.getOrNull(currentStageIndex) as? StreamStageSpec.ApprovalStage ?: return emptyList()
+    return approvalStage.gate.options.map { option ->
+        val label =
+            when (option.id) {
+                GATE_OPT_ARCHIVE_ONLY -> if (english) "Archive only" else "仅归档"
+                GATE_OPT_CLEAN_ALL -> if (english) "Clean duplicates" else "清理重复项"
+                else -> (option.label as? UiText.Literal)?.value ?: option.id
+            }
+        TaskNotificationGateOption(id = option.id, label = label)
     }
 }
 

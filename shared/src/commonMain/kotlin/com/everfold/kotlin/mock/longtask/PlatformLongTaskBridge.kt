@@ -28,6 +28,11 @@ data class TaskStageSegment(
     val reached: Boolean,
 )
 
+data class TaskNotificationGateOption(
+    val id: String,
+    val label: String,
+)
+
 data class TaskNotificationPayload(
     val conversationId: String,
     val title: String,
@@ -41,6 +46,7 @@ data class TaskNotificationPayload(
     val concurrentActiveCount: Int = 1,
     val concurrentSummary: String? = null,
     val shortChipLabel: String? = null,
+    val gateOptions: List<TaskNotificationGateOption> = emptyList(),
 )
 
 sealed interface DeviceTaskCommand {
@@ -50,6 +56,16 @@ sealed interface DeviceTaskCommand {
 
     data class Resume(
         val conversationId: String,
+    ) : DeviceTaskCommand
+
+    data class ResolveGateOption(
+        val conversationId: String,
+        val optionId: String,
+    ) : DeviceTaskCommand
+
+    data class ReplyGateConstraint(
+        val conversationId: String,
+        val constraintText: String,
     ) : DeviceTaskCommand
 
     data object TimeoutStopAll : DeviceTaskCommand

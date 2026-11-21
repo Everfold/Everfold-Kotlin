@@ -108,6 +108,15 @@ class LongTaskNotificationAggregatorTest {
         assertEquals(TaskStageSegmentKind.Tool, payload.activeStageKind)
         val gatePoint = assertNotNull(payload.gatePointPercent)
         assertTrue(gatePoint in 1 until PERCENT_HUNDRED)
+        assertTrue(payload.gateOptions.isEmpty())
+
+        val approvalIndex = scenario.stages.indexOfFirst { it is StreamStageSpec.ApprovalStage }
+        val waitingRecord = record.copy(currentStageIndex = approvalIndex, currentChunkOffset = 0)
+        publishBridgeSnapshot(bridge, waitingRecord, "conv-1", AgentRunState.Waiting)
+        val waitingPayload = captured.last()
+        assertEquals(2, waitingPayload.gateOptions.size)
+        assertEquals(GATE_OPT_CLEAN_ALL, waitingPayload.gateOptions[0].id)
+        assertEquals(GATE_OPT_ARCHIVE_ONLY, waitingPayload.gateOptions[1].id)
     }
 
     private fun samplePayload(

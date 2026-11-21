@@ -2,6 +2,7 @@ package com.everfold.kotlin
 
 import android.app.Notification
 import android.app.NotificationManager
+import android.app.RemoteInput
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -30,9 +31,31 @@ class EverfoldTaskService : Service() {
         startId: Int,
     ): Int {
         val conversationId = intent?.getStringExtra(EXTRA_CONVERSATION_ID)
-        when (intent?.action) {
-            ACTION_PAUSE_TASK -> if (conversationId != null) AndroidLongTaskRuntime.dispatchPause(conversationId)
-            ACTION_RESUME_TASK -> if (conversationId != null) AndroidLongTaskRuntime.dispatchResume(conversationId)
+        if (conversationId != null) {
+            when (intent.action) {
+                ACTION_PAUSE_TASK -> {
+                    AndroidLongTaskRuntime.dispatchPause(conversationId)
+                }
+
+                ACTION_RESUME_TASK -> {
+                    AndroidLongTaskRuntime.dispatchResume(conversationId)
+                }
+
+                ACTION_RESOLVE_GATE_OPTION -> {
+                    val optionId = intent.getStringExtra(EXTRA_GATE_OPTION_ID)
+                    if (optionId != null) AndroidLongTaskRuntime.dispatchResolveGateOption(conversationId, optionId)
+                }
+
+                ACTION_REPLY_GATE_CONSTRAINT -> {
+                    val replyText =
+                        RemoteInput
+                            .getResultsFromIntent(intent)
+                            ?.getCharSequence(KEY_GATE_CONSTRAINT_REPLY)
+                            ?.toString()
+                            ?.trim()
+                    if (!replyText.isNullOrEmpty()) AndroidLongTaskRuntime.dispatchGateConstraintReply(conversationId, replyText)
+                }
+            }
         }
         applyPayload(AndroidLongTaskRuntime.currentNotification.value)
         return START_NOT_STICKY

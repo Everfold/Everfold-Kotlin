@@ -103,6 +103,20 @@ object AndroidLongTaskRuntime {
         commandFlow.tryEmit(DeviceTaskCommand.Resume(conversationId))
     }
 
+    fun dispatchResolveGateOption(
+        conversationId: String,
+        optionId: String,
+    ) {
+        commandFlow.tryEmit(DeviceTaskCommand.ResolveGateOption(conversationId, optionId))
+    }
+
+    fun dispatchGateConstraintReply(
+        conversationId: String,
+        constraintText: String,
+    ) {
+        commandFlow.tryEmit(DeviceTaskCommand.ReplyGateConstraint(conversationId, constraintText))
+    }
+
     fun dispatchTimeoutStop() {
         commandFlow.tryEmit(DeviceTaskCommand.TimeoutStopAll)
     }

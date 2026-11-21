@@ -93,9 +93,29 @@ internal class MockWorkspace(
                 runtimeScope.launch {
                     taskBridge.commands.collect { command ->
                         when (command) {
-                            is DeviceTaskCommand.Pause -> stop(command.conversationId)
-                            is DeviceTaskCommand.Resume -> retry(command.conversationId)
-                            DeviceTaskCommand.TimeoutStopAll -> longTaskEngine.activeRunningIds.forEach(::stop)
+                            is DeviceTaskCommand.Pause -> {
+                                stop(command.conversationId)
+                            }
+
+                            is DeviceTaskCommand.Resume -> {
+                                retry(command.conversationId)
+                            }
+
+                            is DeviceTaskCommand.ResolveGateOption -> {
+                                longTaskEngine.resolveGateOption(command.conversationId, command.optionId)
+                            }
+
+                            is DeviceTaskCommand.ReplyGateConstraint -> {
+                                val text = command.constraintText.trim()
+                                if (text.isNotEmpty()) {
+                                    updateDraft(command.conversationId, text)
+                                    send(command.conversationId)
+                                }
+                            }
+
+                            DeviceTaskCommand.TimeoutStopAll -> {
+                                longTaskEngine.activeRunningIds.forEach(::stop)
+                            }
                         }
                     }
                 }

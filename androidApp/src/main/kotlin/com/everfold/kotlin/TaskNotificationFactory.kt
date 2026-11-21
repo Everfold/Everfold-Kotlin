@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
@@ -14,9 +15,13 @@ import com.everfold.kotlin.mock.longtask.TaskNotificationPayload
 import com.everfold.kotlin.mock.longtask.TaskStageSegmentKind
 
 internal const val EXTRA_CONVERSATION_ID = "com.everfold.kotlin.extra.CONVERSATION_ID"
+internal const val EXTRA_GATE_OPTION_ID = "com.everfold.kotlin.extra.GATE_OPTION_ID"
 internal const val ACTION_SYNC_TASK = "com.everfold.kotlin.action.SYNC_TASK"
 internal const val ACTION_PAUSE_TASK = "com.everfold.kotlin.action.PAUSE_TASK"
 internal const val ACTION_RESUME_TASK = "com.everfold.kotlin.action.RESUME_TASK"
+internal const val ACTION_RESOLVE_GATE_OPTION = "com.everfold.kotlin.action.RESOLVE_GATE_OPTION"
+internal const val ACTION_REPLY_GATE_CONSTRAINT = "com.everfold.kotlin.action.REPLY_GATE_CONSTRAINT"
+internal const val KEY_GATE_CONSTRAINT_REPLY = "com.everfold.kotlin.key.GATE_CONSTRAINT_REPLY"
 
 internal const val ONGOING_NOTIFICATION_ID = 4101
 internal const val RESULT_NOTIFICATION_ID = 4102
@@ -28,6 +33,7 @@ private const val CHANNEL_ATTENTION = "everfold_task_attention"
 private const val MAX_NOTIFICATION_PROGRESS = 100
 private const val OPEN_REQUEST_SALT = 1000
 private const val ACTION_REQUEST_SALT = 2000
+private const val MAX_GATE_OPTION_ACTIONS = 2
 
 private const val COLOR_LLM = 0xFF6750A4.toInt()
 private const val COLOR_TOOL = 0xFF00796B.toInt()
@@ -86,12 +92,51 @@ internal object TaskNotificationFactory {
             builder.setSubText(summary)
         }
         applyProgressAndLiveUpdate(context, builder, payload, clampedProgress, ongoing)
+        addNotificationActions(context, builder, payload)
+        return builder.build()
+    }
+
+    private fun addNotificationActions(
+        context: Context,
+        builder: Notification.Builder,
+        payload: TaskNotificationPayload,
+    ) {
+        if (payload.kind == TaskNotificationKind.Waiting && payload.gateOptions.isNotEmpty()) {
+            payload.gateOptions.take(MAX_GATE_OPTION_ACTIONS).forEach { option ->
+                val pending =
+                    createServiceActionIntent(
+                        context = context,
+                        action = ACTION_RESOLVE_GATE_OPTION,
+                        conversationId = payload.conversationId,
+                        extraOptionId = option.id,
+                    )
+                builder.addAction(Notification.Action.Builder(null, option.label, pending).build())
+            }
+            val remoteInput =
+                RemoteInput
+                    .Builder(KEY_GATE_CONSTRAINT_REPLY)
+                    .setLabel(context.getString(R.string.task_reply_constraint_hint))
+                    .build()
+            val replyPending =
+                createServiceActionIntent(
+                    context = context,
+                    action = ACTION_REPLY_GATE_CONSTRAINT,
+                    conversationId = payload.conversationId,
+                    mutable = true,
+                )
+            builder.addAction(
+                Notification.Action
+                    .Builder(null, context.getString(R.string.task_action_reply_constraint), replyPending)
+                    .addRemoteInput(remoteInput)
+                    .build(),
+            )
+            return
+        }
         payload.actionLabel?.let { label ->
             val action = if (payload.kind == TaskNotificationKind.Running) ACTION_PAUSE_TASK else ACTION_RESUME_TASK
             val pending = createServiceActionIntent(context, action, payload.conversationId)
             builder.addAction(Notification.Action.Builder(null, label, pending).build())
         }
-        return builder.build()
     }
 
     private fun applyProgressAndLiveUpdate(
@@ -213,18 +258,25 @@ internal object TaskNotificationFactory {
         context: Context,
         action: String,
         conversationId: String,
+        extraOptionId: String? = null,
+        mutable: Boolean = false,
     ): PendingIntent {
         val intent =
             Intent(context, EverfoldTaskService::class.java).apply {
                 this.action = action
                 putExtra(EXTRA_CONVERSATION_ID, conversationId)
+                if (extraOptionId != null) {
+                    putExtra(EXTRA_GATE_OPTION_ID, extraOptionId)
+                }
             }
-        val requestCode = ACTION_REQUEST_SALT + ((action.hashCode() xor conversationId.hashCode()) and Int.MAX_VALUE) % ACTION_REQUEST_SALT
-        return PendingIntent.getService(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        val saltKey = action.hashCode() xor conversationId.hashCode() xor (extraOptionId?.hashCode() ?: 0)
+        val requestCode = ACTION_REQUEST_SALT + (saltKey and Int.MAX_VALUE) % ACTION_REQUEST_SALT
+        val flags =
+            if (mutable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            }
+        return PendingIntent.getService(context, requestCode, intent, flags)
     }
 }
