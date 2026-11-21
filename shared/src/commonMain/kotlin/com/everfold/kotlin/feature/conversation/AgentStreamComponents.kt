@@ -31,6 +31,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -343,27 +345,37 @@ private fun StreamApprovalBlock(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                block.gate.options.forEachIndexed { index, option ->
-                    if (index == 0) {
-                        FilledTonalButton(onClick = { onSelectOption(option.id) }, enabled = enabled) {
-                            Text(option.label.resolve())
-                        }
-                    } else {
-                        OutlinedButton(onClick = { onSelectOption(option.id) }, enabled = enabled) {
-                            Text(option.label.resolve())
-                        }
-                    }
-                }
-            }
+            StreamApprovalOptionsRow(block.gate.options, enabled, onSelectOption)
             Text(
                 localizedString(Res.string.stream_approval_custom_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun StreamApprovalOptionsRow(
+    options: List<GateOption>,
+    enabled: Boolean,
+    onSelectOption: (String) -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        options.forEachIndexed { index, option ->
+            val onChoose = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onSelectOption(option.id)
+            }
+            if (index == 0) {
+                FilledTonalButton(onClick = onChoose, enabled = enabled) { Text(option.label.resolve()) }
+            } else {
+                OutlinedButton(onClick = onChoose, enabled = enabled) { Text(option.label.resolve()) }
+            }
         }
     }
 }

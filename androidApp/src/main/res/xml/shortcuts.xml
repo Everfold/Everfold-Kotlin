@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_stat_task"
+        android:shortcutId="new_chat"
+        android:shortcutLongLabel="@string/shortcut_new_chat_long"
+        android:shortcutShortLabel="@string/shortcut_new_chat_short">
+        <intent
+            android:action="com.everfold.kotlin.action.SHORTCUT_NEW_CHAT"
+            android:targetClass="com.everfold.kotlin.MainActivity"
+            android:targetPackage="com.everfold.kotlin"/>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_stat_task"
+        android:shortcutId="active_task"
+        android:shortcutLongLabel="@string/shortcut_active_task_long"
+        android:shortcutShortLabel="@string/shortcut_active_task_short">
+        <intent
+            android:action="com.everfold.kotlin.action.SHORTCUT_ACTIVE_TASK"
+            android:targetClass="com.everfold.kotlin.MainActivity"
+            android:targetPackage="com.everfold.kotlin"/>
+    </shortcut>
+</shortcuts>

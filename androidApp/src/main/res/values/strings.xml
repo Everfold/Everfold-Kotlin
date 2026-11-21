@@ -7,4 +7,8 @@
     <string name="task_chip_failed">已中断</string>
     <string name="task_action_reply_constraint">补充约束</string>
     <string name="task_reply_constraint_hint">输入补充约束后发送…</string>
+    <string name="shortcut_new_chat_short">新建对话</string>
+    <string name="shortcut_new_chat_long">开始新对话</string>
+    <string name="shortcut_active_task_short">当前任务</string>
+    <string name="shortcut_active_task_long">打开正在运行的任务</string>
 </resources>

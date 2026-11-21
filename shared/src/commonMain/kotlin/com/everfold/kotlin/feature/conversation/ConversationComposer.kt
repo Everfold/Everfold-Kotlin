@@ -36,6 +36,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -46,6 +47,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -254,9 +256,15 @@ private fun ComposerSubmitButton(
             else -> localizedString(Res.string.send_message)
         }
     val actionDescription = localizedString(if (state.isResponding) Res.string.stop_reply else Res.string.send_message)
+    val haptic = LocalHapticFeedback.current
     AppTooltip(tooltip) {
         FilledIconButton(
-            onClick = if (state.isResponding) actions.onStop else actions.onSend,
+            onClick = {
+                haptic.performHapticFeedback(
+                    if (state.isResponding) HapticFeedbackType.LongPress else HapticFeedbackType.TextHandleMove,
+                )
+                if (state.isResponding) actions.onStop() else actions.onSend()
+            },
             enabled = state.isResponding || (canSend && state.hasSendableContent),
             modifier = Modifier.padding(bottom = 4.dp),
         ) {

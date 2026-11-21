@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.everfold.kotlin.feature.conversation.AttachmentSource
+import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.mock.MockWorkspace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -130,6 +131,10 @@ object AndroidLongTaskRuntime {
 
     fun requestOpenConversation(conversationId: String) {
         openConversationState.value = conversationId
+    }
+
+    fun requestNewConversation() {
+        openConversationState.value = DRAFT_CONVERSATION_ID
     }
 
     fun deliverSharedContent(

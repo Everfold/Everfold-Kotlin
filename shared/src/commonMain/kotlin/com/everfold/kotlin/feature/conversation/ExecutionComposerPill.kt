@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -168,6 +170,15 @@ internal fun ExecutionComposerPill(
 ) {
     val openLabel = localizedString(Res.string.composer_open_input)
     val stopLabel = localizedString(Res.string.stop_reply)
+    val haptic = LocalHapticFeedback.current
+    val performOpen = {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onOpenInput()
+    }
+    val performStop = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onStop()
+    }
     Box(
         modifier
             .fillMaxWidth()
@@ -190,15 +201,15 @@ internal fun ExecutionComposerPill(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ExecutionPillStatusArea(state, onOpenInput, Modifier.weight(1f))
+                ExecutionPillStatusArea(state, performOpen, Modifier.weight(1f))
                 AppTooltip(openLabel) {
-                    IconButton(onClick = onOpenInput) {
+                    IconButton(onClick = performOpen) {
                         AppIcon(AppSymbol.Edit, modifier = Modifier.size(20.dp), description = openLabel)
                     }
                 }
                 AppTooltip(stopLabel) {
                     FilledIconButton(
-                        onClick = onStop,
+                        onClick = performStop,
                         colors =
                             IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,

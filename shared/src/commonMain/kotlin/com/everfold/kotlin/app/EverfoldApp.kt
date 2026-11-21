@@ -55,6 +55,7 @@ import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.connections.ConnectionsScreen
 import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AttachmentSource
+import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.feature.sessions.SessionsScreen
 import com.everfold.kotlin.feature.settings.SettingsScreen
 import com.everfold.kotlin.mock.longtask.PlatformLongTaskPermissionEffect
@@ -133,7 +134,11 @@ private fun PlatformBridgeEffects(
     val pendingOpenId by platformLongTaskBridge.pendingOpenConversationId.collectAsState()
     LaunchedEffect(pendingOpenId) {
         val targetId = pendingOpenId ?: return@LaunchedEffect
-        if (workspace.conversations.any { it.id == targetId }) {
+        if (targetId == DRAFT_CONVERSATION_ID) {
+            appState.destination = AppDestination.Sessions
+            appState.selectedId = null
+            appState.composerFocusRequest++
+        } else if (workspace.conversations.any { it.id == targetId }) {
             appState.destination = AppDestination.Sessions
             appState.selectedId = targetId
         }

@@ -7,4 +7,8 @@
     <string name="task_chip_failed">Failed</string>
     <string name="task_action_reply_constraint">Add note</string>
     <string name="task_reply_constraint_hint">Type a constraint to continue…</string>
+    <string name="shortcut_new_chat_short">New chat</string>
+    <string name="shortcut_new_chat_long">Start a new conversation</string>
+    <string name="shortcut_active_task_short">Active task</string>
+    <string name="shortcut_active_task_long">Open active running task</string>
 </resources>
