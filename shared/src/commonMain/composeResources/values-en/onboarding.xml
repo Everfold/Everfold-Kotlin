@@ -23,6 +23,16 @@
     <string name="setup_nav_welcome">Welcome</string>
     <string name="setup_nav_preferences">Language &amp; appearance</string>
     <string name="setup_preferences">Personalization</string>
+    <string name="setup_nav_permissions">Permissions</string>
+    <string name="setup_permissions">Permissions</string>
+    <string name="setup_permissions_hint">Enable these permissions to show live progress for background tasks. You can skip and enable them later in system settings.</string>
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_desc">Required to show task progress, approval prompts, and completion alerts.</string>
+    <string name="permission_notifications_action">Allow</string>
+    <string name="permission_live_updates_title">Live Updates capsule</string>
+    <string name="permission_live_updates_desc">Show ongoing agent task progress in the status bar chip and lock screen.</string>
+    <string name="permission_live_updates_action">Open settings</string>
+    <string name="permission_granted">Enabled</string>
     <string name="setup_mode">Run mode</string>
     <string name="setup_cluster">Connect to a cluster</string>
 

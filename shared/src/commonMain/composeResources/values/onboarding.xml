@@ -23,6 +23,16 @@
     <string name="setup_nav_welcome">欢迎</string>
     <string name="setup_nav_preferences">语言与外观</string>
     <string name="setup_preferences">个性化设置</string>
+    <string name="setup_nav_permissions">权限</string>
+    <string name="setup_permissions">系统权限</string>
+    <string name="setup_permissions_hint">开启以下权限可让长程任务在后台持续展示进度，也可以先跳过稍后再在系统设置中开启。</string>
+    <string name="permission_notifications_title">通知权限</string>
+    <string name="permission_notifications_desc">用于推送长程任务进度、策略确认提醒与完成通知。</string>
+    <string name="permission_notifications_action">允许通知</string>
+    <string name="permission_live_updates_title">实时活动 / 流体云胶囊</string>
+    <string name="permission_live_updates_desc">允许在状态栏胶囊与锁屏实时卡片中显示进行中的智能体任务进度。</string>
+    <string name="permission_live_updates_action">前往开启</string>
+    <string name="permission_granted">已开启</string>
     <string name="setup_mode">使用模式</string>
     <string name="setup_cluster">连接集群</string>
 

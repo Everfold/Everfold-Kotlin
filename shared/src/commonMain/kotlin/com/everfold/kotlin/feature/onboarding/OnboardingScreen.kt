@@ -95,8 +95,10 @@ import everfold.shared.generated.resources.previous_step_shortcut
 import everfold.shared.generated.resources.retry_connection
 import everfold.shared.generated.resources.setup_cluster
 import everfold.shared.generated.resources.setup_mode
+import everfold.shared.generated.resources.setup_nav_permissions
 import everfold.shared.generated.resources.setup_nav_preferences
 import everfold.shared.generated.resources.setup_nav_welcome
+import everfold.shared.generated.resources.setup_permissions
 import everfold.shared.generated.resources.setup_preferences
 import everfold.shared.generated.resources.test_connection
 import everfold.shared.generated.resources.testing_connection
@@ -110,8 +112,6 @@ private const val STEP_FADE_IN_DELAY_MILLIS = 40
 private const val STEP_SLIDE_OUT_DURATION_MILLIS = 200
 private const val STEP_FADE_OUT_DURATION_MILLIS = 100
 private const val DISABLED_STEP_ALPHA = 0.38f
-private const val LOCAL_STEP_COUNT = 3f
-private const val CLUSTER_STEP_COUNT = 4f
 private const val PREFERENCE_WIDE_COLUMNS = 3
 private const val PREFERENCE_COMPACT_COLUMNS = 1
 private const val APPEARANCE_ROW_MIN_WIDTH = 380f
@@ -123,13 +123,14 @@ private val SidebarContentReserve = 356.dp
 private val CompactContentReserve = 60.dp
 private val SlideOffsetDistance = 32.dp
 
-/** 首次设置步骤欢迎偏好模式以及可选的集群配置 */
+/** 首次设置步骤：欢迎、偏好、（平台权限）、模式与可选集群配置。 */
 private enum class SetupStep(
     val navLabel: StringResource,
     val title: StringResource,
 ) {
     Welcome(Res.string.setup_nav_welcome, Res.string.onboarding_welcome),
     Preferences(Res.string.setup_nav_preferences, Res.string.setup_preferences),
+    Permissions(Res.string.setup_nav_permissions, Res.string.setup_permissions),
     Mode(Res.string.setup_mode, Res.string.setup_mode),
     Cluster(Res.string.setup_cluster, Res.string.setup_cluster),
 }
@@ -140,11 +141,15 @@ private class OnboardingWizardState(
     val step: SetupStep,
     val furthestStep: Int,
     val cluster: Boolean,
+    val hasPermissions: Boolean,
     val form: ClusterSetup,
     val test: ConnectionTest,
     val previewResult: ConnectionPreviewResult,
     val showError: Boolean,
-)
+) {
+    val visibleSteps: List<SetupStep>
+        get() = SetupStep.entries.filter { (it != SetupStep.Permissions || hasPermissions) && (it != SetupStep.Cluster || cluster) }
+}
 
 private class OnboardingActions(
     val onNavigate: (SetupStep) -> Unit,
@@ -164,8 +169,9 @@ internal fun OnboardingScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     onComplete: (ClusterSetup?) -> Unit,
     modifier: Modifier = Modifier,
+    permissions: OnboardingPermissionsController = rememberOnboardingPermissionsController(),
 ) {
-    val holder = rememberOnboardingWizardHolder(onComplete, onLanguageChange)
+    val holder = rememberOnboardingWizardHolder(permissions.items.isNotEmpty(), onComplete, onLanguageChange)
     val focusRequester = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
     NavigationBackHandler(
@@ -185,7 +191,7 @@ internal fun OnboardingScreen(
             .focusRequester(focusRequester)
             .focusable(),
     ) {
-        OnboardingScaffold(holder.wizard, appearance, language, holder.actions, focusRequester, hasFocus)
+        OnboardingScaffold(holder.wizard, permissions, appearance, language, holder.actions, focusRequester, hasFocus)
     }
 }
 
@@ -196,6 +202,7 @@ private class OnboardingWizardHolder(
 
 @Composable
 private fun rememberOnboardingWizardHolder(
+    hasPermissions: Boolean,
     onComplete: (ClusterSetup?) -> Unit,
     onLanguageChange: (AppLanguage) -> Unit,
 ): OnboardingWizardHolder {
@@ -207,12 +214,17 @@ private fun rememberOnboardingWizardHolder(
     var previewResult by rememberSaveable { mutableStateOf(ConnectionPreviewResult.Success) }
     var showError by rememberSaveable { mutableStateOf(false) }
     OnboardingConnectionTestEffect(test, form, previewResult, step) { test = it }
+    val activeSteps =
+        remember(cluster, hasPermissions) {
+            SetupStep.entries.filter { (it != SetupStep.Permissions || hasPermissions) && (it != SetupStep.Cluster || cluster) }
+        }
     val navigate: (SetupStep) -> Unit = {
         if (test == ConnectionTest.Testing) test = ConnectionTest.Idle
         step = it
         furthestStep = maxOf(furthestStep, it.ordinal)
     }
-    val back = { navigate(SetupStep.entries[(step.ordinal - 1).coerceAtLeast(0)]) }
+    val stepIdx = activeSteps.indexOf(step).coerceAtLeast(0)
+    val back = { navigate(activeSteps[(stepIdx - 1).coerceAtLeast(0)]) }
     val advance = {
         advanceOnboardingStep(
             step = step,
@@ -221,11 +233,11 @@ private fun rememberOnboardingWizardHolder(
             test = test,
             onShowError = { showError = it },
             onStartTest = { test = ConnectionTest.Testing },
-            onNavigateNext = { navigate(SetupStep.entries[step.ordinal + 1]) },
+            onNavigateNext = { if (stepIdx + 1 < activeSteps.size) navigate(activeSteps[stepIdx + 1]) },
             onComplete = { onComplete(if (cluster) form else null) },
         )
     }
-    val wizard = OnboardingWizardState(step, furthestStep, cluster, form, test, previewResult, showError)
+    val wizard = OnboardingWizardState(step, furthestStep, cluster, hasPermissions, form, test, previewResult, showError)
     val actions =
         OnboardingActions(
             onNavigate = navigate,
@@ -293,6 +305,7 @@ private fun advanceOnboardingStep(
 @Composable
 private fun OnboardingScaffold(
     wizard: OnboardingWizardState,
+    permissions: OnboardingPermissionsController,
     appearance: AppearancePreferences,
     language: AppLanguage,
     actions: OnboardingActions,
@@ -301,8 +314,10 @@ private fun OnboardingScaffold(
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= WindowBreakpoints.OnboardingWide
+        val visibleSteps = wizard.visibleSteps
+        val currentIndex = visibleSteps.indexOf(wizard.step).coerceAtLeast(0)
         val progress by animateFloatAsState(
-            targetValue = (wizard.step.ordinal + 1) / (if (wizard.cluster) CLUSTER_STEP_COUNT else LOCAL_STEP_COUNT),
+            targetValue = (currentIndex + 1) / visibleSteps.size.toFloat(),
             animationSpec = tween(STEP_PROGRESS_DURATION_MILLIS),
             label = "setupProgress",
         )
@@ -316,7 +331,7 @@ private fun OnboardingScaffold(
                 if (wide) WindowInsetsSides.Vertical + WindowInsetsSides.End else WindowInsetsSides.Vertical + WindowInsetsSides.Horizontal,
             )
         Row(Modifier.fillMaxSize()) {
-            if (wide) SetupSidebar(wizard.step, wizard.furthestStep, wizard.cluster, actions.onNavigate)
+            if (wide) SetupSidebar(wizard.step, wizard.furthestStep, visibleSteps, actions.onNavigate)
             Column(
                 Modifier
                     .weight(1f)
@@ -325,7 +340,15 @@ private fun OnboardingScaffold(
                     .padding(horizontal = if (wide) 32.dp else 24.dp, vertical = 20.dp),
             ) {
                 if (!wide) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-                OnboardingStepContent(wizard, appearance, language, contentWidth, actions, Modifier.weight(1f).fillMaxWidth())
+                OnboardingStepContent(
+                    wizard = wizard,
+                    permissions = permissions,
+                    appearance = appearance,
+                    language = language,
+                    contentWidth = contentWidth,
+                    actions = actions,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                )
                 HorizontalDivider()
                 OnboardingFooter(wizard, wide, actions.onBack, actions.onAdvance)
             }
@@ -336,6 +359,7 @@ private fun OnboardingScaffold(
 @Composable
 private fun OnboardingStepContent(
     wizard: OnboardingWizardState,
+    permissions: OnboardingPermissionsController,
     appearance: AppearancePreferences,
     language: AppLanguage,
     contentWidth: Dp,
@@ -377,6 +401,10 @@ private fun OnboardingStepContent(
                             (contentWidth - 24.dp * (preferenceColumns - 1)) / preferenceColumns >=
                                 (APPEARANCE_ROW_MIN_WIDTH * LocalDensity.current.fontScale).dp,
                     )
+                }
+
+                SetupStep.Permissions -> {
+                    OnboardingPermissionsStep(items = permissions.items, onRequest = permissions::request)
                 }
 
                 SetupStep.Mode -> {
@@ -498,10 +526,9 @@ private fun Modifier.onboardingShortcuts(
 private fun SetupSidebar(
     step: SetupStep,
     furthestStep: Int,
-    cluster: Boolean,
+    visibleSteps: List<SetupStep>,
     onNavigate: (SetupStep) -> Unit,
 ) {
-    val stepCount = if (cluster) SetupStep.entries.size else SetupStep.entries.size - 1
     PermanentDrawerSheet(
         Modifier.width(SidebarWidth).fillMaxHeight(),
         drawerShape = RectangleShape,
@@ -509,7 +536,7 @@ private fun SetupSidebar(
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start),
     ) {
         Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SetupStep.entries.take(stepCount).forEach { destination ->
+            visibleSteps.forEachIndexed { index, destination ->
                 // 侧栏仅允许返回已到达的步骤避免绕过配置流程
                 val enabled = destination.ordinal <= furthestStep
                 NavigationDrawerItem(
@@ -521,7 +548,7 @@ private fun SetupSidebar(
                             .alpha(if (enabled) 1f else DISABLED_STEP_ALPHA)
                             .focusProperties { canFocus = enabled }
                             .semantics { if (!enabled) disabled() },
-                    icon = { Text((destination.ordinal + 1).toString()) },
+                    icon = { Text((index + 1).toString()) },
                 )
             }
         }
