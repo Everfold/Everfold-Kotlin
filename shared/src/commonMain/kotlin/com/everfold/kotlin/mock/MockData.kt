@@ -62,6 +62,7 @@ private fun pausedStorageAuditConversation(): ConversationUiState {
                     role = MessageRole.Assistant,
                     text = "",
                     streamBlocks = pausedRecord.visibleBlocks(),
+                    traceSpans = pausedRecord.visibleSpans(),
                     elapsedMillis = pausedRecord.elapsedMillis,
                 ),
             ),

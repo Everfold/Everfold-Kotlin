@@ -5,6 +5,8 @@ import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
 import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.ui.localization.UiText
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.longtask_note_thermal
@@ -49,7 +51,16 @@ private suspend fun executeSingleStage(
                 callbacks.writeRecord(record.copy(currentStageIndex = record.currentStageIndex + 1, currentChunkOffset = 0))
                 true
             } else {
-                val waiting = record.copy(activeBlock = AgentStreamBlock.Approval(id = stage.id, gate = stage.gate))
+                val gateSpan =
+                    TraceSpan(
+                        id = stage.id,
+                        kind = TraceSpanKind.UserGate,
+                        title = "策略确认",
+                        detail = stage.gate.id,
+                        startOffsetMs = record.elapsedMillis,
+                        status = StreamRunStatus.Running,
+                    )
+                val waiting = record.copy(activeBlock = AgentStreamBlock.Approval(id = stage.id, gate = stage.gate), activeSpan = gateSpan)
                 callbacks.writeRecord(waiting)
                 callbacks.publishSnapshot(waiting, AgentRunState.Waiting)
                 false
@@ -78,9 +89,24 @@ private suspend fun runTextSlicesStage(
 ): Boolean {
     val totalSlices = stage.totalUnits.coerceAtLeast(1)
     val baseSliceDelay = (durationMillis / totalSlices).coerceAtLeast(1L)
+    val span =
+        if (initial.activeSpan?.id == stage.id) {
+            initial.activeSpan.copy(status = StreamRunStatus.Running, endOffsetMs = null)
+        } else {
+            TraceSpan(
+                id = stage.id,
+                kind = TraceSpanKind.LlmRequest,
+                title = textStageSpanTitle(stage),
+                detail = "${fullText.length} chars",
+                startOffsetMs = initial.elapsedMillis,
+                ttftMillis = throttledDelay(baseSliceDelay, initial.throttled),
+                status = StreamRunStatus.Running,
+            )
+        }
     val started =
         initial.copy(
             activeBlock = buildStreamingTextBlock(stage, fullText, initial.currentChunkOffset, totalSlices, initial.currentStageElapsedMs),
+            activeSpan = span,
         )
     callbacks.writeRecord(started)
     callbacks.publishSnapshot(started, AgentRunState.Running)
@@ -144,10 +170,13 @@ private fun commitCompletedTextStage(
                 AgentStreamBlock.Narration(stage.id, fullText, isStreaming = false)
             }
         }
+    val completedSpan = current.activeSpan?.copy(endOffsetMs = current.elapsedMillis, status = StreamRunStatus.Completed)
     val advanced =
         current.copy(
             committedBlocks = current.committedBlocks + completedBlock,
             activeBlock = null,
+            committedSpans = if (completedSpan != null) current.committedSpans + completedSpan else current.committedSpans,
+            activeSpan = null,
             currentStageIndex = current.currentStageIndex + 1,
             currentChunkOffset = 0,
             currentStageElapsedMs = 0L,
@@ -203,7 +232,20 @@ private suspend fun runToolChunksStage(
             durationMillis = initial.currentStageElapsedMs,
             resumed = initial.currentStageIndex in initial.resumedStages,
         )
-    val started = initial.copy(activeBlock = startTool)
+    val span =
+        if (initial.activeSpan?.id == stage.id) {
+            initial.activeSpan.copy(status = StreamRunStatus.Running, endOffsetMs = null)
+        } else {
+            TraceSpan(
+                id = stage.id,
+                kind = TraceSpanKind.ToolCall,
+                title = stage.toolName,
+                detail = stage.command,
+                startOffsetMs = initial.elapsedMillis,
+                status = StreamRunStatus.Running,
+            )
+        }
+    val started = initial.copy(activeBlock = startTool, activeSpan = span)
     callbacks.writeRecord(started)
     callbacks.publishSnapshot(started, AgentRunState.Running)
 
@@ -240,7 +282,9 @@ private suspend fun advanceToolChunk(
     val nextLogs = if (newLine == null) latest.activeLogLines else latest.activeLogLines + newLine
     val withThermal =
         if (stage.thermalNoteAtChunk == nextChunk) {
-            latest.appendNotice(DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_thermal)))
+            latest
+                .appendNotice(DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_thermal)))
+                .appendEventSpan(title = "温控限速", detail = "39.2°C")
         } else {
             latest
         }
@@ -288,10 +332,13 @@ private fun commitCompletedToolStage(
             durationMillis = current.currentStageElapsedMs,
             resumed = current.currentStageIndex in current.resumedStages,
         )
+    val completedSpan = current.activeSpan?.copy(endOffsetMs = current.elapsedMillis, status = StreamRunStatus.Completed)
     val advanced =
         current.copy(
             committedBlocks = current.committedBlocks + completedTool,
             activeBlock = null,
+            committedSpans = if (completedSpan != null) current.committedSpans + completedSpan else current.committedSpans,
+            activeSpan = null,
             activeLogLines = emptyList(),
             currentStageIndex = current.currentStageIndex + 1,
             currentChunkOffset = 0,

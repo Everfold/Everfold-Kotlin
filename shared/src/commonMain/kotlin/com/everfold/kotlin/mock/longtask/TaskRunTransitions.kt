@@ -5,6 +5,8 @@ import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
 import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.ui.localization.UiText
 import com.everfold.kotlin.ui.localization.uiResource
 import everfold.shared.generated.resources.Res
@@ -23,6 +25,7 @@ internal fun TaskRunRecord.withIoFault(markAutoFault: Boolean = false): TaskRunR
             is AgentStreamBlock.Narration -> block.copy(isStreaming = false)
             else -> block
         }
+    val failedSpan = activeSpan?.copy(status = StreamRunStatus.Failed, endOffsetMs = elapsedMillis)
     val note =
         DeviceEnvironmentNote(
             severity = DeviceNoteSeverity.Warning,
@@ -30,9 +33,10 @@ internal fun TaskRunRecord.withIoFault(markAutoFault: Boolean = false): TaskRunR
         )
     return copy(
         activeBlock = failedActive,
+        activeSpan = failedSpan,
         activeLogLines = updatedLogs,
         autoFaultTriggered = autoFaultTriggered || markAutoFault,
-    ).appendNotice(note)
+    ).appendNotice(note).appendEventSpan(title = "I/O 中断", detail = "$pct%", status = StreamRunStatus.Failed)
 }
 
 internal fun TaskRunRecord.resolveActiveApprovalBlock(addedConstraint: String?): AgentStreamBlock.Approval? {
@@ -48,6 +52,32 @@ internal fun TaskRunRecord.resolveActiveApprovalBlock(addedConstraint: String?):
         }
     return AgentStreamBlock.Approval(id = stage.id, gate = stage.gate, resolvedChoice = choice)
 }
+
+internal fun TaskRunRecord.resolveActiveGateSpan(addedConstraint: String?): TraceSpan? {
+    val stage = scenario.stages.getOrNull(currentStageIndex) as? StreamStageSpec.ApprovalStage ?: return null
+    val base =
+        activeSpan
+            ?: TraceSpan(
+                id = stage.id,
+                kind = TraceSpanKind.UserGate,
+                title = "策略确认",
+                detail = stage.gate.id,
+                startOffsetMs = elapsedMillis,
+            )
+    val note = addedConstraint?.trim().orEmpty()
+    return base.copy(
+        detail = if (note.isNotEmpty()) note else base.detail,
+        endOffsetMs = elapsedMillis,
+        status = StreamRunStatus.Completed,
+    )
+}
+
+internal fun textStageSpanTitle(stage: StreamStageSpec): String =
+    when (stage) {
+        is StreamStageSpec.ThinkStage -> "LLM 推理"
+        is StreamStageSpec.NarrationStage -> if (stage.isFinalAnswer) "LLM 最终回答" else "LLM 响应"
+        else -> "LLM 响应"
+    }
 
 internal fun TaskRunRecord.prepareForResume(
     newAssistantMessageId: String?,
@@ -67,7 +97,9 @@ internal fun TaskRunRecord.prepareForResume(
                 userConstraints = updatedConstraints,
             )
         if (currentStageIndex > 0 || currentChunkOffset > 0) {
-            base.appendNotice(DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_resumed)))
+            base
+                .appendNotice(DeviceEnvironmentNote(DeviceNoteSeverity.Info, UiText.Resource(Res.string.longtask_note_resumed)))
+                .appendEventSpan(title = "断点恢复")
         } else {
             base
         }
@@ -86,6 +118,7 @@ private fun TaskRunRecord.prepareApprovalResume(
     val updatedConstraints = if (trimmedConstraint.isNotEmpty()) userConstraints + trimmedConstraint else userConstraints
     val resolvedChoice = if (trimmedConstraint.isNotEmpty()) UiText.Literal(trimmedConstraint) else chosenOption?.label
     val resolvedBlock = AgentStreamBlock.Approval(id = stage.id, gate = stage.gate, resolvedChoice = resolvedChoice)
+    val resolvedGateSpan = resolveActiveGateSpan(trimmedConstraint.ifEmpty { chosenId })
     return if (newAssistantMessageId != null) {
         val constraintNote =
             DeviceEnvironmentNote(
@@ -96,17 +129,21 @@ private fun TaskRunRecord.prepareApprovalResume(
             assistantMessageId = newAssistantMessageId,
             committedBlocks = emptyList(),
             activeBlock = null,
+            committedSpans = emptyList(),
+            activeSpan = null,
             currentStageIndex = currentStageIndex + 1,
             currentChunkOffset = 0,
             currentStageElapsedMs = 0L,
             approvedGates = approvedGates + stage.gate.id,
             selectedGateOptionId = chosenId ?: selectedGateOptionId,
             userConstraints = updatedConstraints,
-        ).appendNotice(constraintNote)
+        ).appendNotice(constraintNote).appendEventSpan(title = "注入补充约束", detail = trimmedConstraint)
     } else {
         copy(
             committedBlocks = committedBlocks + resolvedBlock,
             activeBlock = null,
+            committedSpans = if (resolvedGateSpan != null) committedSpans + resolvedGateSpan else committedSpans,
+            activeSpan = null,
             currentStageIndex = currentStageIndex + 1,
             currentChunkOffset = 0,
             currentStageElapsedMs = 0L,

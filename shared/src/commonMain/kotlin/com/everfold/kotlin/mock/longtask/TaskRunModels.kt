@@ -4,6 +4,8 @@ import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.DeviceEnvironmentNote
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.feature.conversation.WaitingGate
 import com.everfold.kotlin.ui.localization.UiText
 import kotlin.math.roundToInt
@@ -89,6 +91,8 @@ internal data class TaskRunRecord(
     val scenario: ScenarioSpec,
     val committedBlocks: List<AgentStreamBlock> = emptyList(),
     val activeBlock: AgentStreamBlock? = null,
+    val committedSpans: List<TraceSpan> = emptyList(),
+    val activeSpan: TraceSpan? = null,
     val currentStageIndex: Int = 0,
     val currentChunkOffset: Int = 0,
     val currentStageElapsedMs: Long = 0L,
@@ -113,6 +117,8 @@ internal data class TaskRunRecord(
         )
 
     fun visibleBlocks(): List<AgentStreamBlock> = if (activeBlock == null) committedBlocks else committedBlocks + activeBlock
+
+    fun visibleSpans(): List<TraceSpan> = if (activeSpan == null) committedSpans else committedSpans + activeSpan
 
     fun overallProgress(runState: AgentRunState): Float {
         if (runState == AgentRunState.Completed) return COMPLETE_PROGRESS
@@ -143,14 +149,33 @@ internal data class TaskRunRecord(
         )
     }
 
+    fun appendEventSpan(
+        title: String,
+        detail: String = "",
+        status: StreamRunStatus = StreamRunStatus.Completed,
+    ): TaskRunRecord {
+        val eventSpan =
+            TraceSpan(
+                id = "$taskId-evt-${committedSpans.size + 1}",
+                kind = TraceSpanKind.SystemEvent,
+                title = title,
+                detail = detail,
+                startOffsetMs = elapsedMillis,
+                endOffsetMs = elapsedMillis,
+                status = status,
+            )
+        return copy(committedSpans = committedSpans + eventSpan)
+    }
+
     fun withPausedActiveBlock(): TaskRunRecord {
-        val paused =
+        val pausedBlock =
             when (val block = activeBlock) {
                 is AgentStreamBlock.Thinking -> block.copy(status = StreamRunStatus.Paused)
                 is AgentStreamBlock.ToolCall -> block.copy(status = StreamRunStatus.Paused)
                 is AgentStreamBlock.Narration -> block.copy(isStreaming = false)
                 else -> block
             }
-        return copy(activeBlock = paused)
+        val pausedSpan = activeSpan?.copy(status = StreamRunStatus.Paused, endOffsetMs = elapsedMillis)
+        return copy(activeBlock = pausedBlock, activeSpan = pausedSpan)
     }
 }

@@ -15,6 +15,7 @@ data class ChatMessage(
     val attachments: List<ConversationAttachment> = emptyList(),
     val model: ConversationModel? = null,
     val streamBlocks: List<AgentStreamBlock> = emptyList(),
+    val traceSpans: List<TraceSpan> = emptyList(),
     val elapsedMillis: Long? = null,
 )
 

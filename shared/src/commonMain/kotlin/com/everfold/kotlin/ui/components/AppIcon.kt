@@ -36,6 +36,7 @@ enum class AppSymbol(
     Collapse("M3,8 L8,8 L8,3 M21,8 L16,8 L16,3 M8,21 L8,16 L3,16 M16,21 L16,16 L21,16"),
     More("M5,11 L5,13 M12,11 L12,13 M19,11 L19,13"),
     Spark("M12,3 L14.5,9.5 L21,12 L14.5,14.5 L12,21 L9.5,14.5 L3,12 L9.5,9.5 Z"),
+    Trace("M4,6 L14,6 M8,12 L20,12 M5,18 L16,18"),
 }
 
 private val vectors =

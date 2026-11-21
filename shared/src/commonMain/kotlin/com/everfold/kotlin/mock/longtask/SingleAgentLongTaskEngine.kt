@@ -8,6 +8,8 @@ import com.everfold.kotlin.feature.conversation.DeviceNoteSeverity
 import com.everfold.kotlin.feature.conversation.DeviceTaskController
 import com.everfold.kotlin.feature.conversation.DeviceTaskFault
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.ui.localization.UiText
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.longtask_note_throttled
@@ -17,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** 单智能体本机长程任务驱动器，按时序动态追加实时交错流节点并维护分片级断点。 */
+/** 单智能体本机长程任务驱动器，按时序动态追加实时交错流节点、时间轴轨迹与分片级断点。 */
 internal class SingleAgentLongTaskEngine(
     private val scope: CoroutineScope,
     private val readConversation: (String) -> ConversationUiState?,
@@ -58,6 +60,19 @@ internal class SingleAgentLongTaskEngine(
             firstThink?.let {
                 AgentStreamBlock.Thinking(id = it.id, text = "", status = StreamRunStatus.Running)
             }
+        val initialSpan =
+            firstThink?.let {
+                val slices = it.totalUnits.coerceAtLeast(1)
+                TraceSpan(
+                    id = it.id,
+                    kind = TraceSpanKind.LlmRequest,
+                    title = textStageSpanTitle(it),
+                    detail = "${it.thought.length} chars",
+                    startOffsetMs = 0L,
+                    ttftMillis = (it.durationMillis / slices).coerceAtLeast(1L),
+                    status = StreamRunStatus.Running,
+                )
+            }
         val record =
             TaskRunRecord(
                 taskId = "longtask-${++nextTaskNumber}",
@@ -69,6 +84,7 @@ internal class SingleAgentLongTaskEngine(
                 attachmentNames = attachmentNames,
                 scenario = scenario,
                 activeBlock = initialBlock,
+                activeSpan = initialSpan,
             )
         records[conversationId] = record
         launchRunLoop(conversationId)
@@ -82,18 +98,7 @@ internal class SingleAgentLongTaskEngine(
     ): Boolean {
         val existing = records[conversationId] ?: return false
         if (newAssistantMessageId != null) {
-            val resolvedApproval = existing.resolveActiveApprovalBlock(addedConstraint)
-            if (resolvedApproval != null) {
-                val lockedBlocks = existing.committedBlocks + resolvedApproval
-                updateConversation(conversationId) { state ->
-                    state.copy(
-                        messages =
-                            state.messages.map { msg ->
-                                if (msg.id == existing.assistantMessageId) msg.copy(streamBlocks = lockedBlocks) else msg
-                            },
-                    )
-                }
-            }
+            lockCompletedApprovalMessage(existing, addedConstraint)
         }
         records[conversationId] =
             existing.prepareForResume(
@@ -103,6 +108,29 @@ internal class SingleAgentLongTaskEngine(
             )
         launchRunLoop(conversationId)
         return true
+    }
+
+    private fun lockCompletedApprovalMessage(
+        existing: TaskRunRecord,
+        addedConstraint: String?,
+    ) {
+        val resolvedApproval = existing.resolveActiveApprovalBlock(addedConstraint) ?: return
+        val lockedBlocks = existing.committedBlocks + resolvedApproval
+        val resolvedGateSpan = existing.resolveActiveGateSpan(addedConstraint)
+        val lockedSpans =
+            if (resolvedGateSpan != null) existing.committedSpans + resolvedGateSpan else existing.committedSpans
+        updateConversation(existing.conversationId) { state ->
+            state.copy(
+                messages =
+                    state.messages.map { msg ->
+                        if (msg.id == existing.assistantMessageId) {
+                            msg.copy(streamBlocks = lockedBlocks, traceSpans = lockedSpans)
+                        } else {
+                            msg
+                        }
+                    },
+            )
+        }
     }
 
     override fun resolveGateOption(
@@ -123,7 +151,7 @@ internal class SingleAgentLongTaskEngine(
         when (fault) {
             DeviceTaskFault.PowerSaverThrottle -> {
                 val note = DeviceEnvironmentNote(DeviceNoteSeverity.Warning, UiText.Resource(Res.string.longtask_note_throttled))
-                val throttled = existing.copy(throttled = true).appendNotice(note)
+                val throttled = existing.copy(throttled = true).appendNotice(note).appendEventSpan(title = "省电节流")
                 records[conversationId] = throttled
                 applySnapshotToConversation(throttled, session.runState)
             }
@@ -178,6 +206,7 @@ internal class SingleAgentLongTaskEngine(
         runState: AgentRunState,
     ) {
         val visible = record.visibleBlocks()
+        val visibleSpans = record.visibleSpans()
         val preview =
             when (runState) {
                 AgentRunState.Completed -> UiText.Resource(Res.string.reply_complete)
@@ -193,6 +222,7 @@ internal class SingleAgentLongTaskEngine(
                         if (msg.id == record.assistantMessageId) {
                             msg.copy(
                                 streamBlocks = visible,
+                                traceSpans = visibleSpans,
                                 elapsedMillis = record.elapsedMillis,
                             )
                         } else {

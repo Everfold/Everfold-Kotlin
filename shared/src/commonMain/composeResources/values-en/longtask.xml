@@ -26,6 +26,28 @@
     <string name="stream_process_done_simple">Intermediate process</string>
     <string name="stream_process_expanded_tools">Execution process · %1$d tool calls</string>
 
+    <!-- 会话执行轨迹图 -->
+    <string name="trace_open">Execution trace</string>
+    <string name="trace_title">Execution trace</string>
+    <string name="trace_back_to_chat">Back to conversation</string>
+    <string name="trace_empty_title">No execution trace yet</string>
+    <string name="trace_empty_hint">Send a prompt to inspect LLM latency and tool call timings for each Agent Loop.</string>
+    <string name="trace_metric_loops">Loops</string>
+    <string name="trace_metric_total">Total</string>
+    <string name="trace_metric_llm">LLM</string>
+    <string name="trace_metric_tools">Tools</string>
+    <string name="trace_loop_heading">Loop #%1$d</string>
+    <string name="trace_count_suffix">%1$dx</string>
+    <string name="trace_loops_value">%1$d</string>
+    <string name="trace_legend_llm">LLM</string>
+    <string name="trace_legend_tool">Tool</string>
+    <string name="trace_legend_other">Wait/Other</string>
+    <string name="trace_span_running">Running</string>
+    <string name="trace_span_issued_at">Issued %1$s</string>
+    <string name="trace_span_returned_at">Returned %1$s</string>
+    <string name="trace_span_ttft">TTFT %1$s</string>
+    <string name="trace_span_duration">Duration %1$s</string>
+
     <!-- 演示环境扰动注入 -->
     <string name="longtask_inject_throttle">Simulate battery saver throttling</string>
     <string name="longtask_inject_io_fault">Simulate storage I/O interrupt (resumable)</string>

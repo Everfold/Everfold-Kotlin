@@ -79,6 +79,7 @@ import everfold.shared.generated.resources.show_sessions
 import everfold.shared.generated.resources.suggestion_ideas
 import everfold.shared.generated.resources.suggestion_problem
 import everfold.shared.generated.resources.suggestion_week
+import everfold.shared.generated.resources.trace_open
 import everfold.shared.generated.resources.welcome_title
 import org.jetbrains.compose.resources.painterResource
 
@@ -114,31 +115,97 @@ fun ConversationScreen(
     composerTools: @Composable RowScope.() -> Unit = {},
     attachmentsContent: @Composable () -> Unit = {},
 ) {
-    // 按会话保留编辑状态仅在外部草稿改变时同步避免打断光标和输入法组合
+    // 按会话保留编辑与轨迹视图状态避免切换会话后串台
     var expandedEditor by rememberSaveable(state.id) { mutableStateOf(false) }
+    var showTrace by rememberSaveable(state.id) { mutableStateOf(false) }
     val inputFocus = remember { FocusRequester() }
-    ConversationFocusEffect(state.id, autoFocusInput, inputFocusRequest, inputFocus)
-    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), expandedEditor) { expandedEditor = false }
-    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
-    val prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend, collapsePrompts, processVisibility)
-    val actions =
-        buildComposerActions(
-            onDraftChange = onDraftChange,
-            onStop = onStop,
+    ConversationFocusEffect(state.id, autoFocusInput && !showTrace, inputFocusRequest, inputFocus)
+    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), showTrace) { showTrace = false }
+    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), !showTrace && expandedEditor) { expandedEditor = false }
+    if (showTrace) {
+        SessionTraceScreen(
+            state = state,
+            sideMargins = sideMargins,
+            onBack = { showTrace = false },
+            modifier = modifier.closeOnEscape(true) { showTrace = false },
+        )
+    } else {
+        ConversationChatContent(
+            state = state,
+            connectionName = connectionName,
+            compactNavigation = compactNavigation,
+            expandedEditor = expandedEditor,
             inputFocus = inputFocus,
-            onBeforeSend = {
+            prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend, collapsePrompts, processVisibility),
+            sessionsVisible = sessionsVisible,
+            onToggleSessions = onToggleSessions,
+            onOpenTrace = { showTrace = true },
+            onNewConversation = onNewConversation,
+            onDraftChange = onDraftChange,
+            onSend = onSend,
+            onStop = onStop,
+            onToggleEditor = { expandedEditor = !expandedEditor },
+            onCollapseEditor = { expandedEditor = false },
+            onRetry = onRetry,
+            onSelectGateOption = onSelectGateOption,
+            connectionIndicator = connectionIndicator,
+            conversationMenu = conversationMenu,
+            composerFeedback = composerFeedback,
+            composerTools = composerTools,
+            attachmentsContent = attachmentsContent,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun ConversationChatContent(
+    state: ConversationUiState,
+    connectionName: String,
+    compactNavigation: Boolean,
+    expandedEditor: Boolean,
+    inputFocus: FocusRequester,
+    prefs: ComposerPrefs,
+    sessionsVisible: Boolean,
+    onToggleSessions: () -> Unit,
+    onOpenTrace: () -> Unit,
+    onNewConversation: () -> Unit,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onStop: () -> Unit,
+    onToggleEditor: () -> Unit,
+    onCollapseEditor: () -> Unit,
+    onRetry: () -> Unit,
+    onSelectGateOption: (String) -> Unit,
+    connectionIndicator: @Composable () -> Unit,
+    conversationMenu: @Composable () -> Unit,
+    composerFeedback: @Composable () -> Unit,
+    composerTools: @Composable RowScope.() -> Unit,
+    attachmentsContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var scrollRequest by remember(state.id) { mutableIntStateOf(0) }
+    val actions =
+        ComposerActions(
+            onDraftChange = onDraftChange,
+            onSend = {
                 scrollRequest++
-                expandedEditor = false
+                onCollapseEditor()
                 onSend()
             },
-            onFlipExpanded = { expandedEditor = !expandedEditor },
+            onStop = onStop,
+            onToggleExpanded = {
+                onToggleEditor()
+                inputFocus.requestFocus()
+            },
         )
-    Column(modifier.fillMaxSize().collapseEditorOnEscape(expandedEditor) { expandedEditor = false }) {
+    Column(modifier.fillMaxSize().closeOnEscape(expandedEditor, onCollapseEditor)) {
         ConversationTopBar(
             state.title.resolve(),
             compactNavigation,
             sessionsVisible,
             onToggleSessions,
+            onOpenTrace,
             onNewConversation,
             connectionIndicator,
             conversationMenu,
@@ -149,7 +216,7 @@ fun ConversationScreen(
                 state,
                 connectionName,
                 scrollRequest,
-                canSend && state.workspace != null && state.model != null,
+                prefs.canSend && state.workspace != null && state.model != null,
                 prefs,
                 { onDraftChange(it).also { inputFocus.requestFocus() } },
                 { if (desktopUi) inputFocus.requestFocus() },
@@ -173,23 +240,6 @@ fun ConversationScreen(
     }
 }
 
-private fun buildComposerActions(
-    onDraftChange: (String) -> Unit,
-    onStop: () -> Unit,
-    inputFocus: FocusRequester,
-    onBeforeSend: () -> Unit,
-    onFlipExpanded: () -> Unit,
-): ComposerActions =
-    ComposerActions(
-        onDraftChange = onDraftChange,
-        onSend = onBeforeSend,
-        onStop = onStop,
-        onToggleExpanded = {
-            onFlipExpanded()
-            inputFocus.requestFocus()
-        },
-    )
-
 @Composable
 private fun ConversationFocusEffect(
     conversationId: String,
@@ -205,14 +255,14 @@ private fun ConversationFocusEffect(
     }
 }
 
-private fun Modifier.collapseEditorOnEscape(
-    expandedEditor: Boolean,
-    onCollapse: () -> Unit,
+private fun Modifier.closeOnEscape(
+    enabled: Boolean,
+    onClose: () -> Unit,
 ): Modifier =
     onPreviewKeyEvent { event ->
-        val shouldCollapse = expandedEditor && event.type == KeyEventType.KeyDown && event.key == Key.Escape
-        if (shouldCollapse) onCollapse()
-        shouldCollapse
+        val shouldClose = enabled && event.type == KeyEventType.KeyDown && event.key == Key.Escape
+        if (shouldClose) onClose()
+        shouldClose
     }
 
 @Composable
@@ -221,6 +271,7 @@ private fun ConversationTopBar(
     compactNavigation: Boolean,
     sessionsVisible: Boolean,
     onToggleSessions: () -> Unit,
+    onOpenTrace: () -> Unit,
     onNewConversation: () -> Unit,
     connectionIndicator: @Composable () -> Unit,
     conversationMenu: @Composable () -> Unit,
@@ -257,6 +308,10 @@ private fun ConversationTopBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+        val traceLabel = localizedString(Res.string.trace_open)
+        AppTooltip(traceLabel) {
+            IconButton(onClick = onOpenTrace) { AppIcon(AppSymbol.Trace, description = traceLabel) }
         }
         val newConversationLabel = localizedString(Res.string.new_session)
         val newConversationTooltip =

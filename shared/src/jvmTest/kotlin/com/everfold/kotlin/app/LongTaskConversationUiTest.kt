@@ -116,6 +116,26 @@ class LongTaskConversationUiTest(
             onNodeWithText("sqlite.fts5", substring = true).assertIsDisplayed()
         }
 
+    @Test
+    fun sessionTraceViewShowsEmptyStateAndInteractiveLoopWaterfall() =
+        workspaceUiTest(width = width, enableLongTasks = true) {
+            onNodeWithContentDescription("执行轨迹").assertIsDisplayed().performClick()
+            onNodeWithText("当前会话暂无执行轨迹").assertIsDisplayed()
+            onNodeWithContentDescription("返回会话").performClick()
+
+            openSessionFromSidebar("本机存储与下载目录整理")
+            onNodeWithContentDescription("执行轨迹").assertIsDisplayed().performClick()
+            onNodeWithText("Loop #1").assertIsDisplayed()
+            onNodeWithText("storage.stat").performScrollTo().assertIsDisplayed()
+            onNodeWithText("fs.walk").performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText("发出", substring = true).performScrollTo().assertIsDisplayed()
+            onNodeWithText("返回", substring = true).performScrollTo().assertIsDisplayed()
+            onNodeWithText("hash.sha256").performScrollTo().assertIsDisplayed()
+
+            onNodeWithContentDescription("返回会话").performClick()
+            onNodeWithText("继续执行").assertIsDisplayed()
+        }
+
     private fun DesktopComposeUiTest.openSessionFromSidebar(title: String) {
         if (width < EXPANDED_BREAKPOINT) {
             onNodeWithContentDescription("打开工作台").performClick()

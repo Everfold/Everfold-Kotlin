@@ -6,6 +6,7 @@ import com.everfold.kotlin.feature.conversation.AgentRunState
 import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.DeviceTaskFault
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.mock.MockWorkspace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,6 +82,17 @@ class SingleAgentLongTaskEngineTest {
             )
             val summaryBlock = assertIs<AgentStreamBlock.Narration>(finalMessage.streamBlocks.last())
             assertTrue("未删除" in summaryBlock.text)
+
+            val spans = finalMessage.traceSpans
+            assertTrue(spans.any { it.kind == TraceSpanKind.LlmRequest && (it.ttftMillis ?: 0L) > 0L })
+            assertTrue(
+                spans.any {
+                    it.kind == TraceSpanKind.ToolCall &&
+                        it.title == "fs.batchMove" &&
+                        (it.endOffsetMs ?: 0L) > it.startOffsetMs
+                },
+            )
+            assertTrue(spans.zipWithNext().all { (a, b) -> a.startOffsetMs <= b.startOffsetMs })
         }
 
     @Test
@@ -187,6 +199,12 @@ class SingleAgentLongTaskEngineTest {
                         .last(),
                 )
             assertTrue("SyncPrefs.commit()" in summary.text)
+            assertTrue(
+                finished.messages
+                    .last()
+                    .traceSpans
+                    .any { it.kind == TraceSpanKind.SystemEvent },
+            )
         }
 
     @Test

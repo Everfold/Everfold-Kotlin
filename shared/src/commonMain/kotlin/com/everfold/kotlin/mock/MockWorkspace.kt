@@ -12,6 +12,9 @@ import com.everfold.kotlin.feature.conversation.ConversationUiState
 import com.everfold.kotlin.feature.conversation.DRAFT_CONVERSATION_ID
 import com.everfold.kotlin.feature.conversation.DeviceTaskController
 import com.everfold.kotlin.feature.conversation.MessageRole
+import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 import com.everfold.kotlin.mock.longtask.DeviceTaskCommand
 import com.everfold.kotlin.mock.longtask.NoopLongTaskBridge
 import com.everfold.kotlin.mock.longtask.OnDeviceScenarioCatalog
@@ -265,17 +268,7 @@ internal class MockWorkspace(
         update(id) {
             it.copy(
                 runState = state,
-                messages =
-                    it.messages
-                        .map { msg ->
-                            if (pausedRecord != null && msg.id == pausedRecord.assistantMessageId) {
-                                msg.copy(streamBlocks = pausedRecord.visibleBlocks(), elapsedMillis = pausedRecord.elapsedMillis)
-                            } else {
-                                msg
-                            }
-                        }.filterNot { msg ->
-                            msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.streamBlocks.isEmpty()
-                        },
+                messages = freezePausedMessages(it.messages, pausedRecord),
             )
         }
     }
@@ -289,45 +282,108 @@ internal class MockWorkspace(
         replies.remove(id)?.cancel()
         val job =
             runtimeScope.launch {
+                var elapsed = STREAM_INITIAL_DELAY_MILLIS
                 delay(STREAM_INITIAL_DELAY_MILLIS)
                 for (length in 1..reply.length step STREAM_CHAR_STEP) {
                     val text = reply.take((length + STREAM_CHAR_STEP - 1).coerceAtMost(reply.length))
-                    update(id) { state ->
-                        state.copy(messages = state.messages.map { if (it.id == messageId) it.copy(text = text) else it })
+                    val liveSpan = replyTraceSpan(messageId, reply.length, endOffsetMs = null, status = StreamRunStatus.Running)
+                    update(id) { s ->
+                        s.copy(
+                            messages =
+                                s.messages.map {
+                                    if (it.id ==
+                                        messageId
+                                    ) {
+                                        it.copy(text = text, traceSpans = listOf(liveSpan), elapsedMillis = elapsed)
+                                    } else {
+                                        it
+                                    }
+                                },
+                        )
                     }
+                    elapsed += STREAM_STEP_DELAY_MILLIS
                     delay(STREAM_STEP_DELAY_MILLIS)
                 }
-
-                // 已完成
-                update(id) { it.copy(runState = AgentRunState.Completed, preview = UiText.Resource(Res.string.reply_complete)) }
+                val doneSpan = replyTraceSpan(messageId, reply.length, endOffsetMs = elapsed, status = StreamRunStatus.Completed)
+                update(id) { s ->
+                    s.copy(
+                        runState = AgentRunState.Completed,
+                        preview = UiText.Resource(Res.string.reply_complete),
+                        messages =
+                            s.messages.map {
+                                if (it.id == messageId) it.copy(traceSpans = listOf(doneSpan), elapsedMillis = elapsed) else it
+                            },
+                    )
+                }
             }
         replies[id] = job
         job.invokeOnCompletion { if (replies[id] === job) replies.remove(id) }
     }
 
+    private fun replyTraceSpan(
+        messageId: String,
+        charCount: Int,
+        endOffsetMs: Long?,
+        status: StreamRunStatus,
+    ): TraceSpan =
+        TraceSpan(
+            id = "$messageId-llm",
+            kind = TraceSpanKind.LlmRequest,
+            title = "LLM 响应",
+            detail = "$charCount chars",
+            startOffsetMs = 0L,
+            endOffsetMs = endOffsetMs,
+            ttftMillis = STREAM_INITIAL_DELAY_MILLIS,
+            status = status,
+        )
+
     override fun stop(id: String) {
         replies.remove(id)?.cancel()
         val pausedRecord = if (enableLongTasks) longTaskEngine.pauseRun(id) else null
         update(id) {
-            val updatedMessages =
-                it.messages
-                    .map { msg ->
-                        if (pausedRecord != null && msg.id == pausedRecord.assistantMessageId) {
-                            msg.copy(streamBlocks = pausedRecord.visibleBlocks(), elapsedMillis = pausedRecord.elapsedMillis)
-                        } else {
-                            msg
-                        }
-                    }.filterNot { msg ->
-                        msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.streamBlocks.isEmpty()
-                    }
             it.copy(
                 runState = AgentRunState.Stopped,
                 // 已停止
                 preview = UiText.Resource(Res.string.reply_stopped),
-                messages = updatedMessages,
+                messages = freezePausedMessages(it.messages, pausedRecord),
             )
         }
     }
+
+    private fun freezePausedMessages(
+        messages: List<ChatMessage>,
+        pausedRecord: com.everfold.kotlin.mock.longtask.TaskRunRecord?,
+    ): List<ChatMessage> =
+        messages
+            .map { msg ->
+                when {
+                    pausedRecord != null && msg.id == pausedRecord.assistantMessageId -> {
+                        msg.copy(
+                            streamBlocks = pausedRecord.visibleBlocks(),
+                            traceSpans = pausedRecord.visibleSpans(),
+                            elapsedMillis = pausedRecord.elapsedMillis,
+                        )
+                    }
+
+                    msg.traceSpans.any { it.endOffsetMs == null } -> {
+                        val closedSpans =
+                            msg.traceSpans.map { span ->
+                                if (span.endOffsetMs == null) {
+                                    span.copy(endOffsetMs = msg.elapsedMillis ?: span.startOffsetMs, status = StreamRunStatus.Paused)
+                                } else {
+                                    span
+                                }
+                            }
+                        msg.copy(traceSpans = closedSpans)
+                    }
+
+                    else -> {
+                        msg
+                    }
+                }
+            }.filterNot { msg ->
+                msg.role == MessageRole.Assistant && msg.text.isEmpty() && msg.streamBlocks.isEmpty()
+            }
 
     private fun read(id: String) = if (id == newConversation.id) newConversation else conversations.find { it.id == id }
 

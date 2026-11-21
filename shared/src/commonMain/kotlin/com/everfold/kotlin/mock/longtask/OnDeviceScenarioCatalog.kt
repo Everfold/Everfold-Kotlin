@@ -3,6 +3,8 @@ package com.everfold.kotlin.mock.longtask
 import com.everfold.kotlin.feature.connections.BUILT_IN_CONNECTION_ID
 import com.everfold.kotlin.feature.conversation.AgentStreamBlock
 import com.everfold.kotlin.feature.conversation.StreamRunStatus
+import com.everfold.kotlin.feature.conversation.TraceSpan
+import com.everfold.kotlin.feature.conversation.TraceSpanKind
 
 private val StorageKeywords =
     listOf("download", "screenshot", "apk", "storage", "archive", "clean", "整理", "下载", "截图", "清理", "存储", "归档", "重复")
@@ -14,6 +16,7 @@ private val IndexKeywords =
 private const val PRESEEDED_STAGE_INDEX = 6
 private const val PRESEEDED_CHUNK_OFFSET = 14
 private const val PRESEEDED_STAGE_ELAPSED_MS = 7_000L
+private const val PRESEEDED_PRIOR_ELAPSED_MS = 25_000L
 private const val PRESEEDED_TOTAL_ELAPSED_MS = 32_000L
 
 internal const val PAUSED_SAMPLE_CONVERSATION_ID = "android-storage-audit"
@@ -42,7 +45,9 @@ internal object OnDeviceScenarioCatalog {
         val scenario = buildStorageArchiveScenario()
         val prompt = "深度整理本机 Download 与截图目录并清理重复安装包"
         val context = TaskRunContext(prompt, "/workspace", emptyList(), null, emptyList(), PRESEEDED_TOTAL_ELAPSED_MS)
-        val completedBlocks = scenario.stages.take(PRESEEDED_STAGE_INDEX).mapNotNull { stage -> completedBlockForStage(stage, context) }
+        val completedStages = scenario.stages.take(PRESEEDED_STAGE_INDEX)
+        val completedBlocks = completedStages.mapNotNull { stage -> completedBlockForStage(stage, context) }
+        val completedSpans = buildCompletedSpansForStages(completedStages, context)
         val hashStage = scenario.stages[PRESEEDED_STAGE_INDEX] as StreamStageSpec.ToolStage
         val partialLogs = (1..PRESEEDED_CHUNK_OFFSET).mapNotNull { chunk -> hashStage.logLineAtChunk(chunk, hashStage.totalChunks) }
         val pausedTool =
@@ -56,6 +61,16 @@ internal object OnDeviceScenarioCatalog {
                 progress = PRESEEDED_CHUNK_OFFSET.toFloat() / hashStage.totalChunks,
                 durationMillis = PRESEEDED_STAGE_ELAPSED_MS,
             )
+        val pausedSpan =
+            TraceSpan(
+                id = hashStage.id,
+                kind = TraceSpanKind.ToolCall,
+                title = hashStage.toolName,
+                detail = hashStage.command,
+                startOffsetMs = PRESEEDED_PRIOR_ELAPSED_MS,
+                endOffsetMs = PRESEEDED_TOTAL_ELAPSED_MS,
+                status = StreamRunStatus.Paused,
+            )
         return TaskRunRecord(
             taskId = "task-preseeded-storage",
             conversationId = PAUSED_SAMPLE_CONVERSATION_ID,
@@ -67,12 +82,68 @@ internal object OnDeviceScenarioCatalog {
             scenario = scenario,
             committedBlocks = completedBlocks,
             activeBlock = pausedTool,
+            committedSpans = completedSpans,
+            activeSpan = pausedSpan,
             currentStageIndex = PRESEEDED_STAGE_INDEX,
             currentChunkOffset = PRESEEDED_CHUNK_OFFSET,
             currentStageElapsedMs = PRESEEDED_STAGE_ELAPSED_MS,
             activeLogLines = partialLogs,
             elapsedMillis = PRESEEDED_TOTAL_ELAPSED_MS,
         )
+    }
+}
+
+private fun buildCompletedSpansForStages(
+    stages: List<StreamStageSpec>,
+    context: TaskRunContext,
+): List<TraceSpan> {
+    var cursorMs = 0L
+    return stages.mapNotNull { stage ->
+        val span =
+            when (stage) {
+                is StreamStageSpec.ThinkStage -> {
+                    TraceSpan(
+                        id = stage.id,
+                        kind = TraceSpanKind.LlmRequest,
+                        title = textStageSpanTitle(stage),
+                        detail = "${stage.thought.length} chars",
+                        startOffsetMs = cursorMs,
+                        endOffsetMs = cursorMs + stage.durationMillis,
+                        ttftMillis = (stage.durationMillis / stage.totalUnits.coerceAtLeast(1)).coerceAtLeast(1L),
+                    )
+                }
+
+                is StreamStageSpec.NarrationStage -> {
+                    val text = stage.textBuilder(context)
+                    TraceSpan(
+                        id = stage.id,
+                        kind = TraceSpanKind.LlmRequest,
+                        title = textStageSpanTitle(stage),
+                        detail = "${text.length} chars",
+                        startOffsetMs = cursorMs,
+                        endOffsetMs = cursorMs + stage.durationMillis,
+                        ttftMillis = (stage.durationMillis / stage.totalUnits.coerceAtLeast(1)).coerceAtLeast(1L),
+                    )
+                }
+
+                is StreamStageSpec.ToolStage -> {
+                    val dur = stage.totalChunks * stage.chunkDelayMillis
+                    TraceSpan(
+                        id = stage.id,
+                        kind = TraceSpanKind.ToolCall,
+                        title = stage.toolName,
+                        detail = stage.command,
+                        startOffsetMs = cursorMs,
+                        endOffsetMs = cursorMs + dur,
+                    )
+                }
+
+                is StreamStageSpec.ApprovalStage -> {
+                    null
+                }
+            }
+        cursorMs = span?.endOffsetMs ?: cursorMs
+        span
     }
 }
 
