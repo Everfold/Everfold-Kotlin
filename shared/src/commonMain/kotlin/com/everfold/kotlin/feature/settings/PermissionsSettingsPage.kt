@@ -19,6 +19,7 @@ import everfold.shared.generated.resources.permissions_settings_hint
 internal fun PermissionsSettingsPage(
     items: List<OnboardingPermissionItem>,
     onRequest: (String) -> Unit,
+    onManage: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -28,7 +29,11 @@ internal fun PermissionsSettingsPage(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         items.forEach { item ->
-            OnboardingPermissionCard(item = item, onRequest = { onRequest(item.id) })
+            OnboardingPermissionCard(
+                item = item,
+                onRequest = { onRequest(item.id) },
+                onManage = { onManage(item.id) },
+            )
         }
     }
 }

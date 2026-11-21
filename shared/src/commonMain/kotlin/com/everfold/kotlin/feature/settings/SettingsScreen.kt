@@ -113,7 +113,11 @@ fun SettingsScreen(
             }
 
             SettingsPage.Permissions -> {
-                PermissionsSettingsPage(items = permissions.items, onRequest = permissions::request)
+                PermissionsSettingsPage(
+                    items = permissions.items,
+                    onRequest = permissions::request,
+                    onManage = permissions::openSettings,
+                )
             }
 
             SettingsPage.About -> {

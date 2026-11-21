@@ -22,6 +22,8 @@ internal interface OnboardingPermissionsController {
     val items: List<OnboardingPermissionItem>
 
     fun request(id: String)
+
+    fun openSettings(id: String) = request(id)
 }
 
 internal object EmptyPermissionsController : OnboardingPermissionsController {

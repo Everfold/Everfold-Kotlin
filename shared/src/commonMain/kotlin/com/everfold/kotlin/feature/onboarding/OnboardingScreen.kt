@@ -404,7 +404,11 @@ private fun OnboardingStepContent(
                 }
 
                 SetupStep.Permissions -> {
-                    OnboardingPermissionsStep(items = permissions.items, onRequest = permissions::request)
+                    OnboardingPermissionsStep(
+                        items = permissions.items,
+                        onRequest = permissions::request,
+                        onManage = permissions::openSettings,
+                    )
                 }
 
                 SetupStep.Mode -> {

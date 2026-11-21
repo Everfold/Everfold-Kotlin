@@ -137,6 +137,26 @@ private fun buildAndroidPermissionsController(
                 }
             }
         }
+
+        override fun openSettings(id: String) {
+            when (id) {
+                PERMISSION_ID_NOTIFICATIONS -> {
+                    openAppNotificationSettings(context)
+                }
+
+                PERMISSION_ID_LIVE_UPDATES -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                        openPromotedNotificationSettings(context)
+                    } else {
+                        openAppNotificationSettings(context)
+                    }
+                }
+
+                PERMISSION_ID_BATTERY_OPTIMIZATION -> {
+                    openAppDetailsSettings(context)
+                }
+            }
+        }
     }
 }
 
@@ -197,12 +217,16 @@ private fun openBatteryOptimizationSettings(context: Context) {
         Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
             if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+    runCatching { context.startActivity(directIntent) }
+        .recoverCatching { context.startActivity(listIntent) }
+        .onFailure { openAppDetailsSettings(context) }
+}
+
+private fun openAppDetailsSettings(context: Context) {
     val appDetailsIntent =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", context.packageName, null)
             if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-    runCatching { context.startActivity(directIntent) }
-        .recoverCatching { context.startActivity(listIntent) }
-        .recoverCatching { context.startActivity(appDetailsIntent) }
+    runCatching { context.startActivity(appDetailsIntent) }
 }
