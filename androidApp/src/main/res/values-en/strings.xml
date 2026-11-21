@@ -2,4 +2,7 @@
     <string name="app_name">Everfold</string>
     <string name="task_channel_ongoing">On-device task progress</string>
     <string name="task_channel_attention">Task approvals &amp; completion</string>
+    <string name="task_chip_waiting">Confirm</string>
+    <string name="task_chip_paused">Paused</string>
+    <string name="task_chip_failed">Failed</string>
 </resources>

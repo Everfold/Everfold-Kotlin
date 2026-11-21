@@ -2,4 +2,7 @@
     <string name="app_name">Everfold</string>
     <string name="task_channel_ongoing">后台长程任务进度</string>
     <string name="task_channel_attention">任务确认与完成提醒</string>
+    <string name="task_chip_waiting">待确认</string>
+    <string name="task_chip_paused">已暂停</string>
+    <string name="task_chip_failed">已中断</string>
 </resources>

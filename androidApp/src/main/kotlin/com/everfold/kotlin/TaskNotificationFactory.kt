@@ -34,9 +34,11 @@ internal object TaskNotificationFactory {
             NotificationChannel(
                 CHANNEL_ONGOING,
                 context.getString(R.string.task_channel_ongoing),
-                NotificationManager.IMPORTANCE_LOW,
+                NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 setShowBadge(false)
+                setSound(null, null)
+                enableVibration(false)
             }
         val attention =
             NotificationChannel(
@@ -53,7 +55,8 @@ internal object TaskNotificationFactory {
     ): Notification {
         val channelId = if (payload.kind == TaskNotificationKind.Running) CHANNEL_ONGOING else CHANNEL_ATTENTION
         val builder = createBuilder(context, channelId)
-        val ongoing = payload.kind == TaskNotificationKind.Running
+        val ongoing = payload.kind == TaskNotificationKind.Running || payload.kind == TaskNotificationKind.Waiting
+        val clampedProgress = payload.progressPercent.coerceIn(0, MAX_NOTIFICATION_PROGRESS)
         builder
             .setSmallIcon(R.drawable.ic_stat_task)
             .setContentTitle(payload.title)
@@ -63,9 +66,7 @@ internal object TaskNotificationFactory {
             .setOngoing(ongoing)
             .setAutoCancel(!ongoing)
             .setCategory(Notification.CATEGORY_PROGRESS)
-        if (payload.kind != TaskNotificationKind.Completed) {
-            builder.setProgress(MAX_NOTIFICATION_PROGRESS, payload.progressPercent.coerceIn(0, MAX_NOTIFICATION_PROGRESS), false)
-        }
+        applyProgressAndLiveUpdate(context, builder, payload, clampedProgress, ongoing)
         payload.actionLabel?.let { label ->
             val action = if (payload.kind == TaskNotificationKind.Running) ACTION_PAUSE_TASK else ACTION_RESUME_TASK
             val pending = createServiceActionIntent(context, action, payload.conversationId)
@@ -73,6 +74,43 @@ internal object TaskNotificationFactory {
         }
         return builder.build()
     }
+
+    private fun applyProgressAndLiveUpdate(
+        context: Context,
+        builder: Notification.Builder,
+        payload: TaskNotificationPayload,
+        clampedProgress: Int,
+        ongoing: Boolean,
+    ) {
+        if (payload.kind == TaskNotificationKind.Completed) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            builder
+                .setStyle(
+                    Notification
+                        .ProgressStyle()
+                        .setStyledByProgress(true)
+                        .setProgress(clampedProgress),
+                ).setRequestPromotedOngoing(ongoing)
+            if (ongoing) {
+                builder.setShortCriticalText(shortChipText(context, payload, clampedProgress))
+            }
+        } else {
+            builder.setProgress(MAX_NOTIFICATION_PROGRESS, clampedProgress, false)
+        }
+    }
+
+    private fun shortChipText(
+        context: Context,
+        payload: TaskNotificationPayload,
+        clampedProgress: Int,
+    ): String =
+        when (payload.kind) {
+            TaskNotificationKind.Running -> "$clampedProgress%"
+            TaskNotificationKind.Waiting -> context.getString(R.string.task_chip_waiting)
+            TaskNotificationKind.Paused -> context.getString(R.string.task_chip_paused)
+            TaskNotificationKind.Failed -> context.getString(R.string.task_chip_failed)
+            TaskNotificationKind.Completed -> ""
+        }
 
     private fun createBuilder(
         context: Context,
