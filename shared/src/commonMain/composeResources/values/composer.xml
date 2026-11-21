@@ -33,4 +33,10 @@
     <string name="selection_empty">没有匹配的选项</string>
     <string name="expand_composer">展开编辑</string>
     <string name="collapse_composer">收起编辑</string>
+    <string name="composer_open_input">展开输入框</string>
+    <string name="composer_hide_input">收起输入框</string>
+    <string name="composer_draft_badge">草稿</string>
+    <string name="composer_status_thinking">正在思考…</string>
+    <string name="composer_status_streaming">正在输出回复…</string>
+    <string name="composer_status_running_tool">正在执行 %1$s</string>
 </resources>

@@ -61,6 +61,7 @@ import com.everfold.kotlin.ui.components.primaryShortcutModifier
 import com.everfold.kotlin.ui.localization.localizedString
 import everfold.shared.generated.resources.Res
 import everfold.shared.generated.resources.collapse_composer
+import everfold.shared.generated.resources.composer_hide_input
 import everfold.shared.generated.resources.expand_composer
 import everfold.shared.generated.resources.message_placeholder
 import everfold.shared.generated.resources.send_message
@@ -89,6 +90,7 @@ internal class ComposerActions(
     val onSend: () -> Unit,
     val onStop: () -> Unit,
     val onToggleExpanded: () -> Unit,
+    val onCollapseInput: (() -> Unit)? = null,
 )
 
 @Composable
@@ -202,7 +204,20 @@ private fun ComposerActionRow(
         if (shouldShowExpandToggle(draftText, expandedEditor)) {
             ComposerExpandToggleButton(expandedEditor, actions.onToggleExpanded)
         }
+        actions.onCollapseInput?.let { onHide ->
+            ComposerHideInputButton(onHide)
+        }
         ComposerSubmitButton(state, prefs.shortcut, prefs.canSend, actions)
+    }
+}
+
+@Composable
+private fun ComposerHideInputButton(onHide: () -> Unit) {
+    val label = localizedString(Res.string.composer_hide_input)
+    AppTooltip(label) {
+        IconButton(onClick = onHide) {
+            AppIcon(AppSymbol.ChevronDown, description = label)
+        }
     }
 }
 

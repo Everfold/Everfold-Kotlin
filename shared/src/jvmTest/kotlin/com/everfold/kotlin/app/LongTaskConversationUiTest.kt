@@ -5,7 +5,9 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -72,7 +74,7 @@ class LongTaskConversationUiTest(
                 fixture.scheduler.runCurrent()
             }
             waitForIdle()
-            onNodeWithText("device.vitals", substring = true).assertIsDisplayed()
+            onNode(hasText("device.vitals", substring = true) and hasAnyAncestor(hasScrollAction())).assertIsDisplayed()
             onNodeWithContentDescription("会话菜单").performClick()
             onNodeWithText("演示执行状态").performClick()
             onNodeWithText("模拟省电模式节流").assertIsDisplayed().performClick()

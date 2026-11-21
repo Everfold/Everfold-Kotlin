@@ -45,7 +45,10 @@ class ConversationComposerTest(
             assertTrue(sendBounds.right >= inputBounds.right - sendBounds.width, "Send stays at the right edge of the composer")
             runOnIdle { fixture.scheduler.advanceUntilIdle() }
             onNodeWithContentDescription("发送").assertIsEnabled().performClick()
+            onNodeWithContentDescription("展开输入框").assertIsDisplayed().performClick()
             onNodeWithContentDescription("选择模型").assertIsNotEnabled()
+            onNodeWithContentDescription("收起输入框").assertIsDisplayed().performClick()
+            onNodeWithContentDescription("展开输入框").assertIsDisplayed()
             runOnIdle {
                 val session = fixture.workspace.conversations.first { it.messages.any { message -> message.attachments.isNotEmpty() } }
                 assertEquals("/workspace/notes", session.workspace?.path)

@@ -37,6 +37,7 @@ enum class AppSymbol(
     More("M5,11 L5,13 M12,11 L12,13 M19,11 L19,13"),
     Spark("M12,3 L14.5,9.5 L21,12 L14.5,14.5 L12,21 L9.5,14.5 L3,12 L9.5,9.5 Z"),
     Trace("M4,6 L14,6 M8,12 L20,12 M5,18 L16,18"),
+    Edit("M4,20 L8.5,19 L19,8.5 L15.5,5 L5,15.5 Z M13.5,7 L17,10.5"),
 }
 
 private val vectors =

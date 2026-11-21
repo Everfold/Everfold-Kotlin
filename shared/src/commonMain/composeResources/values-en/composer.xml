@@ -33,4 +33,10 @@
     <string name="selection_empty">No matching options</string>
     <string name="expand_composer">Expand editor</string>
     <string name="collapse_composer">Collapse editor</string>
+    <string name="composer_open_input">Open input</string>
+    <string name="composer_hide_input">Collapse input</string>
+    <string name="composer_draft_badge">Draft</string>
+    <string name="composer_status_thinking">Thinking…</string>
+    <string name="composer_status_streaming">Streaming response…</string>
+    <string name="composer_status_running_tool">Running %1$s</string>
 </resources>

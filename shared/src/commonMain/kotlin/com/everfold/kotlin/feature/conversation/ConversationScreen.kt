@@ -115,11 +115,12 @@ fun ConversationScreen(
     composerTools: @Composable RowScope.() -> Unit = {},
     attachmentsContent: @Composable () -> Unit = {},
 ) {
-    // 按会话保留编辑与轨迹视图状态避免切换会话后串台
+    // 按会话保留编辑、轨迹与执行期间输入框展开状态避免切换会话后串台
     var expandedEditor by rememberSaveable(state.id) { mutableStateOf(false) }
     var showTrace by rememberSaveable(state.id) { mutableStateOf(false) }
     val inputFocus = remember { FocusRequester() }
-    ConversationFocusEffect(state.id, autoFocusInput && !showTrace, inputFocusRequest, inputFocus)
+    val composerState = rememberExecutionComposerState(state.id, state.isResponding, expandedEditor, showTrace, inputFocus)
+    ConversationFocusEffect(state.id, autoFocusInput && !showTrace && !composerState.collapsed, inputFocusRequest, inputFocus)
     NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), showTrace) { showTrace = false }
     NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), !showTrace && expandedEditor) { expandedEditor = false }
     if (showTrace) {
@@ -135,6 +136,7 @@ fun ConversationScreen(
             connectionName = connectionName,
             compactNavigation = compactNavigation,
             expandedEditor = expandedEditor,
+            composerState = composerState,
             inputFocus = inputFocus,
             prefs = ComposerPrefs(textSize, shortcut, sideMargins, canSend, collapsePrompts, processVisibility),
             sessionsVisible = sessionsVisible,
@@ -164,6 +166,7 @@ private fun ConversationChatContent(
     connectionName: String,
     compactNavigation: Boolean,
     expandedEditor: Boolean,
+    composerState: ExecutionComposerState,
     inputFocus: FocusRequester,
     prefs: ComposerPrefs,
     sessionsVisible: Boolean,
@@ -198,8 +201,10 @@ private fun ConversationChatContent(
                 onToggleEditor()
                 inputFocus.requestFocus()
             },
+            onCollapseInput = if (state.isResponding && !expandedEditor) composerState.hideInput else null,
         )
-    Column(modifier.fillMaxSize().closeOnEscape(expandedEditor, onCollapseEditor)) {
+    val escapeEnabled = expandedEditor || (state.isResponding && !composerState.collapsed)
+    Column(modifier.fillMaxSize().closeOnEscape(escapeEnabled) { if (expandedEditor) onCollapseEditor() else composerState.hideInput() }) {
         ConversationTopBar(
             state.title.resolve(),
             compactNavigation,
@@ -219,23 +224,24 @@ private fun ConversationChatContent(
                 prefs.canSend && state.workspace != null && state.model != null,
                 prefs,
                 { onDraftChange(it).also { inputFocus.requestFocus() } },
-                { if (desktopUi) inputFocus.requestFocus() },
+                { if (desktopUi && !composerState.collapsed) inputFocus.requestFocus() },
                 onRetry,
                 onSelectGateOption,
                 Modifier.weight(1f),
             )
         }
-        val composerModifier = if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth()
-        ConversationComposer(
-            state,
-            expandedEditor,
-            inputFocus,
-            prefs,
-            actions,
-            composerFeedback,
-            composerTools,
-            attachmentsContent,
-            composerModifier,
+        CollapsibleConversationComposer(
+            state = state,
+            composerCollapsed = composerState.collapsed,
+            expandedEditor = expandedEditor,
+            inputFocus = inputFocus,
+            prefs = prefs,
+            actions = actions,
+            onOpenInput = composerState.openInput,
+            composerFeedback = composerFeedback,
+            composerTools = composerTools,
+            attachmentsContent = attachmentsContent,
+            modifier = if (expandedEditor) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth(),
         )
     }
 }

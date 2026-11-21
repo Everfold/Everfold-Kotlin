@@ -51,7 +51,7 @@ class ConversationExperienceTest(
             val running = onNodeWithContentDescription("执行详情").fetchSemanticsNode().boundsInRoot
             val progress =
                 onNode(
-                    SemanticsMatcher.keyIsDefined(SemanticsProperties.ProgressBarRangeInfo),
+                    SemanticsMatcher.keyIsDefined(SemanticsProperties.ProgressBarRangeInfo) and hasAnyAncestor(hasScrollAction()),
                     useUnmergedTree = true,
                 ).fetchSemanticsNode().boundsInRoot
             val partialBody = onNodeWithText(partialReply).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
