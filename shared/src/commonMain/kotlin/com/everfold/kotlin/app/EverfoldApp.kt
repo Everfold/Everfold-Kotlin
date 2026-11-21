@@ -96,21 +96,7 @@ internal fun EverfoldApp(
     preferences: UserPreferencesState = remember { UserPreferencesState() },
 ) {
     val appState = rememberEverfoldAppState()
-    val pendingOpenId by platformLongTaskBridge.pendingOpenConversationId.collectAsState()
-    LaunchedEffect(pendingOpenId) {
-        val targetId = pendingOpenId ?: return@LaunchedEffect
-        if (workspace.conversations.any { it.id == targetId }) {
-            appState.destination = AppDestination.Sessions
-            appState.selectedId = targetId
-        }
-        platformLongTaskBridge.consumeOpenConversation(targetId)
-    }
-    val hasActiveLocalTask =
-        workspace.conversations.any {
-            it.connectionId == BUILT_IN_CONNECTION_ID &&
-                (it.runState == AgentRunState.Running || it.runState == AgentRunState.Waiting)
-        }
-    PlatformLongTaskPermissionEffect(hasActiveLocalTask)
+    PlatformBridgeEffects(workspace = workspace, appState = appState)
     val filePicker =
         filePickerProvider { result ->
             val target = appState.attachments.pendingTarget ?: return@filePickerProvider
@@ -137,6 +123,45 @@ internal fun EverfoldApp(
             }
         }
     }
+}
+
+@Composable
+private fun PlatformBridgeEffects(
+    workspace: Workspace,
+    appState: EverfoldAppState,
+) {
+    val pendingOpenId by platformLongTaskBridge.pendingOpenConversationId.collectAsState()
+    LaunchedEffect(pendingOpenId) {
+        val targetId = pendingOpenId ?: return@LaunchedEffect
+        if (workspace.conversations.any { it.id == targetId }) {
+            appState.destination = AppDestination.Sessions
+            appState.selectedId = targetId
+        }
+        platformLongTaskBridge.consumeOpenConversation(targetId)
+    }
+    val pendingShare by platformLongTaskBridge.pendingShareContent.collectAsState()
+    LaunchedEffect(pendingShare) {
+        val share = pendingShare ?: return@LaunchedEffect
+        appState.destination = AppDestination.Sessions
+        appState.selectedId = null
+        val sharedText = share.text.orEmpty().trim()
+        if (sharedText.isNotEmpty()) {
+            val currentDraft = workspace.newConversation.draft.trim()
+            val mergedDraft = if (currentDraft.isEmpty()) sharedText else "$currentDraft\n\n$sharedText"
+            workspace.updateNewConversationDraft(mergedDraft)
+        }
+        if (share.attachments.isNotEmpty()) {
+            workspace.conversationOptions.attach(workspace.newConversation.attachmentTarget, share.attachments)
+        }
+        appState.composerFocusRequest++
+        platformLongTaskBridge.consumeShareContent()
+    }
+    val hasActiveLocalTask =
+        workspace.conversations.any {
+            it.connectionId == BUILT_IN_CONNECTION_ID &&
+                (it.runState == AgentRunState.Running || it.runState == AgentRunState.Waiting)
+        }
+    PlatformLongTaskPermissionEffect(hasActiveLocalTask)
 }
 
 @Composable

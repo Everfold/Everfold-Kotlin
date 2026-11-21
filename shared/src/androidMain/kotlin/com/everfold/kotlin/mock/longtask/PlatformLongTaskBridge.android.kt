@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.mock.MockWorkspace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ private const val NOTIFICATION_THROTTLE_MS = 750L
 object AndroidLongTaskRuntime {
     private val commandFlow = MutableSharedFlow<DeviceTaskCommand>(extraBufferCapacity = 16)
     private val openConversationState = MutableStateFlow<String?>(null)
+    private val shareContentState = MutableStateFlow<IncomingShareContent?>(null)
     private val notificationState = MutableStateFlow<TaskNotificationPayload?>(null)
     private val aggregator = LongTaskNotificationAggregator()
     private val lastPublishElapsedByConv = mutableMapOf<String, Long>()
@@ -45,6 +47,7 @@ object AndroidLongTaskRuntime {
         object : PlatformLongTaskBridge {
             override val commands: SharedFlow<DeviceTaskCommand> = commandFlow.asSharedFlow()
             override val pendingOpenConversationId: StateFlow<String?> = openConversationState.asStateFlow()
+            override val pendingShareContent: StateFlow<IncomingShareContent?> = shareContentState.asStateFlow()
 
             override fun publish(payload: TaskNotificationPayload) {
                 val now = SystemClock.elapsedRealtime()
@@ -83,6 +86,10 @@ object AndroidLongTaskRuntime {
                 if (openConversationState.value == conversationId) {
                     openConversationState.value = null
                 }
+            }
+
+            override fun consumeShareContent() {
+                shareContentState.value = null
             }
         }
 
@@ -123,6 +130,14 @@ object AndroidLongTaskRuntime {
 
     fun requestOpenConversation(conversationId: String) {
         openConversationState.value = conversationId
+    }
+
+    fun deliverSharedContent(
+        text: String? = null,
+        attachments: List<AttachmentSource> = emptyList(),
+    ) {
+        if (text.isNullOrBlank() && attachments.isEmpty()) return
+        shareContentState.value = IncomingShareContent(text = text?.trim(), attachments = attachments)
     }
 
     private fun notifyHost(payload: TaskNotificationPayload?) {

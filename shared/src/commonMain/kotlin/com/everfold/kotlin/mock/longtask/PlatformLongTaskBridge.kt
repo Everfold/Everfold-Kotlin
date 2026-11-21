@@ -1,6 +1,7 @@
 package com.everfold.kotlin.mock.longtask
 
 import androidx.compose.runtime.Composable
+import com.everfold.kotlin.feature.conversation.AttachmentSource
 import com.everfold.kotlin.mock.MockWorkspace
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,15 +72,26 @@ sealed interface DeviceTaskCommand {
     data object TimeoutStopAll : DeviceTaskCommand
 }
 
+data class IncomingShareContent(
+    val text: String? = null,
+    val attachments: List<AttachmentSource> = emptyList(),
+)
+
+private val EmptyShareContentFlow: StateFlow<IncomingShareContent?> = MutableStateFlow(null)
+
 internal interface PlatformLongTaskBridge {
     val commands: SharedFlow<DeviceTaskCommand>
     val pendingOpenConversationId: StateFlow<String?>
+    val pendingShareContent: StateFlow<IncomingShareContent?>
+        get() = EmptyShareContentFlow
 
     fun publish(payload: TaskNotificationPayload)
 
     fun dismiss(conversationId: String)
 
     fun consumeOpenConversation(conversationId: String)
+
+    fun consumeShareContent() = Unit
 }
 
 internal object NoopLongTaskBridge : PlatformLongTaskBridge {

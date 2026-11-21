@@ -15,6 +15,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AndroidLongTaskRuntime.bindHost(applicationContext, EverfoldTaskService::sync)
         handleTaskNotificationIntent(intent)
+        if (savedInstanceState == null) {
+            handleIncomingShareIntent(intent)
+        }
 
         setContent {
             App()
@@ -25,11 +28,17 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleTaskNotificationIntent(intent)
+        handleIncomingShareIntent(intent)
     }
 
     private fun handleTaskNotificationIntent(intent: Intent?) {
         val conversationId = intent?.getStringExtra(EXTRA_CONVERSATION_ID) ?: return
         AndroidLongTaskRuntime.requestOpenConversation(conversationId)
+    }
+
+    private fun handleIncomingShareIntent(intent: Intent?) {
+        val parsed = parseIncomingShareIntent(this, intent) ?: return
+        AndroidLongTaskRuntime.deliverSharedContent(text = parsed.text, attachments = parsed.attachments)
     }
 }
 
