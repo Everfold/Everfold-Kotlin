@@ -18,7 +18,8 @@ internal const val ACTION_RESUME_TASK = "com.everfold.kotlin.action.RESUME_TASK"
 internal const val ONGOING_NOTIFICATION_ID = 4101
 internal const val RESULT_NOTIFICATION_ID = 4102
 
-private const val CHANNEL_ONGOING = "everfold_task_ongoing"
+private const val LEGACY_CHANNEL_ONGOING = "everfold_task_ongoing"
+private const val CHANNEL_ONGOING = "everfold_task_live"
 private const val CHANNEL_ATTENTION = "everfold_task_attention"
 private const val MAX_NOTIFICATION_PROGRESS = 100
 private const val OPEN_REQUEST_SALT = 1000
@@ -30,6 +31,7 @@ internal object TaskNotificationFactory {
         manager: NotificationManager,
     ) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_ONGOING)
         val ongoing =
             NotificationChannel(
                 CHANNEL_ONGOING,
@@ -88,6 +90,7 @@ internal object TaskNotificationFactory {
                 .setStyle(
                     Notification
                         .ProgressStyle()
+                        .addProgressSegment(Notification.ProgressStyle.Segment(MAX_NOTIFICATION_PROGRESS))
                         .setStyledByProgress(true)
                         .setProgress(clampedProgress),
                 ).setRequestPromotedOngoing(ongoing)
