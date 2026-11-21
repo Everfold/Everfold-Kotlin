@@ -6,9 +6,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.os.Build
+import androidx.annotation.RequiresApi
 import com.everfold.kotlin.mock.longtask.TaskNotificationKind
 import com.everfold.kotlin.mock.longtask.TaskNotificationPayload
+import com.everfold.kotlin.mock.longtask.TaskStageSegmentKind
 
 internal const val EXTRA_CONVERSATION_ID = "com.everfold.kotlin.extra.CONVERSATION_ID"
 internal const val ACTION_SYNC_TASK = "com.everfold.kotlin.action.SYNC_TASK"
@@ -17,6 +20,7 @@ internal const val ACTION_RESUME_TASK = "com.everfold.kotlin.action.RESUME_TASK"
 
 internal const val ONGOING_NOTIFICATION_ID = 4101
 internal const val RESULT_NOTIFICATION_ID = 4102
+private const val RESULT_ID_MASK = 0x7FFF
 
 private const val LEGACY_CHANNEL_ONGOING = "everfold_task_ongoing"
 private const val CHANNEL_ONGOING = "everfold_task_live"
@@ -24,6 +28,15 @@ private const val CHANNEL_ATTENTION = "everfold_task_attention"
 private const val MAX_NOTIFICATION_PROGRESS = 100
 private const val OPEN_REQUEST_SALT = 1000
 private const val ACTION_REQUEST_SALT = 2000
+
+private const val COLOR_LLM = 0xFF6750A4.toInt()
+private const val COLOR_TOOL = 0xFF00796B.toInt()
+private const val COLOR_GATE = 0xFFE65100.toInt()
+private const val COLOR_FAILED = 0xFFC62828.toInt()
+private const val COLOR_PAUSED = 0xFF546E7A.toInt()
+private const val COLOR_PENDING = 0xFFCFD8DC.toInt()
+
+internal fun resultNotificationIdFor(conversationId: String): Int = RESULT_NOTIFICATION_ID + (conversationId.hashCode() and RESULT_ID_MASK)
 
 internal object TaskNotificationFactory {
     fun ensureChannels(
@@ -61,6 +74,7 @@ internal object TaskNotificationFactory {
         val clampedProgress = payload.progressPercent.coerceIn(0, MAX_NOTIFICATION_PROGRESS)
         builder
             .setSmallIcon(R.drawable.ic_stat_task)
+            .setColor(resolveAccentColor(payload))
             .setContentTitle(payload.title)
             .setContentText(payload.body)
             .setContentIntent(createOpenConversationIntent(context, payload.conversationId))
@@ -68,6 +82,9 @@ internal object TaskNotificationFactory {
             .setOngoing(ongoing)
             .setAutoCancel(!ongoing)
             .setCategory(Notification.CATEGORY_PROGRESS)
+        payload.concurrentSummary?.takeIf { it.isNotBlank() }?.let { summary ->
+            builder.setSubText(summary)
+        }
         applyProgressAndLiveUpdate(context, builder, payload, clampedProgress, ongoing)
         payload.actionLabel?.let { label ->
             val action = if (payload.kind == TaskNotificationKind.Running) ACTION_PAUSE_TASK else ACTION_RESUME_TASK
@@ -87,20 +104,68 @@ internal object TaskNotificationFactory {
         if (payload.kind == TaskNotificationKind.Completed) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             builder
-                .setStyle(
-                    Notification
-                        .ProgressStyle()
-                        .addProgressSegment(Notification.ProgressStyle.Segment(MAX_NOTIFICATION_PROGRESS))
-                        .setStyledByProgress(true)
-                        .setProgress(clampedProgress),
-                ).setRequestPromotedOngoing(ongoing)
+                .setStyle(buildMultiSegmentProgressStyle(context, payload, clampedProgress))
+                .setRequestPromotedOngoing(ongoing)
             if (ongoing) {
-                builder.setShortCriticalText(shortChipText(context, payload, clampedProgress))
+                val chip =
+                    payload.shortChipLabel?.takeIf { it.isNotBlank() }
+                        ?: shortChipText(context, payload, clampedProgress)
+                builder.setShortCriticalText(chip)
             }
         } else {
             builder.setProgress(MAX_NOTIFICATION_PROGRESS, clampedProgress, false)
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+    private fun buildMultiSegmentProgressStyle(
+        context: Context,
+        payload: TaskNotificationPayload,
+        clampedProgress: Int,
+    ): Notification.ProgressStyle {
+        val style =
+            Notification
+                .ProgressStyle()
+                .setProgressTrackerIcon(Icon.createWithResource(context, R.drawable.ic_stat_task))
+                .setProgress(clampedProgress)
+        if (payload.stageSegments.isEmpty()) {
+            return style
+                .addProgressSegment(Notification.ProgressStyle.Segment(MAX_NOTIFICATION_PROGRESS))
+                .setStyledByProgress(true)
+        }
+        payload.stageSegments.forEach { segment ->
+            val color = if (segment.reached) resolveStageColor(segment.kind) else COLOR_PENDING
+            style.addProgressSegment(
+                Notification.ProgressStyle
+                    .Segment(segment.weight.coerceAtLeast(1))
+                    .setColor(color),
+            )
+        }
+        payload.gatePointPercent?.let { gatePercent ->
+            style.addProgressPoint(
+                Notification.ProgressStyle
+                    .Point(gatePercent.coerceIn(1, MAX_NOTIFICATION_PROGRESS - 1))
+                    .setColor(COLOR_GATE),
+            )
+        }
+        return style.setStyledByProgress(false)
+    }
+
+    private fun resolveAccentColor(payload: TaskNotificationPayload): Int =
+        when (payload.kind) {
+            TaskNotificationKind.Waiting -> COLOR_GATE
+            TaskNotificationKind.Failed -> COLOR_FAILED
+            TaskNotificationKind.Paused -> COLOR_PAUSED
+            TaskNotificationKind.Running, TaskNotificationKind.Completed -> resolveStageColor(payload.activeStageKind)
+        }
+
+    private fun resolveStageColor(kind: TaskStageSegmentKind): Int =
+        when (kind) {
+            TaskStageSegmentKind.Llm -> COLOR_LLM
+            TaskStageSegmentKind.Tool -> COLOR_TOOL
+            TaskStageSegmentKind.Gate -> COLOR_GATE
+            TaskStageSegmentKind.Pending -> COLOR_PENDING
+        }
 
     private fun shortChipText(
         context: Context,

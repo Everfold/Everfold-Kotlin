@@ -17,6 +17,7 @@ internal fun publishBridgeSnapshot(
         val kind = mapRunStateToNotificationKind(runState)
         val percent = record.progressPercent(runState)
         val toolName = record.activeToolName()
+        val segments = record.buildStageSegments(runState)
         bridge.publish(
             TaskNotificationPayload(
                 conversationId = conversationId,
@@ -25,10 +26,50 @@ internal fun publishBridgeSnapshot(
                 progressPercent = percent,
                 kind = kind,
                 actionLabel = resolveNotificationActionLabel(kind, english),
+                stageSegments = segments,
+                gatePointPercent = record.resolveGatePointPercent(segments),
+                activeStageKind = record.resolveActiveStageKind(),
             ),
         )
     }
 }
+
+private fun TaskRunRecord.buildStageSegments(runState: AgentRunState): List<TaskStageSegment> {
+    val stages = scenario.stages
+    if (stages.isEmpty()) return emptyList()
+    val baseWeight = PERCENT_HUNDRED / stages.size
+    val remainder = PERCENT_HUNDRED % stages.size
+    val allReached = runState == AgentRunState.Completed
+    return stages.mapIndexed { index, stage ->
+        val weight = if (index < remainder) baseWeight + 1 else baseWeight
+        val reached = allReached || index <= currentStageIndex
+        TaskStageSegment(
+            weight = weight,
+            kind = stage.toSegmentKind(),
+            reached = reached,
+        )
+    }
+}
+
+private fun TaskRunRecord.resolveGatePointPercent(segments: List<TaskStageSegment>): Int? {
+    val gateIndex = scenario.stages.indexOfFirst { it is StreamStageSpec.ApprovalStage }
+    if (gateIndex < 0) return null
+    val cumulative = segments.take(gateIndex).sumOf { it.weight }
+    return cumulative.coerceIn(1, PERCENT_HUNDRED - 1)
+}
+
+private fun TaskRunRecord.resolveActiveStageKind(): TaskStageSegmentKind =
+    scenario.stages
+        .getOrNull(currentStageIndex.coerceIn(0, (scenario.stages.size - 1).coerceAtLeast(0)))
+        ?.toSegmentKind()
+        ?: TaskStageSegmentKind.Llm
+
+private fun StreamStageSpec.toSegmentKind(): TaskStageSegmentKind =
+    when (this) {
+        is StreamStageSpec.ThinkStage, is StreamStageSpec.NarrationStage -> TaskStageSegmentKind.Llm
+        is StreamStageSpec.ToolStage -> TaskStageSegmentKind.Tool
+        is StreamStageSpec.ApprovalStage -> TaskStageSegmentKind.Gate
+    }
 
 private fun mapRunStateToNotificationKind(runState: AgentRunState): TaskNotificationKind =
     when (runState) {

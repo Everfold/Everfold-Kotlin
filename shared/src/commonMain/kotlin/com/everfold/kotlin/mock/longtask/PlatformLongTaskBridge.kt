@@ -15,6 +15,19 @@ enum class TaskNotificationKind {
     Completed,
 }
 
+enum class TaskStageSegmentKind {
+    Llm,
+    Tool,
+    Gate,
+    Pending,
+}
+
+data class TaskStageSegment(
+    val weight: Int,
+    val kind: TaskStageSegmentKind,
+    val reached: Boolean,
+)
+
 data class TaskNotificationPayload(
     val conversationId: String,
     val title: String,
@@ -22,6 +35,12 @@ data class TaskNotificationPayload(
     val progressPercent: Int,
     val kind: TaskNotificationKind,
     val actionLabel: String?,
+    val stageSegments: List<TaskStageSegment> = emptyList(),
+    val gatePointPercent: Int? = null,
+    val activeStageKind: TaskStageSegmentKind = TaskStageSegmentKind.Llm,
+    val concurrentActiveCount: Int = 1,
+    val concurrentSummary: String? = null,
+    val shortChipLabel: String? = null,
 )
 
 sealed interface DeviceTaskCommand {

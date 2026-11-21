@@ -66,7 +66,7 @@ class EverfoldTaskService : Service() {
         promoteToForeground(notification)
         if (payload.kind == TaskNotificationKind.Completed) {
             stopForeground(STOP_FOREGROUND_REMOVE)
-            manager.notify(RESULT_NOTIFICATION_ID, notification)
+            manager.notify(resultNotificationIdFor(payload.conversationId), notification)
             stopSelf()
         } else if (payload.kind != TaskNotificationKind.Running) {
             stopForeground(STOP_FOREGROUND_DETACH)
@@ -95,6 +95,13 @@ class EverfoldTaskService : Service() {
                 context.stopService(Intent(context, EverfoldTaskService::class.java))
                 return
             }
+            if (payload.kind == TaskNotificationKind.Completed) {
+                manager.notify(
+                    resultNotificationIdFor(payload.conversationId),
+                    TaskNotificationFactory.build(context, payload),
+                )
+                return
+            }
             val serviceIntent =
                 Intent(context, EverfoldTaskService::class.java).apply {
                     action = ACTION_SYNC_TASK
@@ -105,14 +112,7 @@ class EverfoldTaskService : Service() {
             } else {
                 // 非 Running 态若服务已在运行则通过服务降级前台状态，否则直接刷新普通通知避免后台拉起 FGS 异常
                 context.stopService(Intent(context, EverfoldTaskService::class.java))
-                val notificationId =
-                    if (payload.kind == TaskNotificationKind.Completed) {
-                        manager.cancel(ONGOING_NOTIFICATION_ID)
-                        RESULT_NOTIFICATION_ID
-                    } else {
-                        ONGOING_NOTIFICATION_ID
-                    }
-                manager.notify(notificationId, TaskNotificationFactory.build(context, payload))
+                manager.notify(ONGOING_NOTIFICATION_ID, TaskNotificationFactory.build(context, payload))
             }
         }
 

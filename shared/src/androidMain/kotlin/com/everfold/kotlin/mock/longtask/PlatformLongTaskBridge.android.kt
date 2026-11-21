@@ -33,10 +33,11 @@ object AndroidLongTaskRuntime {
     private val commandFlow = MutableSharedFlow<DeviceTaskCommand>(extraBufferCapacity = 16)
     private val openConversationState = MutableStateFlow<String?>(null)
     private val notificationState = MutableStateFlow<TaskNotificationPayload?>(null)
+    private val aggregator = LongTaskNotificationAggregator()
+    private val lastPublishElapsedByConv = mutableMapOf<String, Long>()
+    private val lastPublishedKeyByConv = mutableMapOf<String, String>()
     private var appContext: Context? = null
     private var hostSync: ((Context, TaskNotificationPayload?) -> Unit)? = null
-    private var lastPublishElapsedMs = 0L
-    private var lastPublishedKey: String? = null
 
     val currentNotification: StateFlow<TaskNotificationPayload?> = notificationState.asStateFlow()
 
@@ -47,24 +48,34 @@ object AndroidLongTaskRuntime {
 
             override fun publish(payload: TaskNotificationPayload) {
                 val now = SystemClock.elapsedRealtime()
-                val stateKey = "${payload.conversationId}:${payload.kind}:${payload.title}"
+                val convId = payload.conversationId
+                val stateKey = "$convId:${payload.kind}:${payload.activeStageKind}:${payload.title}"
+                val lastElapsed = lastPublishElapsedByConv[convId] ?: 0L
                 val shouldSkip =
                     payload.kind == TaskNotificationKind.Running &&
-                        stateKey == lastPublishedKey &&
-                        now - lastPublishElapsedMs < NOTIFICATION_THROTTLE_MS
-                if (!shouldSkip) {
-                    lastPublishElapsedMs = now
-                    lastPublishedKey = stateKey
-                    notificationState.value = payload
-                    notifyHost(payload)
+                        stateKey == lastPublishedKeyByConv[convId] &&
+                        now - lastElapsed < NOTIFICATION_THROTTLE_MS
+                if (shouldSkip) return
+
+                lastPublishElapsedByConv[convId] = now
+                lastPublishedKeyByConv[convId] = stateKey
+                val update = aggregator.onPublish(payload, isEnglishNotificationLocale())
+                notificationState.value = update.primaryOngoing
+                update.completedEvent?.let { completed ->
+                    lastPublishElapsedByConv.remove(completed.conversationId)
+                    lastPublishedKeyByConv.remove(completed.conversationId)
+                    notifyHost(completed)
                 }
+                notifyHost(update.primaryOngoing)
             }
 
             override fun dismiss(conversationId: String) {
-                if (notificationState.value?.conversationId == conversationId) {
-                    lastPublishedKey = null
-                    notificationState.value = null
-                    notifyHost(null)
+                lastPublishElapsedByConv.remove(conversationId)
+                lastPublishedKeyByConv.remove(conversationId)
+                val update = aggregator.onDismiss(conversationId, isEnglishNotificationLocale())
+                if (notificationState.value != update.primaryOngoing) {
+                    notificationState.value = update.primaryOngoing
+                    notifyHost(update.primaryOngoing)
                 }
             }
 
@@ -106,11 +117,10 @@ object AndroidLongTaskRuntime {
     }
 }
 
-private val ProcessWorkspaceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 private val ProcessWorkspaceInstance by lazy {
     MockWorkspace(
         enableLongTasks = true,
-        externalScope = ProcessWorkspaceScope,
+        externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         taskBridge = AndroidLongTaskRuntime.bridge,
     )
 }
