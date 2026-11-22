@@ -34,5 +34,5 @@ compose-rules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+versions = { id = "io.github.ben-manes.versions", version.ref = "versions" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
