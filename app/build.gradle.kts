@@ -37,6 +37,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     lint {
@@ -51,6 +52,16 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.designsystem)
+    implementation(projects.core.gateway)
+    implementation(projects.core.gatewayMock)
+    implementation(projects.core.model)
+    implementation(projects.core.ui)
+    implementation(projects.feature.models)
+    implementation(projects.feature.nodes)
+    implementation(projects.feature.onboarding)
+    implementation(projects.feature.sessions)
+    implementation(projects.feature.settings)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.a2ui.compose.runtime)
     implementation(libs.androidx.a2ui.compose.ui)
