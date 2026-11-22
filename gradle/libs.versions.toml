@@ -29,6 +29,10 @@ biometric = "1.1.0"
 timber = "5.0.1"
 konfetti = "2.2.0"
 profileinstaller = "1.4.1"
+a2ui = "1.0.0-alpha02"
+vico = "3.3.1"
+mcp = "0.16.0"
+ktor = "3.5.2"
 turbine = "1.2.1"
 robolectric = "4.18.1"
 roborazzi = "1.79.0"
@@ -87,6 +91,14 @@ androidx-biometric = { group = "androidx.biometric", name = "biometric", version
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 konfetti-compose = { group = "nl.dionsegijn", name = "konfetti-compose", version.ref = "konfetti" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-a2ui-model = { group = "androidx.a2ui", name = "a2ui-model", version.ref = "a2ui" }
+androidx-a2ui-engine = { group = "androidx.a2ui", name = "a2ui-engine", version.ref = "a2ui" }
+androidx-a2ui-compose-runtime = { group = "androidx.a2ui.compose", name = "compose-runtime", version.ref = "a2ui" }
+androidx-a2ui-compose-ui = { group = "androidx.a2ui.compose", name = "compose-ui", version.ref = "a2ui" }
+androidx-compose-material3-a2ui = { group = "androidx.compose.material3", name = "material3-a2ui", version.ref = "a2ui" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+mcp-kotlin-sdk-client = { group = "io.modelcontextprotocol", name = "kotlin-sdk-client", version.ref = "mcp" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
