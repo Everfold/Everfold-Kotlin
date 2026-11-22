@@ -1,12 +1,27 @@
 import com.diffplug.spotless.LineEnding
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import dev.detekt.gradle.Detekt
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
+    base
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.versions)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.detekt)
+}
+
+detekt {
+    source.setFrom("app/src")
+    config.setFrom(layout.projectDirectory.file("config/detekt/detekt.yml"))
+    buildUponDefaultConfig.set(true)
+    basePath.set(layout.projectDirectory)
+}
+
+tasks.withType<Detekt>().configureEach {
+    include("**/*.kt")
+    exclude("**/build/**")
 }
 
 tasks.named<DependencyUpdatesTask>("dependencyUpdates") {
@@ -62,6 +77,8 @@ spotless {
             "*.yaml",
             "gradle/**/*.properties",
             "gradle/**/*.toml",
+            "config/**/*.yml",
+            "config/**/*.yaml",
             ".github/**/*.yml",
             ".github/**/*.yaml",
             "**/keepRules/**/*.keep",
