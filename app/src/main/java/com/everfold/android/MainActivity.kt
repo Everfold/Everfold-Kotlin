@@ -16,8 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.everfold.android.ui.theme.EverfoldTheme
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 
 @PreviewScreenSizes
 @Composable
-fun EverfoldApp() {
+private fun EverfoldApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
     NavigationSuiteScaffold(
@@ -46,20 +46,20 @@ fun EverfoldApp() {
                     icon = {
                         Icon(
                             painterResource(it.icon),
-                            contentDescription = it.label
+                            contentDescription = it.label,
                         )
                     },
                     label = { Text(it.label) },
                     selected = it == currentDestination,
-                    onClick = { currentDestination = it }
+                    onClick = { currentDestination = it },
                 )
             }
-        }
+        },
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Greeting(
                 name = "Android",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
             )
         }
     }
@@ -75,16 +75,19 @@ enum class AppDestinations(
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(
+    name: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = "Hello $name!",
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+private fun GreetingPreview() {
     EverfoldTheme {
         Greeting("Android")
     }
