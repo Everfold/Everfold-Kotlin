@@ -1,3 +1,4 @@
+import com.diffplug.spotless.LineEnding
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
@@ -15,9 +16,11 @@ tasks.named<DependencyUpdatesTask>("dependencyUpdates") {
 }
 
 spotless {
+    lineEndings = LineEnding.UNIX
+
     kotlin {
-        target("app/src/**/*.kt")
-        targetExclude("**/build/**")
+        target("**/src/**/*.kt")
+        targetExclude("**/build/**", ".agents/**")
         ktlint(libs.versions.ktlint.get())
             .customRuleSets(
                 listOf(
@@ -30,9 +33,22 @@ spotless {
         endWithNewline()
     }
     kotlinGradle {
-        target("*.gradle.kts", "app/build.gradle.kts")
-        targetExclude("**/build/**")
+        target("**/*.gradle.kts")
+        targetExclude("**/build/**", ".gradle/**", ".agents/**")
         ktlint(libs.versions.ktlint.get())
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("xml") {
+        target("**/src/**/*.xml")
+        targetExclude("**/build/**", ".agents/**")
+        leadingTabsToSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("markdown") {
+        target("**/*.md")
+        targetExclude("**/build/**", ".agents/**", ".gradle/**", ".direnv/**")
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -48,8 +64,10 @@ spotless {
             "gradle/**/*.toml",
             ".github/**/*.yml",
             ".github/**/*.yaml",
+            "**/keepRules/**/*.keep",
+            "**/proguard-rules.pro",
         )
-        targetExclude("local.properties", "**/build/**")
+        targetExclude("local.properties", "**/build/**", ".agents/**")
         trimTrailingWhitespace()
         endWithNewline()
     }
