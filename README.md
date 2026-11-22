@@ -29,10 +29,13 @@ nix flake update
 # Unit Test
 ./gradlew :app:testDebugUnitTest
 
+# Lint
+./gradlew :app:lintDebug
+
 # Check
 ./gradlew check
 
-# Lint
+# Format Check
 ./gradlew spotlessCheck
 
 # Format
@@ -46,7 +49,7 @@ nix flake update
 
 ```bash
 # Create Android Emulator
-avdmanager create avd --name everfold --package 'system-images;android-37.0;google_apis;x86_64' --device pixel_10_pro
+avdmanager create avd --name everfold --package 'system-images;android-37.2;google_apis;x86_64' --device pixel_10_pro
 
 # Run in Android Emulator
 emulator -avd everfold -gpu host
