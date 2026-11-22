@@ -6,6 +6,8 @@ import dev.detekt.gradle.Detekt
 plugins {
     base
     alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.roborazzi) apply false
@@ -15,7 +17,12 @@ plugins {
 }
 
 detekt {
-    source.setFrom("app/src")
+    source.setFrom(
+        fileTree(layout.projectDirectory) {
+            include("app/src/**/*.kt", "core/*/src/**/*.kt", "feature/*/src/**/*.kt")
+            exclude("**/build/**")
+        },
+    )
     config.setFrom(layout.projectDirectory.file("config/detekt/detekt.yml"))
     buildUponDefaultConfig.set(true)
     basePath.set(layout.projectDirectory)
