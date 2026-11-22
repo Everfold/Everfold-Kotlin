@@ -28,3 +28,7 @@ rootProject.name = "Everfold"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":app")
+include(":core:model")
+include(":core:gateway")
+include(":core:gateway-mock")
+include(":core:testing")
