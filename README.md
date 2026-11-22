@@ -1,18 +1,8 @@
-# Everfold Kotlin
-
-## Usage
-
-### Nix
-
-```bash
-nix run github:Everfold/Everfold-Kotlin#everfold-kotlin
-```
+# Everfold Android
 
 ## Build
 
-### Development Environment
-
-#### Nix Develop
+### Nix Develop Shell
 
 ```bash
 # Nix Shell
@@ -25,63 +15,36 @@ direnv allow
 
 # Update
 nix flake update
-
-# Update nix/deps.json
-"$(nix build --no-link --print-out-paths .#everfold-kotlin.mitmCache.updateScript)"
 ```
 
-```fish
-# Fish
-set -l update_script (nix build --no-link --print-out-paths .#everfold-kotlin.mitmCache.updateScript)
-and "$update_script"
-```
-
-### Project
+### Program
 
 ```bash
-# Android Build
-./gradlew :androidApp:assembleDebug
+# Build Debug
+./gradlew :app:assembleDebug
 
-# Desktop Hot reload
-./gradlew :desktopApp:hotRun --auto
+# Build Release
+./gradlew :app:assembleRelease
 
-# Desktop
-./gradlew :desktopApp:run
+# Unit Test
+./gradlew :app:testDebugUnitTest
 
-# Check formatting
-./gradlew spotlessCheck
-
-# Formatting
-./gradlew spotlessApply
-
-# Verification
-./gradlew :check
-
-# Android tests
-./gradlew :shared:testAndroidHostTest
-
-# Desktop tests
-./gradlew :shared:jvmTest
-
-# iOS tests
-./gradlew :shared:iosSimulatorArm64Test
-
-# Check dependency and plugin updates
-./gradlew dependencyUpdates
-
-# Optional: enable Aliyun Maven mirrors
-./gradlew :check -PuseAliyunMirror=true
-# or: USE_ALIYUN_MIRROR=true ./gradlew :check
+# Check
+./gradlew check
 ```
 
-### Android Emulator
+### Android
 
 ```bash
 # Create Android Emulator
-avdmanager create avd --name everfold --package 'system-images;android-37.0;google_apis;x86_64' --device pixel_9_pro
+avdmanager create avd --name everfold --package 'system-images;android-37.0;google_apis;x86_64' --device pixel_10_pro
 
 # Run in Android Emulator
 emulator -avd everfold -gpu host
-android emulator list
-android run androidApp/build/outputs/apk/debug/androidApp-debug.apk
+
+# Install Debug APK to Device
+./gradlew :app:installDebug
+
+# Test on Device
+./gradlew :app:connectedDebugAndroidTest
 ```
