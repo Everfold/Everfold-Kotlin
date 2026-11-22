@@ -31,6 +31,15 @@ nix flake update
 
 # Check
 ./gradlew check
+
+# Lint
+./gradlew spotlessCheck
+
+# Format
+./gradlew spotlessApply
+
+# Update
+./gradlew dependencyUpdates
 ```
 
 ### Android
