@@ -27,6 +27,8 @@ glance = "1.2.0"
 browser = "1.10.0"
 biometric = "1.1.0"
 timber = "5.0.1"
+konfetti = "2.2.0"
+profileinstaller = "1.4.1"
 turbine = "1.2.1"
 robolectric = "4.18.1"
 roborazzi = "1.79.0"
@@ -83,6 +85,8 @@ androidx-glance-material3 = { group = "androidx.glance", name = "glance-material
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+konfetti-compose = { group = "nl.dionsegijn", name = "konfetti-compose", version.ref = "konfetti" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
