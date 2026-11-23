@@ -1,5 +1,12 @@
 package com.everfold.android.navigation
 
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -29,6 +36,11 @@ import com.everfold.feature.settings.screen.SessionSettingsScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
+private const val NAV_ENTER_DURATION_MS = 200
+private const val NAV_EXIT_DURATION_MS = 140
+private const val NAV_POP_DURATION_MS = 180
+private const val SLIDE_DIVISOR = 12
+
 @Composable
 internal fun EverfoldAppShell(
     modifier: Modifier = Modifier,
@@ -54,13 +66,11 @@ internal fun EverfoldAppShell(
     val isRootRoute = currentRoute.isRootDestination()
 
     fun openRoot(target: AppDestination) {
-        scope.launch {
-            drawerState.close()
-            if (currentRoute != target) {
-                backStack.clear()
-                backStack.add(target)
-            }
+        if (currentRoute != target) {
+            backStack.clear()
+            backStack.add(target)
         }
+        scope.launch { drawerState.close() }
     }
 
     ModalNavigationDrawer(
@@ -108,6 +118,9 @@ private fun AppNavDisplay(
     NavDisplay(
         backStack = backStack,
         onBack = popBack,
+        transitionSpec = { forwardTransition() },
+        popTransitionSpec = { popTransition() },
+        predictivePopTransitionSpec = { _ -> popTransition() },
         entryProvider =
             entryProvider {
                 entry<AppDestination.Session> { destination ->
@@ -141,3 +154,23 @@ private fun AppNavDisplay(
             },
     )
 }
+
+private fun forwardTransition(): ContentTransform =
+    (
+        fadeIn(tween(NAV_ENTER_DURATION_MS)) +
+            slideInHorizontally(tween(NAV_ENTER_DURATION_MS)) { it / SLIDE_DIVISOR }
+    ) togetherWith
+        (
+            fadeOut(tween(NAV_EXIT_DURATION_MS)) +
+                slideOutHorizontally(tween(NAV_EXIT_DURATION_MS)) { -it / SLIDE_DIVISOR }
+        )
+
+private fun popTransition(): ContentTransform =
+    (
+        fadeIn(tween(NAV_POP_DURATION_MS)) +
+            slideInHorizontally(tween(NAV_POP_DURATION_MS)) { -it / SLIDE_DIVISOR }
+    ) togetherWith
+        (
+            fadeOut(tween(NAV_POP_DURATION_MS)) +
+                slideOutHorizontally(tween(NAV_POP_DURATION_MS)) { it / SLIDE_DIVISOR }
+        )
