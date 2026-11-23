@@ -1,0 +1,28 @@
+<resources>
+    <string name="sessions_title">会话</string>
+    <string name="sessions_new_fab">新建智能体会话</string>
+    <string name="sessions_empty_title">还没有活跃的智能体会话</string>
+    <string name="sessions_empty_subtitle">点击右下角新建按钮，向 Authority 发起一个新的 Agent Loop。</string>
+    <string name="sessions_card_meta">Loop · %1$s · %2$s</string>
+
+    <string name="session_detail_back">返回</string>
+    <string name="session_detail_new_title">新会话</string>
+    <string name="session_detail_new_subtitle">准备向 Authority 发起新 Loop</string>
+    <string name="session_detail_new_action">新建会话</string>
+    <string name="session_detail_empty_new_title">新建智能体会话</string>
+    <string name="session_detail_empty_existing_title">开始一次新的 Agent Loop</string>
+    <string name="session_detail_empty_subtitle">输入任意指令，Authority 将自动调度最合适的节点执行动作。</string>
+    <string name="session_detail_host_label">Loop · %1$s</string>
+    <string name="session_detail_composer_hint">向智能体发送指令…</string>
+    <string name="session_detail_send">发送</string>
+    <string name="session_detail_stop">停止执行</string>
+    <string name="session_message_collapse">收起</string>
+    <string name="session_message_expand">展开全文</string>
+
+    <string name="loop_state_idle">待命</string>
+    <string name="loop_state_planning">规划中</string>
+    <string name="loop_state_executing">执行动作</string>
+    <string name="loop_state_awaiting_input">等待输入</string>
+    <string name="loop_state_completed">已完成</string>
+    <string name="loop_state_failed">异常</string>
+</resources>

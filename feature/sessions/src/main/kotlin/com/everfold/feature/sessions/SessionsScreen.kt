@@ -1,5 +1,6 @@
 package com.everfold.feature.sessions
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,17 +47,20 @@ fun SessionsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("会话") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.sessions_title)) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewSession) {
-                Icon(Icons.Rounded.Add, contentDescription = "新建智能体会话")
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = stringResource(R.string.sessions_new_fab),
+                )
             }
         },
     ) { innerPadding ->
         if (sessions.isEmpty()) {
             EverfoldEmptyState(
-                title = "还没有活跃的智能体会话",
-                subtitle = "点击右下角新建按钮，向 Authority 发起一个新的 Agent Loop。",
+                title = stringResource(R.string.sessions_empty_title),
+                subtitle = stringResource(R.string.sessions_empty_subtitle),
                 modifier = Modifier.padding(innerPadding),
             )
         } else {
@@ -97,7 +102,7 @@ private fun SessionSummaryCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                EverfoldStatusPill(text = summary.loopState.toLabel())
+                EverfoldStatusPill(text = stringResource(summary.loopState.labelRes()))
             }
             Text(
                 text = summary.lastMessagePreview,
@@ -107,7 +112,12 @@ private fun SessionSummaryCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "Loop · ${summary.loopHostNodeName} · ${summary.updatedAtLabel}",
+                text =
+                    stringResource(
+                        R.string.sessions_card_meta,
+                        summary.loopHostNodeName,
+                        summary.updatedAtLabel,
+                    ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -115,12 +125,13 @@ private fun SessionSummaryCard(
     }
 }
 
-internal fun LoopState.toLabel(): String =
+@StringRes
+internal fun LoopState.labelRes(): Int =
     when (this) {
-        LoopState.IDLE -> "待命"
-        LoopState.PLANNING -> "规划中"
-        LoopState.EXECUTING_ACTION -> "执行动作"
-        LoopState.AWAITING_INPUT -> "等待输入"
-        LoopState.COMPLETED -> "已完成"
-        LoopState.FAILED -> "异常"
+        LoopState.IDLE -> R.string.loop_state_idle
+        LoopState.PLANNING -> R.string.loop_state_planning
+        LoopState.EXECUTING_ACTION -> R.string.loop_state_executing
+        LoopState.AWAITING_INPUT -> R.string.loop_state_awaiting_input
+        LoopState.COMPLETED -> R.string.loop_state_completed
+        LoopState.FAILED -> R.string.loop_state_failed
     }

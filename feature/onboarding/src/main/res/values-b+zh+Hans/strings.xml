@@ -1,0 +1,12 @@
+<resources>
+    <string name="onboarding_subtitle">选择 Authority 连接方式，或先以纯本地模式体验智能体工作台。</string>
+    <string name="onboarding_address_label">节点地址</string>
+    <string name="onboarding_mode_remote_title">连接远程 Authority</string>
+    <string name="onboarding_mode_remote_subtitle">直连全局 Authority 节点，统一调度多节点 Loop 与动作</string>
+    <string name="onboarding_mode_relay_title">通过中转节点连接</string>
+    <string name="onboarding_mode_relay_subtitle">经由 Relay 转发接入内网或跨网络 Authority</string>
+    <string name="onboarding_mode_local_title">纯本地模式</string>
+    <string name="onboarding_mode_local_subtitle">暂不连接远程节点，使用本机模拟环境运行</string>
+    <string name="onboarding_cta_local">进入本地工作台</string>
+    <string name="onboarding_cta_connect">连接并进入</string>
+</resources>

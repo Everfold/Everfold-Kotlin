@@ -1,0 +1,15 @@
+<resources>
+    <string name="nodes_title">Nodes</string>
+    <string name="nodes_refresh">Refresh nodes</string>
+    <string name="nodes_topology_header">Visible Node Topology (%1$d)</string>
+    <string name="nodes_disconnected">Disconnected</string>
+    <string name="nodes_mode_remote">Remote Authority</string>
+    <string name="nodes_mode_relay">Relay Node</string>
+    <string name="nodes_mode_local">Local Only Mode</string>
+    <string name="nodes_local_subtitle">Running locally standalone (Mock)</string>
+    <string name="nodes_select_authority">Please select an Authority node</string>
+    <string name="nodes_switch">Switch</string>
+    <string name="node_status_online">Online</string>
+    <string name="node_status_degraded">Degraded</string>
+    <string name="node_status_offline">Offline</string>
+</resources>

@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -110,8 +111,15 @@ private fun SessionDetailBody(
     val detail = state.detail
     if (detail == null || detail.items.isEmpty()) {
         EverfoldEmptyState(
-            title = if (detail == null) "新建智能体会话" else "开始一次新的 Agent Loop",
-            subtitle = "输入任意指令，Authority 将自动调度最合适的节点执行动作。",
+            title =
+                stringResource(
+                    if (detail == null) {
+                        R.string.session_detail_empty_new_title
+                    } else {
+                        R.string.session_detail_empty_existing_title
+                    },
+                ),
+            subtitle = stringResource(R.string.session_detail_empty_subtitle),
             modifier = modifier,
         )
         return
@@ -151,22 +159,25 @@ private fun SessionDetailTopBar(
     TopAppBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(R.string.session_detail_back),
+                )
             }
         },
         title = {
             Column {
                 Text(
-                    text = detail?.summary?.title ?: "新会话",
+                    text = detail?.summary?.title ?: stringResource(R.string.session_detail_new_title),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium,
                 )
                 val subtitle =
                     if (detail != null) {
-                        "Loop · ${detail.summary.loopHostNodeName}"
+                        stringResource(R.string.session_detail_host_label, detail.summary.loopHostNodeName)
                     } else {
-                        defaultModelName.ifBlank { "准备向 Authority 发起新 Loop" }
+                        defaultModelName.ifBlank { stringResource(R.string.session_detail_new_subtitle) }
                     }
                 Text(
                     text = subtitle,
@@ -179,11 +190,11 @@ private fun SessionDetailTopBar(
         },
         actions = {
             if (detail != null) {
-                EverfoldStatusPill(text = detail.summary.loopState.toLabel())
+                EverfoldStatusPill(text = stringResource(detail.summary.loopState.labelRes()))
                 IconButton(onClick = onNewSession) {
                     Icon(
                         imageVector = Icons.Rounded.AddComment,
-                        contentDescription = "新建会话",
+                        contentDescription = stringResource(R.string.session_detail_new_action),
                     )
                 }
             }
@@ -246,7 +257,16 @@ private fun UserMessageBubble(
                         onClick = { expanded = !expanded },
                         modifier = Modifier.align(Alignment.End),
                     ) {
-                        Text(if (expanded) "收起" else "展开全文")
+                        Text(
+                            text =
+                                stringResource(
+                                    if (expanded) {
+                                        R.string.session_message_collapse
+                                    } else {
+                                        R.string.session_message_expand
+                                    },
+                                ),
+                        )
                     }
                 }
             }
@@ -284,7 +304,16 @@ private fun AssistantMessageCard(
                     onClick = { expanded = !expanded },
                     modifier = Modifier.align(Alignment.End),
                 ) {
-                    Text(if (expanded) "收起" else "展开全文")
+                    Text(
+                        text =
+                            stringResource(
+                                if (expanded) {
+                                    R.string.session_message_collapse
+                                } else {
+                                    R.string.session_message_expand
+                                },
+                            ),
+                    )
                 }
             }
         }
@@ -312,18 +341,24 @@ private fun SessionComposerBar(
             OutlinedTextField(
                 value = draft,
                 onValueChange = onDraftChange,
-                placeholder = { Text("向智能体发送指令…") },
+                placeholder = { Text(stringResource(R.string.session_detail_composer_hint)) },
                 shape = RoundedCornerShape(24.dp),
                 maxLines = 4,
                 modifier = Modifier.weight(1f),
             )
             if (isRunning) {
                 FilledIconButton(onClick = onCancel) {
-                    Icon(Icons.Rounded.StopCircle, contentDescription = "停止执行")
+                    Icon(
+                        imageVector = Icons.Rounded.StopCircle,
+                        contentDescription = stringResource(R.string.session_detail_stop),
+                    )
                 }
             } else {
                 FilledIconButton(onClick = onSend, enabled = draft.isNotBlank()) {
-                    Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = "发送")
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.Send,
+                        contentDescription = stringResource(R.string.session_detail_send),
+                    )
                 }
             }
         }

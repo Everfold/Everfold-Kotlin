@@ -1,0 +1,15 @@
+<resources>
+    <string name="nodes_title">节点管理</string>
+    <string name="nodes_refresh">刷新节点</string>
+    <string name="nodes_topology_header">可见节点拓扑 (%1$d)</string>
+    <string name="nodes_disconnected">未连接</string>
+    <string name="nodes_mode_remote">远程 Authority</string>
+    <string name="nodes_mode_relay">中转节点</string>
+    <string name="nodes_mode_local">纯本地模式</string>
+    <string name="nodes_local_subtitle">本机独立运行 (Mock)</string>
+    <string name="nodes_select_authority">请选择 Authority 节点</string>
+    <string name="nodes_switch">切换</string>
+    <string name="node_status_online">在线</string>
+    <string name="node_status_degraded">降级</string>
+    <string name="node_status_offline">离线</string>
+</resources>

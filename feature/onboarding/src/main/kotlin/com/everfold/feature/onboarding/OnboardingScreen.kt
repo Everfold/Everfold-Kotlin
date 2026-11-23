@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.model.ConnectionMode
@@ -60,26 +61,23 @@ fun OnboardingScreen(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "选择 Authority 连接方式，或先以纯本地模式体验智能体工作台。",
+                text = stringResource(R.string.onboarding_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
             OnboardingModeOptions(
                 selectedMode = state.selectedMode,
                 onSelectMode = viewModel::selectMode,
             )
-
             if (state.selectedMode != ConnectionMode.LOCAL_ONLY) {
                 OutlinedTextField(
                     value = state.address,
                     onValueChange = viewModel::updateAddress,
-                    label = { Text("节点地址") },
+                    label = { Text(stringResource(R.string.onboarding_address_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-
             state.errorMessage?.let { error ->
                 Text(
                     text = error,
@@ -87,7 +85,6 @@ fun OnboardingScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-
             Spacer(modifier = Modifier.height(8.dp))
             OnboardingConnectButton(
                 mode = state.selectedMode,
@@ -105,22 +102,22 @@ private fun OnboardingModeOptions(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ConnectionModeOption(
-            title = "连接远程 Authority",
-            subtitle = "直连全局 Authority 节点，统一调度多节点 Loop 与动作",
+            title = stringResource(R.string.onboarding_mode_remote_title),
+            subtitle = stringResource(R.string.onboarding_mode_remote_subtitle),
             icon = Icons.Rounded.Cloud,
             selected = selectedMode == ConnectionMode.REMOTE_AUTHORITY,
             onClick = { onSelectMode(ConnectionMode.REMOTE_AUTHORITY) },
         )
         ConnectionModeOption(
-            title = "通过中转节点连接",
-            subtitle = "经由 Relay 转发接入内网或跨网络 Authority",
+            title = stringResource(R.string.onboarding_mode_relay_title),
+            subtitle = stringResource(R.string.onboarding_mode_relay_subtitle),
             icon = Icons.Rounded.Hub,
             selected = selectedMode == ConnectionMode.RELAY,
             onClick = { onSelectMode(ConnectionMode.RELAY) },
         )
         ConnectionModeOption(
-            title = "纯本地模式",
-            subtitle = "暂不连接远程节点，使用本机模拟环境运行",
+            title = stringResource(R.string.onboarding_mode_local_title),
+            subtitle = stringResource(R.string.onboarding_mode_local_subtitle),
             icon = Icons.Rounded.Smartphone,
             selected = selectedMode == ConnectionMode.LOCAL_ONLY,
             onClick = { onSelectMode(ConnectionMode.LOCAL_ONLY) },
@@ -148,11 +145,13 @@ private fun OnboardingConnectButton(
         } else {
             Text(
                 text =
-                    if (mode == ConnectionMode.LOCAL_ONLY) {
-                        "进入本地工作台"
-                    } else {
-                        "连接并进入"
-                    },
+                    stringResource(
+                        if (mode == ConnectionMode.LOCAL_ONLY) {
+                            R.string.onboarding_cta_local
+                        } else {
+                            R.string.onboarding_cta_connect
+                        },
+                    ),
             )
         }
     }

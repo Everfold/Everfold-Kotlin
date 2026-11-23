@@ -1,5 +1,6 @@
 package com.everfold.feature.models
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldStatusPill
@@ -53,10 +55,10 @@ fun ModelsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("模型管理") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.models_title)) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Rounded.Add, contentDescription = "添加模型")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.models_add_fab))
             }
         },
     ) { innerPadding ->
@@ -121,7 +123,10 @@ private fun ModelCard(
                 }
                 if (canDelete) {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Rounded.DeleteOutline, contentDescription = "移除模型")
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = stringResource(R.string.models_remove),
+                        )
                     }
                 }
             }
@@ -131,13 +136,13 @@ private fun ModelCard(
             ) {
                 if (model.isDefault) {
                     EverfoldStatusPill(
-                        text = "默认",
+                        text = stringResource(R.string.models_default_badge),
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
                 model.capabilities.forEach { cap ->
-                    EverfoldStatusPill(text = cap.toLabel())
+                    EverfoldStatusPill(text = stringResource(cap.labelRes()))
                 }
             }
         }
@@ -155,25 +160,25 @@ private fun AddModelDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加自定义模型 (Mock)") },
+        title = { Text(stringResource(R.string.models_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("模型名称") },
+                    label = { Text(stringResource(R.string.models_dialog_name_label)) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = provider,
                     onValueChange = { provider = it },
-                    label = { Text("提供商") },
+                    label = { Text(stringResource(R.string.models_dialog_provider_label)) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = context,
                     onValueChange = { context = it },
-                    label = { Text("上下文窗口") },
+                    label = { Text(stringResource(R.string.models_dialog_context_label)) },
                     singleLine = true,
                 )
             }
@@ -183,21 +188,22 @@ private fun AddModelDialog(
                 onClick = { onConfirm(name, provider, context) },
                 enabled = name.isNotBlank(),
             ) {
-                Text("添加")
+                Text(stringResource(R.string.models_dialog_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.models_dialog_cancel))
             }
         },
     )
 }
 
-private fun ModelCapability.toLabel(): String =
+@StringRes
+private fun ModelCapability.labelRes(): Int =
     when (this) {
-        ModelCapability.REASONING -> "推理"
-        ModelCapability.TOOL_USE -> "工具调用"
-        ModelCapability.VISION -> "多模态"
-        ModelCapability.CODE_MODE -> "CodeMode"
+        ModelCapability.REASONING -> R.string.model_cap_reasoning
+        ModelCapability.TOOL_USE -> R.string.model_cap_tool_use
+        ModelCapability.VISION -> R.string.model_cap_vision
+        ModelCapability.CODE_MODE -> R.string.model_cap_code_mode
     }

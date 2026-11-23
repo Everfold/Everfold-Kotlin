@@ -1,0 +1,15 @@
+<resources>
+    <string name="nodes_title">節點管理</string>
+    <string name="nodes_refresh">重新整理節點</string>
+    <string name="nodes_topology_header">可見節點拓撲 (%1$d)</string>
+    <string name="nodes_disconnected">未連線</string>
+    <string name="nodes_mode_remote">遠端 Authority</string>
+    <string name="nodes_mode_relay">中轉節點</string>
+    <string name="nodes_mode_local">純本機模式</string>
+    <string name="nodes_local_subtitle">本機獨立執行 (Mock)</string>
+    <string name="nodes_select_authority">請選擇 Authority 節點</string>
+    <string name="nodes_switch">切換</string>
+    <string name="node_status_online">線上</string>
+    <string name="node_status_degraded">降級</string>
+    <string name="node_status_offline">離線</string>
+</resources>

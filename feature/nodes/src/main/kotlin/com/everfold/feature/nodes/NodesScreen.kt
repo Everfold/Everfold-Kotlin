@@ -1,5 +1,6 @@
 package com.everfold.feature.nodes
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -27,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.designsystem.component.EverfoldStatusPill
+import com.everfold.core.model.ConnectionMode
 import com.everfold.core.model.ConnectionState
 import com.everfold.core.model.NodeCapability
 import com.everfold.core.model.NodeDescriptor
@@ -50,10 +53,13 @@ fun NodesScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("节点管理") },
+                title = { Text(stringResource(R.string.nodes_title)) },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Rounded.Refresh, contentDescription = "刷新节点")
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = stringResource(R.string.nodes_refresh),
+                        )
                     }
                 },
             )
@@ -71,7 +77,9 @@ fun NodesScreen(
                 )
             }
             item {
-                EverfoldSectionHeader(title = "可见节点拓扑 (${state.nodes.size})")
+                EverfoldSectionHeader(
+                    title = stringResource(R.string.nodes_topology_header, state.nodes.size),
+                )
             }
             items(state.nodes, key = { it.id }) { node ->
                 NodeCard(node = node)
@@ -103,19 +111,23 @@ private fun ConnectionSummaryCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = connected?.endpoint?.label ?: "未连接",
+                    text =
+                        stringResource(
+                            connected?.endpoint?.mode?.labelRes() ?: R.string.nodes_disconnected,
+                        ),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
                     text =
-                        connected?.endpoint?.address?.ifBlank { "本机独立运行 (Mock)" }
-                            ?: "请选择 Authority 节点",
+                        connected?.endpoint?.address?.ifBlank {
+                            stringResource(R.string.nodes_local_subtitle)
+                        } ?: stringResource(R.string.nodes_select_authority),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             OutlinedButton(onClick = onDisconnect) {
-                Text("切换")
+                Text(stringResource(R.string.nodes_switch))
             }
         }
     }
@@ -143,7 +155,7 @@ private fun NodeCard(node: NodeDescriptor) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                EverfoldStatusPill(text = node.status.toLabel())
+                EverfoldStatusPill(text = stringResource(node.status.labelRes()))
             }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -168,11 +180,20 @@ private fun NodeCard(node: NodeDescriptor) {
     }
 }
 
-private fun NodeStatus.toLabel(): String =
+@StringRes
+private fun ConnectionMode.labelRes(): Int =
     when (this) {
-        NodeStatus.ONLINE -> "在线"
-        NodeStatus.DEGRADED -> "降级"
-        NodeStatus.OFFLINE -> "离线"
+        ConnectionMode.REMOTE_AUTHORITY -> R.string.nodes_mode_remote
+        ConnectionMode.RELAY -> R.string.nodes_mode_relay
+        ConnectionMode.LOCAL_ONLY -> R.string.nodes_mode_local
+    }
+
+@StringRes
+private fun NodeStatus.labelRes(): Int =
+    when (this) {
+        NodeStatus.ONLINE -> R.string.node_status_online
+        NodeStatus.DEGRADED -> R.string.node_status_degraded
+        NodeStatus.OFFLINE -> R.string.node_status_offline
     }
 
 private fun NodeRole.toLabel(): String =
