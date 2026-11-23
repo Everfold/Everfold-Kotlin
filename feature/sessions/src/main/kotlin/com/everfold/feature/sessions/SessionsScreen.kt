@@ -36,53 +36,39 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionsScreen(
+    onOpenSession: (String) -> Unit,
+    onNewSession: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SessionsViewModel = koinViewModel(),
+    viewModel: SessionsListViewModel = koinViewModel(),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val detail = state.activeDetail
+    val sessions by viewModel.sessions.collectAsStateWithLifecycle()
 
-    if (detail != null) {
-        SessionDetailPane(
-            detail = detail,
-            draft = state.draft,
-            chatTextSize = state.chatTextSize,
-            autoCollapseLongMessages = state.autoCollapseLongMessages,
-            showNodeBadgesInline = state.showNodeBadgesInline,
-            onBack = viewModel::closeSession,
-            onDraftChange = viewModel::updateDraft,
-            onSend = viewModel::sendDraft,
-            onCancel = viewModel::cancelActiveLoop,
-            modifier = modifier,
-        )
-    } else {
-        Scaffold(
-            modifier = modifier.fillMaxSize(),
-            topBar = { TopAppBar(title = { Text("会话") }) },
-            floatingActionButton = {
-                FloatingActionButton(onClick = viewModel::createAndOpenSession) {
-                    Icon(Icons.Rounded.Add, contentDescription = "新建智能体会话")
-                }
-            },
-        ) { innerPadding ->
-            if (state.sessions.isEmpty()) {
-                EverfoldEmptyState(
-                    title = "还没有活跃的智能体会话",
-                    subtitle = "点击右下角新建按钮，向 Authority 发起一个新的 Agent Loop。",
-                    modifier = Modifier.padding(innerPadding),
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(state.sessions, key = { it.id }) { summary ->
-                        SessionSummaryCard(
-                            summary = summary,
-                            onClick = { viewModel.openSession(summary.id) },
-                        )
-                    }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { TopAppBar(title = { Text("会话") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNewSession) {
+                Icon(Icons.Rounded.Add, contentDescription = "新建智能体会话")
+            }
+        },
+    ) { innerPadding ->
+        if (sessions.isEmpty()) {
+            EverfoldEmptyState(
+                title = "还没有活跃的智能体会话",
+                subtitle = "点击右下角新建按钮，向 Authority 发起一个新的 Agent Loop。",
+                modifier = Modifier.padding(innerPadding),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(sessions, key = { it.id }) { summary ->
+                    SessionSummaryCard(
+                        summary = summary,
+                        onClick = { onOpenSession(summary.id) },
+                    )
                 }
             }
         }

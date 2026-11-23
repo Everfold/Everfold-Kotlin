@@ -3,12 +3,10 @@ package com.everfold.feature.sessions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.everfold.core.gateway.AppSettingsStore
+import com.everfold.core.gateway.ModelGateway
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.model.AgentSessionDetail
-import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.ChatTextSize
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,9 +17,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class SessionsUiState(
-    val sessions: ImmutableList<AgentSessionSummary> = persistentListOf(),
-    val activeDetail: AgentSessionDetail? = null,
+data class SessionDetailUiState(
+    val sessionId: String? = null,
+    val detail: AgentSessionDetail? = null,
+    val defaultModelName: String = "",
     val draft: String = "",
     val chatTextSize: ChatTextSize = ChatTextSize.MEDIUM,
     val autoCollapseLongMessages: Boolean = true,
@@ -29,28 +28,32 @@ data class SessionsUiState(
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SessionsViewModel(
+class SessionDetailViewModel(
     private val sessionGateway: SessionGateway,
+    modelGateway: ModelGateway,
     settingsStore: AppSettingsStore,
 ) : ViewModel() {
-    private val selectedSessionId = MutableStateFlow<String?>(null)
+    private val currentSessionId = MutableStateFlow<String?>(null)
     private val draft = MutableStateFlow("")
 
     private val activeDetail =
-        selectedSessionId.flatMapLatest { id ->
+        currentSessionId.flatMapLatest { id ->
             if (id == null) flowOf(null) else sessionGateway.observeSession(id)
         }
 
-    val uiState: StateFlow<SessionsUiState> =
+    val uiState: StateFlow<SessionDetailUiState> =
         combine(
-            sessionGateway.sessions,
+            currentSessionId,
             activeDetail,
+            modelGateway.models,
             draft,
             settingsStore.preferences,
-        ) { sessions, detail, draftText, prefs ->
-            SessionsUiState(
-                sessions = sessions,
-                activeDetail = detail,
+        ) { sessionId, detail, models, draftText, prefs ->
+            val defaultModel = models.firstOrNull { it.isDefault } ?: models.firstOrNull()
+            SessionDetailUiState(
+                sessionId = sessionId,
+                detail = detail,
+                defaultModelName = defaultModel?.displayName.orEmpty(),
                 draft = draftText,
                 chatTextSize = prefs.chatTextSize,
                 autoCollapseLongMessages = prefs.autoCollapseLongMessages,
@@ -59,21 +62,15 @@ class SessionsViewModel(
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-            initialValue = SessionsUiState(),
+            initialValue = SessionDetailUiState(),
         )
 
-    fun openSession(sessionId: String) {
-        selectedSessionId.value = sessionId
-    }
-
-    fun closeSession() {
-        selectedSessionId.value = null
-    }
-
-    fun createAndOpenSession() {
-        viewModelScope.launch {
-            val id = sessionGateway.createSession()
-            selectedSessionId.value = id
+    fun bindSession(sessionId: String?) {
+        if (currentSessionId.value != sessionId) {
+            currentSessionId.value = sessionId
+            if (sessionId == null) {
+                draft.value = ""
+            }
         }
     }
 
@@ -81,18 +78,28 @@ class SessionsViewModel(
         draft.value = value
     }
 
-    fun sendDraft() {
-        val sessionId = selectedSessionId.value ?: return
+    fun sendDraft(onSessionCreate: (String) -> Unit) {
         val text = draft.value.trim()
         if (text.isEmpty()) return
         draft.value = ""
+
         viewModelScope.launch {
-            sessionGateway.sendMessage(sessionId = sessionId, content = text)
+            val existingId = currentSessionId.value
+            val targetId =
+                if (existingId != null) {
+                    existingId
+                } else {
+                    val createdId = sessionGateway.createSession()
+                    currentSessionId.value = createdId
+                    onSessionCreate(createdId)
+                    createdId
+                }
+            sessionGateway.sendMessage(sessionId = targetId, content = text)
         }
     }
 
     fun cancelActiveLoop() {
-        val sessionId = selectedSessionId.value ?: return
+        val sessionId = currentSessionId.value ?: return
         viewModelScope.launch {
             sessionGateway.cancelLoop(sessionId)
         }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.AddComment
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -30,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,75 +43,98 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldEmptyState
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AgentSessionDetail
-import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.ObservedItem
 import com.everfold.core.ui.ActionTraceGroupCard
 import com.everfold.core.ui.MarkdownMessageContent
+import org.koin.androidx.compose.koinViewModel
 
 private const val LONG_MESSAGE_CHAR_LIMIT = 240
 private const val COLLAPSED_PREVIEW_CHARS = 160
 
 @Composable
-internal fun SessionDetailPane(
-    detail: AgentSessionDetail,
-    draft: String,
-    chatTextSize: ChatTextSize,
-    autoCollapseLongMessages: Boolean,
-    showNodeBadgesInline: Boolean,
+fun SessionDetailScreen(
+    sessionId: String?,
     onBack: () -> Unit,
-    onDraftChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onCancel: () -> Unit,
+    onSessionCreate: (String) -> Unit,
+    onNewSession: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: SessionDetailViewModel = koinViewModel(),
 ) {
+    LaunchedEffect(sessionId) {
+        viewModel.bindSession(sessionId)
+    }
+
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val detail = state.detail
     val isRunning =
-        detail.summary.loopState == LoopState.PLANNING ||
-            detail.summary.loopState == LoopState.EXECUTING_ACTION
+        detail?.summary?.loopState == LoopState.PLANNING ||
+            detail?.summary?.loopState == LoopState.EXECUTING_ACTION
 
     Scaffold(
         modifier = modifier.fillMaxSize().imePadding(),
-        topBar = { SessionDetailTopBar(detail = detail, onBack = onBack) },
+        topBar = {
+            SessionDetailTopBar(
+                detail = detail,
+                defaultModelName = state.defaultModelName,
+                onBack = onBack,
+                onNewSession = onNewSession,
+            )
+        },
         bottomBar = {
             SessionComposerBar(
-                draft = draft,
+                draft = state.draft,
                 isRunning = isRunning,
-                onDraftChange = onDraftChange,
-                onSend = onSend,
-                onCancel = onCancel,
+                onDraftChange = viewModel::updateDraft,
+                onSend = { viewModel.sendDraft(onSessionCreate) },
+                onCancel = viewModel::cancelActiveLoop,
             )
         },
     ) { innerPadding ->
-        if (detail.items.isEmpty()) {
-            EverfoldEmptyState(
-                title = "开始一次新的 Agent Loop",
-                subtitle = "输入任意指令，Authority 将自动调度最合适的节点执行动作。",
-                modifier = Modifier.padding(innerPadding),
-            )
-        } else {
-            val currentDensity = LocalDensity.current
-            val scaledDensity =
-                Density(
-                    density = currentDensity.density,
-                    fontScale = currentDensity.fontScale * chatTextSize.scale,
+        SessionDetailBody(
+            state = state,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        )
+    }
+}
+
+@Composable
+private fun SessionDetailBody(
+    state: SessionDetailUiState,
+    modifier: Modifier = Modifier,
+) {
+    val detail = state.detail
+    if (detail == null || detail.items.isEmpty()) {
+        EverfoldEmptyState(
+            title = if (detail == null) "新建智能体会话" else "开始一次新的 Agent Loop",
+            subtitle = "输入任意指令，Authority 将自动调度最合适的节点执行动作。",
+            modifier = modifier,
+        )
+        return
+    }
+
+    val currentDensity = LocalDensity.current
+    val scaledDensity =
+        Density(
+            density = currentDensity.density,
+            fontScale = currentDensity.fontScale * state.chatTextSize.scale,
+        )
+    CompositionLocalProvider(LocalDensity provides scaledDensity) {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(detail.items, key = { it.id }) { item ->
+                ObservedItemRow(
+                    item = item,
+                    autoCollapseLongMessages = state.autoCollapseLongMessages,
+                    showNodeBadgesInline = state.showNodeBadgesInline,
                 )
-            CompositionLocalProvider(LocalDensity provides scaledDensity) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(detail.items, key = { it.id }) { item ->
-                        ObservedItemRow(
-                            item = item,
-                            autoCollapseLongMessages = autoCollapseLongMessages,
-                            showNodeBadgesInline = showNodeBadgesInline,
-                        )
-                    }
-                }
             }
         }
     }
@@ -117,8 +143,10 @@ internal fun SessionDetailPane(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SessionDetailTopBar(
-    detail: AgentSessionDetail,
+    detail: AgentSessionDetail?,
+    defaultModelName: String,
     onBack: () -> Unit,
+    onNewSession: () -> Unit,
 ) {
     TopAppBar(
         navigationIcon = {
@@ -129,23 +157,36 @@ private fun SessionDetailTopBar(
         title = {
             Column {
                 Text(
-                    text = detail.summary.title,
+                    text = detail?.summary?.title ?: "新会话",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium,
                 )
+                val subtitle =
+                    if (detail != null) {
+                        "Loop · ${detail.summary.loopHostNodeName}"
+                    } else {
+                        defaultModelName.ifBlank { "准备向 Authority 发起新 Loop" }
+                    }
                 Text(
-                    text = "Loop · ${detail.summary.loopHostNodeName}",
+                    text = subtitle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
         actions = {
-            EverfoldStatusPill(
-                text = detail.summary.loopState.toLabel(),
-                modifier = Modifier.padding(end = 12.dp),
-            )
+            if (detail != null) {
+                EverfoldStatusPill(text = detail.summary.loopState.toLabel())
+                IconButton(onClick = onNewSession) {
+                    Icon(
+                        imageVector = Icons.Rounded.AddComment,
+                        contentDescription = "新建会话",
+                    )
+                }
+            }
         },
     )
 }
@@ -260,7 +301,11 @@ private fun SessionComposerBar(
 ) {
     Surface(tonalElevation = 2.dp) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
