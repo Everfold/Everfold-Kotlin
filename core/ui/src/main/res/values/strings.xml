@@ -1,0 +1,4 @@
+<resources>
+    <string name="action_group_running">Coordinating %1$d actions…</string>
+    <string name="action_group_completed">Completed %1$d actions</string>
+</resources>

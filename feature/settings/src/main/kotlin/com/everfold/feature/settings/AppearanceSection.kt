@@ -1,5 +1,6 @@
 package com.everfold.feature.settings
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.theme.parseHexColorOrNull
 import com.everfold.core.designsystem.theme.toColor
@@ -50,24 +52,30 @@ internal fun AppearanceCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("浅色 / 暗色模式", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.appearance_theme_mode_label),
+                style = MaterialTheme.typography.titleSmall,
+            )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { mode ->
                     FilterChip(
                         selected = prefs.themeMode == mode,
                         onClick = { onThemeModeChange(mode) },
-                        label = { Text(mode.toLabel()) },
+                        label = { Text(stringResource(mode.labelRes())) },
                     )
                 }
             }
 
-            Text("主题色来源", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.appearance_theme_color_label),
+                style = MaterialTheme.typography.titleSmall,
+            )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeColorMode.entries.forEach { mode ->
                     FilterChip(
                         selected = prefs.themeColorMode == mode,
                         onClick = { onThemeColorModeChange(mode) },
-                        label = { Text(mode.toLabel()) },
+                        label = { Text(stringResource(mode.labelRes())) },
                     )
                 }
             }
@@ -75,7 +83,7 @@ internal fun AppearanceCard(
             when (prefs.themeColorMode) {
                 ThemeColorMode.SYSTEM_DYNAMIC -> {
                     Text(
-                        text = "Android 12+ 自动跟随系统壁纸动态取色，低版本回退至推荐主题色。",
+                        text = stringResource(R.string.appearance_dynamic_color_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -136,7 +144,7 @@ private fun PresetColorSwatches(
                             ),
                 )
                 Text(
-                    text = preset.displayName,
+                    text = stringResource(preset.labelRes()),
                     style = MaterialTheme.typography.labelSmall,
                     color =
                         if (isSelected) {
@@ -177,7 +185,7 @@ private fun CustomColorPicker(
             OutlinedTextField(
                 value = hex,
                 onValueChange = onHexChange,
-                label = { Text("自定义 Hex (#RRGGBB)") },
+                label = { Text(stringResource(R.string.appearance_custom_hex_label)) },
                 singleLine = true,
                 isError = parseHexColorOrNull(hex) == null,
                 modifier = Modifier.weight(1f),
@@ -221,16 +229,28 @@ private fun formatHex(
     blue: Int,
 ): String = String.format(Locale.US, "#%02X%02X%02X", red, green, blue)
 
-private fun ThemeMode.toLabel(): String =
+@StringRes
+private fun ThemeMode.labelRes(): Int =
     when (this) {
-        ThemeMode.SYSTEM -> "跟随系统"
-        ThemeMode.LIGHT -> "浅色"
-        ThemeMode.DARK -> "暗色"
+        ThemeMode.SYSTEM -> R.string.theme_mode_system
+        ThemeMode.LIGHT -> R.string.theme_mode_light
+        ThemeMode.DARK -> R.string.theme_mode_dark
     }
 
-private fun ThemeColorMode.toLabel(): String =
+@StringRes
+private fun ThemeColorMode.labelRes(): Int =
     when (this) {
-        ThemeColorMode.SYSTEM_DYNAMIC -> "跟随系统"
-        ThemeColorMode.PRESET -> "推荐主题色"
-        ThemeColorMode.CUSTOM -> "自定义主题色"
+        ThemeColorMode.SYSTEM_DYNAMIC -> R.string.theme_color_system_dynamic
+        ThemeColorMode.PRESET -> R.string.theme_color_preset
+        ThemeColorMode.CUSTOM -> R.string.theme_color_custom
+    }
+
+@StringRes
+private fun SeedColorPreset.labelRes(): Int =
+    when (this) {
+        SeedColorPreset.INDIGO -> R.string.seed_indigo
+        SeedColorPreset.TEAL -> R.string.seed_teal
+        SeedColorPreset.TERRACOTTA -> R.string.seed_terracotta
+        SeedColorPreset.FOREST -> R.string.seed_forest
+        SeedColorPreset.PLUM -> R.string.seed_plum
     }

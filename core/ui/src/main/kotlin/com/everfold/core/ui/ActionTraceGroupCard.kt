@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.ActionKind
@@ -110,7 +111,12 @@ private fun ActionGroupHeader(
                 )
             }
             Text(
-                text = if (isRunning) "正在协调执行 $actionCount 个动作…" else "已完成 $actionCount 个动作",
+                text =
+                    if (isRunning) {
+                        stringResource(R.string.action_group_running, actionCount)
+                    } else {
+                        stringResource(R.string.action_group_completed, actionCount)
+                    },
                 style = MaterialTheme.typography.labelLarge,
             )
         }

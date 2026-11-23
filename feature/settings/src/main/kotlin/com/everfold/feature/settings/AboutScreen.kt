@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AppInfo
@@ -51,10 +52,13 @@ internal fun AboutScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.settings_back),
+                        )
                     }
                 },
-                title = { Text("关于 Everfold") },
+                title = { Text(stringResource(R.string.settings_about_title)) },
             )
         },
     ) { innerPadding ->
@@ -96,7 +100,7 @@ private fun AboutHeroCard(versionName: String) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Text(
-                text = "跨节点 AI 智能体控制与可观测性终端",
+                text = stringResource(R.string.about_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
@@ -115,13 +119,18 @@ private fun AboutLinksCard(
         Column(modifier = Modifier.fillMaxWidth()) {
             AboutInfoRow(
                 icon = Icons.Rounded.Info,
-                title = "软件版本",
-                subtitle = "v${appInfo.versionName} (Build ${appInfo.versionCode})",
+                title = stringResource(R.string.about_version_label),
+                subtitle =
+                    stringResource(
+                        R.string.about_version_value,
+                        appInfo.versionName,
+                        appInfo.versionCode,
+                    ),
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             AboutInfoRow(
                 icon = Icons.Rounded.Link,
-                title = "GitHub 仓库",
+                title = stringResource(R.string.about_repo_label),
                 subtitle = appInfo.repositoryUrl,
                 trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
                 onClick = onOpenRepo,
@@ -129,8 +138,8 @@ private fun AboutLinksCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             AboutInfoRow(
                 icon = Icons.Rounded.Gavel,
-                title = "开源许可证",
-                subtitle = "${appInfo.licenseName} License",
+                title = stringResource(R.string.about_license_label),
+                subtitle = stringResource(R.string.about_license_value, appInfo.licenseName),
                 trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
                 onClick = onOpenLicense,
             )

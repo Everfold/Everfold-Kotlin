@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
@@ -88,7 +89,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("设置") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) },
     ) { innerPadding ->
         SettingsContentList(
             prefs = prefs,
@@ -111,7 +112,7 @@ private fun SettingsContentList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { EverfoldSectionHeader(title = "外观") }
+        item { EverfoldSectionHeader(title = stringResource(R.string.settings_section_appearance)) }
         item {
             AppearanceCard(
                 prefs = prefs,
@@ -121,14 +122,14 @@ private fun SettingsContentList(
                 onCustomColorHexChange = actions.onCustomColorHexChange,
             )
         }
-        item { EverfoldSectionHeader(title = "界面") }
+        item { EverfoldSectionHeader(title = stringResource(R.string.settings_section_interface)) }
         item {
             LanguageCard(
                 language = prefs.language,
                 onLanguageChange = actions.onLanguageChange,
             )
         }
-        item { EverfoldSectionHeader(title = "会话") }
+        item { EverfoldSectionHeader(title = stringResource(R.string.settings_section_sessions)) }
         item {
             SessionPreferencesCard(
                 prefs = prefs,
@@ -137,9 +138,11 @@ private fun SettingsContentList(
                 onShowNodeBadgesChange = actions.onShowNodeBadgesChange,
             )
         }
-        item { EverfoldSectionHeader(title = "权限与后台运行") }
+        item { EverfoldSectionHeader(title = stringResource(R.string.settings_section_permissions)) }
         item { PermissionsCard() }
-        item { EverfoldSectionHeader(title = "连接与关于") }
+        item {
+            EverfoldSectionHeader(title = stringResource(R.string.settings_section_connection_about))
+        }
         item {
             AboutEntryCard(
                 versionName = versionName,
@@ -151,7 +154,7 @@ private fun SettingsContentList(
                 onClick = actions.onDisconnect,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("断开当前连接并返回引导页")
+                Text(stringResource(R.string.settings_disconnect))
             }
         }
     }
@@ -174,9 +177,12 @@ private fun AboutEntryCard(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text("关于 Everfold", style = MaterialTheme.typography.titleSmall)
                 Text(
-                    text = "版本 v$versionName · GitHub · Apache 2.0",
+                    text = stringResource(R.string.settings_about_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = stringResource(R.string.settings_about_entry_subtitle, versionName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

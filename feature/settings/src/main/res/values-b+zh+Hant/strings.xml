@@ -1,0 +1,73 @@
+<resources>
+    <string name="settings_title">設定</string>
+    <string name="settings_section_appearance">外觀</string>
+    <string name="settings_section_interface">介面</string>
+    <string name="settings_section_sessions">會話</string>
+    <string name="settings_section_permissions">權限與背景執行</string>
+    <string name="settings_section_connection_about">連線與關於</string>
+    <string name="settings_disconnect">中斷目前連線並返回引導頁</string>
+    <string name="settings_about_title">關於 Everfold</string>
+    <string name="settings_about_entry_subtitle">版本 v%1$s · GitHub · Apache 2.0</string>
+    <string name="settings_back">返回</string>
+
+    <string name="appearance_theme_mode_label">淺色 / 深色模式</string>
+    <string name="theme_mode_system">跟隨系統</string>
+    <string name="theme_mode_light">淺色</string>
+    <string name="theme_mode_dark">深色</string>
+
+    <string name="appearance_theme_color_label">主題色來源</string>
+    <string name="theme_color_system_dynamic">跟隨系統</string>
+    <string name="theme_color_preset">推薦主題色</string>
+    <string name="theme_color_custom">自訂主題色</string>
+    <string name="appearance_dynamic_color_hint">Android 12+ 自動跟隨系統桌布動態取色，舊版本將退回推薦主題色。</string>
+    <string name="appearance_custom_hex_label">自訂 Hex (#RRGGBB)</string>
+
+    <string name="seed_indigo">靛藍</string>
+    <string name="seed_teal">青黛</string>
+    <string name="seed_terracotta">陶土</string>
+    <string name="seed_forest">森綠</string>
+    <string name="seed_plum">梅紫</string>
+
+    <string name="interface_language_label">應用程式語言</string>
+    <string name="language_system">跟隨系統</string>
+    <string name="language_zh_hans">简体中文</string>
+    <string name="language_zh_hant">繁體中文</string>
+    <string name="language_en">English</string>
+
+    <string name="session_pref_text_size_label">會話文字大小</string>
+    <string name="text_size_small">小</string>
+    <string name="text_size_medium">標準</string>
+    <string name="text_size_large">大</string>
+    <string name="text_size_extra_large">特大</string>
+    <string name="session_pref_text_preview">預覽：Everfold 會話正文與 Markdown 回覆字級範例。</string>
+    <string name="session_pref_auto_collapse_title">自動折疊長訊息</string>
+    <string name="session_pref_auto_collapse_subtitle">較長的使用者或智能體回覆預設折疊，點擊展開全文</string>
+    <string name="session_pref_show_traces_title">預設展開動作與節點軌跡</string>
+    <string name="session_pref_show_traces_subtitle">關閉時對使用者無感折疊，點擊步驟卡片再檢視執行節點</string>
+
+    <string name="perm_notifications_title">通知權限</string>
+    <string name="perm_notifications_subtitle">用於顯示背景 Agent Loop 進度與核准提醒</string>
+    <string name="perm_status_granted">已授權</string>
+    <string name="perm_status_denied">未授權</string>
+    <string name="perm_action_notification_settings">通知設定</string>
+    <string name="perm_action_request">申請權限</string>
+
+    <string name="perm_background_title">允許背景執行</string>
+    <string name="perm_background_subtitle">將應用程式加入電池最佳化白名單，避免長任務被系統暫停</string>
+    <string name="perm_status_allowed">已允許</string>
+    <string name="perm_status_restricted">受限制</string>
+    <string name="perm_action_view_settings">檢視設定</string>
+    <string name="perm_action_allow">申請允許</string>
+
+    <string name="perm_battery_title">耗電管理（允許完全背景行為）</string>
+    <string name="perm_battery_subtitle">一鍵前往系統耗電管理，手動開啟「允許完全背景行為 / 無限制」</string>
+    <string name="perm_status_manual">手動設定</string>
+    <string name="perm_action_open_battery">前往耗電管理</string>
+
+    <string name="about_tagline">跨節點 AI 智能體控制與可觀測性終端</string>
+    <string name="about_version_label">軟體版本</string>
+    <string name="about_version_value">v%1$s (Build %2$d)</string>
+    <string name="about_repo_label">GitHub 儲存庫</string>
+    <string name="about_license_label">開源授權條款</string>
+    <string name="about_license_value">%1$s 授權條款</string>
+</resources>

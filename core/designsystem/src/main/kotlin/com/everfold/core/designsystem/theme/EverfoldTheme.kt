@@ -76,9 +76,11 @@ fun EverfoldTheme(
             }
         }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography(),
-        content = content,
-    )
+    ProvideAppLocale(language = preferences.language) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography(),
+            content = content,
+        )
+    }
 }

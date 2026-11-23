@@ -1,5 +1,6 @@
 package com.everfold.android
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -15,6 +16,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -52,13 +54,13 @@ private sealed interface AppDestination : NavKey {
 
 private enum class EverfoldTab(
     val route: AppDestination.TopLevel,
-    val label: String,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
-    SESSIONS(AppDestination.TopLevel.Sessions, "会话", Icons.Rounded.ChatBubbleOutline),
-    NODES(AppDestination.TopLevel.Nodes, "节点", Icons.Rounded.Hub),
-    MODELS(AppDestination.TopLevel.Models, "模型", Icons.Rounded.Memory),
-    SETTINGS(AppDestination.TopLevel.Settings, "设置", Icons.Rounded.Tune),
+    SESSIONS(AppDestination.TopLevel.Sessions, R.string.tab_sessions, Icons.Rounded.ChatBubbleOutline),
+    NODES(AppDestination.TopLevel.Nodes, R.string.tab_nodes, Icons.Rounded.Hub),
+    MODELS(AppDestination.TopLevel.Models, R.string.tab_models, Icons.Rounded.Memory),
+    SETTINGS(AppDestination.TopLevel.Settings, R.string.tab_settings, Icons.Rounded.Tune),
 }
 
 @Composable
@@ -80,8 +82,13 @@ internal fun EverfoldAppShell(modifier: Modifier = Modifier) {
         navigationSuiteItems = {
             EverfoldTab.entries.forEach { tab ->
                 item(
-                    icon = { Icon(imageVector = tab.icon, contentDescription = tab.label) },
-                    label = { Text(tab.label) },
+                    icon = {
+                        Icon(
+                            imageVector = tab.icon,
+                            contentDescription = stringResource(tab.labelRes),
+                        )
+                    },
+                    label = { Text(stringResource(tab.labelRes)) },
                     selected = currentRoute == tab.route,
                     onClick = {
                         if (currentRoute != tab.route) {

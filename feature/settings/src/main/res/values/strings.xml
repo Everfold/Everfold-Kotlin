@@ -1,0 +1,73 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_interface">Interface</string>
+    <string name="settings_section_sessions">Sessions</string>
+    <string name="settings_section_permissions">Permissions &amp; Background</string>
+    <string name="settings_section_connection_about">Connection &amp; About</string>
+    <string name="settings_disconnect">Disconnect and return to onboarding</string>
+    <string name="settings_about_title">About Everfold</string>
+    <string name="settings_about_entry_subtitle">Version v%1$s · GitHub · Apache 2.0</string>
+    <string name="settings_back">Back</string>
+
+    <string name="appearance_theme_mode_label">Theme mode</string>
+    <string name="theme_mode_system">Follow system</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+
+    <string name="appearance_theme_color_label">Color source</string>
+    <string name="theme_color_system_dynamic">Follow system</string>
+    <string name="theme_color_preset">Recommended</string>
+    <string name="theme_color_custom">Custom</string>
+    <string name="appearance_dynamic_color_hint">Uses system wallpaper colors on Android 12+, falling back to recommended palette on older versions.</string>
+    <string name="appearance_custom_hex_label">Custom Hex (#RRGGBB)</string>
+
+    <string name="seed_indigo">Indigo</string>
+    <string name="seed_teal">Teal</string>
+    <string name="seed_terracotta">Terracotta</string>
+    <string name="seed_forest">Forest</string>
+    <string name="seed_plum">Plum</string>
+
+    <string name="interface_language_label">App language</string>
+    <string name="language_system">Follow system</string>
+    <string name="language_zh_hans">简体中文</string>
+    <string name="language_zh_hant">繁體中文</string>
+    <string name="language_en">English</string>
+
+    <string name="session_pref_text_size_label">Message text size</string>
+    <string name="text_size_small">Small</string>
+    <string name="text_size_medium">Standard</string>
+    <string name="text_size_large">Large</string>
+    <string name="text_size_extra_large">Extra Large</string>
+    <string name="session_pref_text_preview">Preview: Sample session message and Markdown reply size.</string>
+    <string name="session_pref_auto_collapse_title">Auto-collapse long messages</string>
+    <string name="session_pref_auto_collapse_subtitle">Collapse long user or agent replies by default with a tap-to-expand toggle</string>
+    <string name="session_pref_show_traces_title">Expand action &amp; node traces by default</string>
+    <string name="session_pref_show_traces_subtitle">When off, action steps stay compact until tapped</string>
+
+    <string name="perm_notifications_title">Notification permission</string>
+    <string name="perm_notifications_subtitle">Used for background Agent Loop progress and approval prompts</string>
+    <string name="perm_status_granted">Granted</string>
+    <string name="perm_status_denied">Not granted</string>
+    <string name="perm_action_notification_settings">Notification settings</string>
+    <string name="perm_action_request">Request permission</string>
+
+    <string name="perm_background_title">Background execution</string>
+    <string name="perm_background_subtitle">Exclude from battery optimization so long tasks are not suspended</string>
+    <string name="perm_status_allowed">Allowed</string>
+    <string name="perm_status_restricted">Restricted</string>
+    <string name="perm_action_view_settings">View settings</string>
+    <string name="perm_action_allow">Allow</string>
+
+    <string name="perm_battery_title">Battery management (Unrestricted background)</string>
+    <string name="perm_battery_subtitle">Jump directly to system battery settings to enable unrestricted background activity</string>
+    <string name="perm_status_manual">Manual setup</string>
+    <string name="perm_action_open_battery">Open battery settings</string>
+
+    <string name="about_tagline">Cross-node AI Agent Control &amp; Observability Client</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_version_value">v%1$s (Build %2$d)</string>
+    <string name="about_repo_label">GitHub Repository</string>
+    <string name="about_license_label">Open Source License</string>
+    <string name="about_license_value">%1$s License</string>
+</resources>

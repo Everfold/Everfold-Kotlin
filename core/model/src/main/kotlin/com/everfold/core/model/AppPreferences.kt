@@ -12,21 +12,20 @@ enum class ThemeColorMode {
     CUSTOM,
 }
 
-enum class SeedColorPreset(
-    val displayName: String,
-) {
-    INDIGO("靛蓝"),
-    TEAL("青黛"),
-    TERRACOTTA("陶土"),
-    FOREST("森绿"),
-    PLUM("梅紫"),
+enum class SeedColorPreset {
+    INDIGO,
+    TEAL,
+    TERRACOTTA,
+    FOREST,
+    PLUM,
 }
 
 enum class AppLanguage(
     val languageTag: String,
 ) {
     SYSTEM(""),
-    CHINESE("zh-CN"),
+    SIMPLIFIED_CHINESE("zh-Hans"),
+    TRADITIONAL_CHINESE("zh-Hant"),
     ENGLISH("en"),
 }
 
