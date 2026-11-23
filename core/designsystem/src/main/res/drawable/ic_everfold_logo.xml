@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="304.53839"
+    android:viewportHeight="304.53839">
+    <path android:pathData="M5.28125 224.538393 Q-7.71875 215.538393 11.28125 202.538393 L138.28125 131.538393 Q154.28125 122.538393 170.28125 131.538393 L296.28125 202.538393 Q313.28125 214.538393 295.28125 226.538393 L171.28125 299.538393 Q154.28125 309.538393 138.28125 299.538393 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="304.53839"
+                android:endY="304.53839"
+                android:startX="0.0"
+                android:startY="127.03839"
+                android:type="linear">
+                <item
+                    android:color="#FF4166D8"
+                    android:offset="0.0" />
+                <item
+                    android:color="#FF56FDFD"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M5.28125 162.019196 Q-7.71875 151.019196 11.28125 139.019196 L138.28125 68.019196 Q154.28125 59.019196 170.28125 68.019196 L296.28125 139.019196 Q313.28125 151.019196 295.28125 163.019196 L171.28125 236.019196 Q154.28125 246.019196 138.28125 236.019196 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="304.53839"
+                android:endY="241.01920"
+                android:startX="0.0"
+                android:startY="63.51920"
+                android:type="linear">
+                <item
+                    android:color="#FF493AD2"
+                    android:offset="0.0" />
+                <item
+                    android:color="#FF82B8FF"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M5.28125 98.5 Q-7.71875 87.5 11.28125 75.5 L138.28125 4.5 Q154.28125 -4.5 170.28125 4.5 L296.28125 75.5 Q310.28125 83.5 298.28125 96.5 Q292.28125 102.5 277.28125 95.5 L232.28125 74.5 Q216.28125 67.5 201.28125 75.5 L142.28125 109.5 Q124.28125 119.5 124.28125 143.5 Q124.28125 160.5 109.28125 167.5 Q98.28125 173.5 85.28125 166.5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="303.81971"
+                android:endY="170.26923"
+                android:startX="0.0"
+                android:startY="0.0"
+                android:type="linear">
+                <item
+                    android:color="#FF9B3AF6"
+                    android:offset="0.0" />
+                <item
+                    android:color="#FFB5A6FC"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

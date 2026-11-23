@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.model.ConnectionMode
 import org.koin.androidx.compose.koinViewModel
 
@@ -55,16 +56,7 @@ fun OnboardingScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Everfold",
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.onboarding_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            OnboardingBrandHeader()
             OnboardingModeOptions(
                 selectedMode = state.selectedMode,
                 onSelectMode = viewModel::selectMode,
@@ -92,6 +84,28 @@ fun OnboardingScreen(
                 onClick = viewModel::connect,
             )
         }
+    }
+}
+
+@Composable
+private fun OnboardingBrandHeader() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            EverfoldLogo(modifier = Modifier.size(44.dp))
+            Text(
+                text = "Everfold",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Text(
+            text = stringResource(R.string.onboarding_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
