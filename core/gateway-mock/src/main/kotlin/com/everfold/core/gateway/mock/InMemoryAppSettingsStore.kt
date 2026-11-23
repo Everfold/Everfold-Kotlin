@@ -1,6 +1,7 @@
 package com.everfold.core.gateway.mock
 
 import com.everfold.core.gateway.AppSettingsStore
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
@@ -34,6 +35,10 @@ class InMemoryAppSettingsStore : AppSettingsStore {
 
     override fun updateLanguage(language: AppLanguage) {
         _preferences.update { it.copy(language = language) }
+    }
+
+    override fun updateAnimationSpeed(speed: AnimationSpeed) {
+        _preferences.update { it.copy(animationSpeed = speed) }
     }
 
     override fun updateChatTextSize(size: ChatTextSize) {

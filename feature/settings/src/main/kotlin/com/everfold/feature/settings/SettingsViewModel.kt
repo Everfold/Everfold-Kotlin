@@ -2,6 +2,7 @@ package com.everfold.feature.settings
 
 import androidx.lifecycle.ViewModel
 import com.everfold.core.gateway.AppSettingsStore
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppInfo
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
@@ -26,6 +27,8 @@ class SettingsViewModel(
     fun setCustomColorHex(hex: String) = settingsStore.updateCustomColorHex(hex)
 
     fun setLanguage(language: AppLanguage) = settingsStore.updateLanguage(language)
+
+    fun setAnimationSpeed(speed: AnimationSpeed) = settingsStore.updateAnimationSpeed(speed)
 
     fun setChatTextSize(size: ChatTextSize) = settingsStore.updateChatTextSize(size)
 

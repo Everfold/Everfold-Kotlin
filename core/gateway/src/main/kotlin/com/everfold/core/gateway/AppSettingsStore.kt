@@ -1,5 +1,6 @@
 package com.everfold.core.gateway
 
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
@@ -20,6 +21,8 @@ interface AppSettingsStore {
     fun updateCustomColorHex(hex: String)
 
     fun updateLanguage(language: AppLanguage)
+
+    fun updateAnimationSpeed(speed: AnimationSpeed)
 
     fun updateChatTextSize(size: ChatTextSize)
 

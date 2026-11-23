@@ -73,6 +73,12 @@ fun AppearanceSettingsScreen(
                     onCustomColorHexChange = viewModel::setCustomColorHex,
                 )
             }
+            item {
+                AnimationSpeedCard(
+                    speed = prefs.animationSpeed,
+                    onSpeedChange = viewModel::setAnimationSpeed,
+                )
+            }
         }
     }
 }

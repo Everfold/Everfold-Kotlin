@@ -1,6 +1,13 @@
 package com.everfold.core.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,10 +42,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldStatusPill
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.model.ActionKind
 import com.everfold.core.model.ActionStatus
 import com.everfold.core.model.ActionTrace
+import com.everfold.core.model.AnimationSpeed
 import kotlinx.collections.immutable.ImmutableList
+
+private const val TRACE_ANIM_DURATION_MS = 180
 
 @Composable
 fun ActionTraceGroupCard(
@@ -51,6 +63,20 @@ fun ActionTraceGroupCard(
     val defaultExpanded = if (isRunning) expandWhenRunning else expandWhenCompleted
     var manualOverride by rememberSaveable(isRunning) { mutableStateOf<Boolean?>(null) }
     val isExpanded = manualOverride ?: defaultExpanded
+    val animationSpeed = LocalAnimationSpeed.current
+    val animMs = animationSpeed.scaleDuration(TRACE_ANIM_DURATION_MS)
+    val enterTransition =
+        if (animationSpeed == AnimationSpeed.OFF) {
+            EnterTransition.None
+        } else {
+            expandVertically(tween(animMs)) + fadeIn(tween(animMs))
+        }
+    val exitTransition =
+        if (animationSpeed == AnimationSpeed.OFF) {
+            ExitTransition.None
+        } else {
+            shrinkVertically(tween(animMs)) + fadeOut(tween(animMs))
+        }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -65,7 +91,11 @@ fun ActionTraceGroupCard(
                 expanded = isExpanded,
                 onToggle = { manualOverride = !isExpanded },
             )
-            AnimatedVisibility(visible = isExpanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = enterTransition,
+                exit = exitTransition,
+            ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),

@@ -30,6 +30,13 @@
     <string name="appearance_dynamic_color_hint">Android 12+ 自动跟随系统壁纸动态取色，低版本回退至推荐主题色。</string>
     <string name="appearance_custom_hex_label">自定义 Hex (#RRGGBB)</string>
 
+    <string name="appearance_animation_speed_label">动画速度</string>
+    <string name="appearance_animation_speed_hint">调整页面切换与轨迹展开收起的动画快慢，也可完全关闭。</string>
+    <string name="animation_speed_default">默认</string>
+    <string name="animation_speed_fast">快</string>
+    <string name="animation_speed_slow">慢</string>
+    <string name="animation_speed_off">关闭</string>
+
     <string name="seed_indigo">靛蓝</string>
     <string name="seed_teal">青黛</string>
     <string name="seed_terracotta">陶土</string>

@@ -30,6 +30,13 @@
     <string name="appearance_dynamic_color_hint">Uses system wallpaper colors on Android 12+, falling back to recommended palette on older versions.</string>
     <string name="appearance_custom_hex_label">Custom Hex (#RRGGBB)</string>
 
+    <string name="appearance_animation_speed_label">Animation speed</string>
+    <string name="appearance_animation_speed_hint">Controls screen transition and trace expand/collapse speed.</string>
+    <string name="animation_speed_default">Default</string>
+    <string name="animation_speed_fast">Fast</string>
+    <string name="animation_speed_slow">Slow</string>
+    <string name="animation_speed_off">Off</string>
+
     <string name="seed_indigo">Indigo</string>
     <string name="seed_teal">Teal</string>
     <string name="seed_terracotta">Terracotta</string>

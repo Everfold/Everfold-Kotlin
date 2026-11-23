@@ -1,6 +1,8 @@
 package com.everfold.android.navigation
 
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,7 +26,10 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.gateway.SessionGateway
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.feature.nodes.NodesScreen
 import com.everfold.feature.sessions.SessionDetailScreen
 import com.everfold.feature.settings.SettingsScreen
@@ -109,6 +114,7 @@ private fun AppNavDisplay(
     backStack: NavBackStack<NavKey>,
     onOpenDrawer: () -> Unit,
 ) {
+    val animationSpeed = LocalAnimationSpeed.current
     val popBack: () -> Unit = {
         if (backStack.size > 1) {
             backStack.removeAt(backStack.lastIndex)
@@ -118,9 +124,9 @@ private fun AppNavDisplay(
     NavDisplay(
         backStack = backStack,
         onBack = popBack,
-        transitionSpec = { forwardTransition() },
-        popTransitionSpec = { popTransition() },
-        predictivePopTransitionSpec = { _ -> popTransition() },
+        transitionSpec = { forwardTransition(animationSpeed) },
+        popTransitionSpec = { popTransition(animationSpeed) },
+        predictivePopTransitionSpec = { _ -> popTransition(animationSpeed) },
         entryProvider =
             entryProvider {
                 entry<AppDestination.Session> { destination ->
@@ -155,22 +161,21 @@ private fun AppNavDisplay(
     )
 }
 
-private fun forwardTransition(): ContentTransform =
-    (
-        fadeIn(tween(NAV_ENTER_DURATION_MS)) +
-            slideInHorizontally(tween(NAV_ENTER_DURATION_MS)) { it / SLIDE_DIVISOR }
-    ) togetherWith
-        (
-            fadeOut(tween(NAV_EXIT_DURATION_MS)) +
-                slideOutHorizontally(tween(NAV_EXIT_DURATION_MS)) { -it / SLIDE_DIVISOR }
-        )
+private fun forwardTransition(speed: AnimationSpeed): ContentTransform =
+    if (speed == AnimationSpeed.OFF) {
+        EnterTransition.None togetherWith ExitTransition.None
+    } else {
+        val enterMs = speed.scaleDuration(NAV_ENTER_DURATION_MS)
+        val exitMs = speed.scaleDuration(NAV_EXIT_DURATION_MS)
+        (fadeIn(tween(enterMs)) + slideInHorizontally(tween(enterMs)) { it / SLIDE_DIVISOR }) togetherWith
+            (fadeOut(tween(exitMs)) + slideOutHorizontally(tween(exitMs)) { -it / SLIDE_DIVISOR })
+    }
 
-private fun popTransition(): ContentTransform =
-    (
-        fadeIn(tween(NAV_POP_DURATION_MS)) +
-            slideInHorizontally(tween(NAV_POP_DURATION_MS)) { -it / SLIDE_DIVISOR }
-    ) togetherWith
-        (
-            fadeOut(tween(NAV_POP_DURATION_MS)) +
-                slideOutHorizontally(tween(NAV_POP_DURATION_MS)) { it / SLIDE_DIVISOR }
-        )
+private fun popTransition(speed: AnimationSpeed): ContentTransform =
+    if (speed == AnimationSpeed.OFF) {
+        EnterTransition.None togetherWith ExitTransition.None
+    } else {
+        val popMs = speed.scaleDuration(NAV_POP_DURATION_MS)
+        (fadeIn(tween(popMs)) + slideInHorizontally(tween(popMs)) { -it / SLIDE_DIVISOR }) togetherWith
+            (fadeOut(tween(popMs)) + slideOutHorizontally(tween(popMs)) { it / SLIDE_DIVISOR })
+    }
