@@ -1,41 +1,56 @@
 package com.everfold.feature.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
-import com.everfold.core.designsystem.theme.toColor
+import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
+import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.SeedColorPreset
+import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
 import org.koin.androidx.compose.koinViewModel
+
+private data class SettingsActions(
+    val onThemeModeChange: (ThemeMode) -> Unit,
+    val onThemeColorModeChange: (ThemeColorMode) -> Unit,
+    val onSeedColorChange: (SeedColorPreset) -> Unit,
+    val onCustomColorHexChange: (String) -> Unit,
+    val onLanguageChange: (AppLanguage) -> Unit,
+    val onChatTextSizeChange: (ChatTextSize) -> Unit,
+    val onAutoCollapseChange: (Boolean) -> Unit,
+    val onShowNodeBadgesChange: (Boolean) -> Unit,
+    val onOpenAbout: () -> Unit,
+    val onDisconnect: () -> Unit,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,137 +59,133 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
+    var showAbout by rememberSaveable { mutableStateOf(false) }
+
+    if (showAbout) {
+        AboutScreen(
+            appInfo = viewModel.appInfo,
+            onBack = { showAbout = false },
+            modifier = modifier,
+        )
+        return
+    }
+
+    val actions =
+        remember(viewModel) {
+            SettingsActions(
+                onThemeModeChange = viewModel::setThemeMode,
+                onThemeColorModeChange = viewModel::setThemeColorMode,
+                onSeedColorChange = viewModel::setSeedColor,
+                onCustomColorHexChange = viewModel::setCustomColorHex,
+                onLanguageChange = viewModel::setLanguage,
+                onChatTextSizeChange = viewModel::setChatTextSize,
+                onAutoCollapseChange = viewModel::setAutoCollapseLongMessages,
+                onShowNodeBadgesChange = viewModel::setShowNodeBadgesInline,
+                onOpenAbout = { showAbout = true },
+                onDisconnect = viewModel::disconnectAuthority,
+            )
+        }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { TopAppBar(title = { Text("设置") }) },
     ) { innerPadding ->
-        LazyColumn(
+        SettingsContentList(
+            prefs = prefs,
+            versionName = viewModel.appInfo.versionName,
+            actions = actions,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item { EverfoldSectionHeader(title = "外观与 Material 3 主题") }
-            item {
-                AppearanceCard(
-                    prefs = prefs,
-                    onThemeModeChange = viewModel::setThemeMode,
-                    onDynamicColorChange = viewModel::setDynamicColor,
-                    onSeedColorChange = viewModel::setSeedColor,
-                )
-            }
-            item { EverfoldSectionHeader(title = "可观测性展示") }
-            item {
-                ObservabilityCard(
-                    showInline = prefs.showNodeBadgesInline,
-                    onToggleInline = viewModel::setShowNodeBadgesInline,
-                )
-            }
-            item { EverfoldSectionHeader(title = "连接会话") }
-            item {
-                OutlinedButton(
-                    onClick = viewModel::disconnectAuthority,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("断开当前连接并返回引导页")
-                }
-            }
-        }
+        )
     }
 }
 
 @Composable
-private fun AppearanceCard(
+private fun SettingsContentList(
     prefs: AppPreferences,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    onDynamicColorChange: (Boolean) -> Unit,
-    onSeedColorChange: (SeedColorPreset) -> Unit,
+    versionName: String,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = prefs.themeMode == mode,
-                        onClick = { onThemeModeChange(mode) },
-                        label = { Text(mode.toLabel()) },
-                    )
-                }
-            }
-            Row(
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { EverfoldSectionHeader(title = "外观") }
+        item {
+            AppearanceCard(
+                prefs = prefs,
+                onThemeModeChange = actions.onThemeModeChange,
+                onThemeColorModeChange = actions.onThemeColorModeChange,
+                onSeedColorChange = actions.onSeedColorChange,
+                onCustomColorHexChange = actions.onCustomColorHexChange,
+            )
+        }
+        item { EverfoldSectionHeader(title = "界面") }
+        item {
+            LanguageCard(
+                language = prefs.language,
+                onLanguageChange = actions.onLanguageChange,
+            )
+        }
+        item { EverfoldSectionHeader(title = "会话") }
+        item {
+            SessionPreferencesCard(
+                prefs = prefs,
+                onChatTextSizeChange = actions.onChatTextSizeChange,
+                onAutoCollapseChange = actions.onAutoCollapseChange,
+                onShowNodeBadgesChange = actions.onShowNodeBadgesChange,
+            )
+        }
+        item { EverfoldSectionHeader(title = "权限与后台运行") }
+        item { PermissionsCard() }
+        item { EverfoldSectionHeader(title = "连接与关于") }
+        item {
+            AboutEntryCard(
+                versionName = versionName,
+                onClick = actions.onOpenAbout,
+            )
+        }
+        item {
+            OutlinedButton(
+                onClick = actions.onDisconnect,
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("系统动态取色 (Material You)", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "关闭后使用下方自定义主题种子色",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(checked = prefs.useDynamicColor, onCheckedChange = onDynamicColorChange)
-            }
-            if (!prefs.useDynamicColor) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SeedColorPreset.entries.forEach { preset ->
-                        val selected = prefs.seedColor == preset
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(preset.toColor())
-                                    .then(
-                                        if (selected) {
-                                            Modifier.border(
-                                                3.dp,
-                                                MaterialTheme.colorScheme.onSurface,
-                                                CircleShape,
-                                            )
-                                        } else {
-                                            Modifier
-                                        },
-                                    ).clickable { onSeedColorChange(preset) },
-                        )
-                    }
-                }
+                Text("断开当前连接并返回引导页")
             }
         }
     }
 }
 
 @Composable
-private fun ObservabilityCard(
-    showInline: Boolean,
-    onToggleInline: (Boolean) -> Unit,
+private fun AboutEntryCard(
+    versionName: String,
+    onClick: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
             Column(modifier = Modifier.weight(1f)) {
-                Text("默认展开动作与节点轨迹", style = MaterialTheme.typography.bodyLarge)
+                Text("关于 Everfold", style = MaterialTheme.typography.titleSmall)
                 Text(
-                    "关闭时对用户无感折叠，点击步骤卡片再查看执行节点",
+                    text = "版本 v$versionName · GitHub · Apache 2.0",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Switch(checked = showInline, onCheckedChange = onToggleInline)
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
-
-private fun ThemeMode.toLabel(): String =
-    when (this) {
-        ThemeMode.SYSTEM -> "跟随系统"
-        ThemeMode.LIGHT -> "浅色"
-        ThemeMode.DARK -> "深色"
-    }

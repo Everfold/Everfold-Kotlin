@@ -5,6 +5,7 @@ import com.everfold.core.gateway.AuthorityGateway
 import com.everfold.core.gateway.ModelGateway
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.gateway.TopologyGateway
+import com.everfold.core.model.AppInfo
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.koin.dsl.koinApplication
@@ -18,6 +19,7 @@ class KoinGraphTest {
             }
         try {
             val koin = koinApp.koin
+            assertNotNull(koin.get<AppInfo>())
             assertNotNull(koin.get<AuthorityGateway>())
             assertNotNull(koin.get<SessionGateway>())
             assertNotNull(koin.get<TopologyGateway>())
