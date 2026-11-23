@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Everfold" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/everfold_window_background</item>
+    </style>
+
+    <style name="Theme.Everfold.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/everfold_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Everfold</item>
+    </style>
+
+    <color name="everfold_window_background">#FF121318</color>
+</resources>

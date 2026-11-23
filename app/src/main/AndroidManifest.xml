@@ -22,7 +22,7 @@
             android:name=".MainActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="true"
-            android:theme="@style/Theme.Everfold"
+            android:theme="@style/Theme.Everfold.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
