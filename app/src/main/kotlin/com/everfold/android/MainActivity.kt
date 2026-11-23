@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.android.navigation.EverfoldAppShell
 import com.everfold.core.designsystem.theme.EverfoldTheme
 import com.everfold.core.gateway.AppSettingsStore
 import com.everfold.core.gateway.AuthorityGateway

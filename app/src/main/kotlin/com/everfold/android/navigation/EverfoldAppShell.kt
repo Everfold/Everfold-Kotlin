@@ -1,4 +1,4 @@
-package com.everfold.android
+package com.everfold.android.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
@@ -17,45 +17,14 @@ import androidx.navigation3.ui.NavDisplay
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.feature.nodes.NodesScreen
 import com.everfold.feature.sessions.SessionDetailScreen
-import com.everfold.feature.settings.AboutSettingsScreen
-import com.everfold.feature.settings.AppearanceSettingsScreen
-import com.everfold.feature.settings.LanguageSettingsScreen
-import com.everfold.feature.settings.PermissionsSettingsScreen
-import com.everfold.feature.settings.SessionSettingsScreen
 import com.everfold.feature.settings.SettingsScreen
-import com.everfold.feature.settings.SettingsSection
+import com.everfold.feature.settings.screen.AboutSettingsScreen
+import com.everfold.feature.settings.screen.AppearanceSettingsScreen
+import com.everfold.feature.settings.screen.LanguageSettingsScreen
+import com.everfold.feature.settings.screen.PermissionsSettingsScreen
+import com.everfold.feature.settings.screen.SessionSettingsScreen
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
-
-@Serializable
-private sealed interface AppDestination : NavKey {
-    @Serializable
-    data class Session(
-        val sessionId: String? = null,
-    ) : AppDestination
-
-    @Serializable
-    data object Nodes : AppDestination
-
-    @Serializable
-    data object Settings : AppDestination
-
-    @Serializable
-    data object SettingsAppearance : AppDestination
-
-    @Serializable
-    data object SettingsLanguage : AppDestination
-
-    @Serializable
-    data object SettingsSessions : AppDestination
-
-    @Serializable
-    data object SettingsPermissions : AppDestination
-
-    @Serializable
-    data object SettingsAbout : AppDestination
-}
 
 @Composable
 internal fun EverfoldAppShell(
@@ -156,12 +125,3 @@ private fun AppNavDisplay(
             },
     )
 }
-
-private fun SettingsSection.toDestination(): AppDestination =
-    when (this) {
-        SettingsSection.APPEARANCE -> AppDestination.SettingsAppearance
-        SettingsSection.LANGUAGE -> AppDestination.SettingsLanguage
-        SettingsSection.SESSIONS -> AppDestination.SettingsSessions
-        SettingsSection.PERMISSIONS -> AppDestination.SettingsPermissions
-        SettingsSection.ABOUT -> AppDestination.SettingsAbout
-    }

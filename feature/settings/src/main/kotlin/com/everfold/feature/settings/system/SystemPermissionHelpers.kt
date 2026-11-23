@@ -1,4 +1,4 @@
-package com.everfold.feature.settings
+package com.everfold.feature.settings.system
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -7,7 +7,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.LocaleList
 import android.os.PowerManager
@@ -15,6 +14,7 @@ import android.provider.Settings
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.everfold.core.model.AppLanguage
 
 internal fun readSystemPermissionStatus(context: Context): SystemPermissionStatus =
@@ -51,7 +51,7 @@ internal fun openNotificationSettings(context: Context) {
 internal fun requestIgnoreBatteryOptimizations(context: Context) {
     val intent =
         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = Uri.parse("package:${context.packageName}")
+            data = "package:${context.packageName}".toUri()
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     launchSafely(context, intent) { openBatteryManagementSettings(context) }
@@ -68,7 +68,7 @@ internal fun openBatteryManagementSettings(context: Context) {
 internal fun openAppDetailsSettings(context: Context) {
     val intent =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:${context.packageName}")
+            data = "package:${context.packageName}".toUri()
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     launchSafely(context, intent)
@@ -93,7 +93,7 @@ internal fun openUrlInCustomTab(
     context: Context,
     url: String,
 ) {
-    val uri = Uri.parse(url)
+    val uri = url.toUri()
     try {
         CustomTabsIntent.Builder().build().launchUrl(context, uri)
     } catch (_: ActivityNotFoundException) {

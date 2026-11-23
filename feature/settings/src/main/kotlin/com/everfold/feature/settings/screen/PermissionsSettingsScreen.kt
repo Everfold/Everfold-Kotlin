@@ -1,23 +1,21 @@
-package com.everfold.feature.settings
+package com.everfold.feature.settings.screen
 
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,93 +27,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.everfold.core.designsystem.component.EverfoldStatusPill
-import com.everfold.core.model.AppLanguage
-import com.everfold.core.model.AppPreferences
-import com.everfold.core.model.ChatTextSize
+import com.everfold.feature.settings.R
+import com.everfold.feature.settings.system.openBatteryManagementSettings
+import com.everfold.feature.settings.system.openNotificationSettings
+import com.everfold.feature.settings.system.readSystemPermissionStatus
+import com.everfold.feature.settings.system.requestIgnoreBatteryOptimizations
 
-private const val BASE_PREVIEW_SP = 14f
-
-internal data class SystemPermissionStatus(
-    val notificationsGranted: Boolean,
-    val backgroundUnrestricted: Boolean,
-)
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SessionReadingCard(
-    prefs: AppPreferences,
-    onChatTextSizeChange: (ChatTextSize) -> Unit,
-    onAutoCollapseChange: (Boolean) -> Unit,
+fun PermissionsSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+    SettingsSubPageScaffold(
+        title = stringResource(R.string.settings_entry_permissions_title),
+        onBack = onBack,
+        modifier = modifier,
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.session_pref_text_size_label),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChatTextSize.entries.forEach { size ->
-                    FilterChip(
-                        selected = prefs.chatTextSize == size,
-                        onClick = { onChatTextSizeChange(size) },
-                        label = { Text(stringResource(size.labelRes())) },
-                    )
-                }
-            }
-            Text(
-                text = stringResource(R.string.session_pref_text_preview),
-                fontSize = (BASE_PREVIEW_SP * prefs.chatTextSize.scale).sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            SettingSwitchRow(
-                title = stringResource(R.string.session_pref_auto_collapse_title),
-                subtitle = stringResource(R.string.session_pref_auto_collapse_subtitle),
-                checked = prefs.autoCollapseLongMessages,
-                onCheckedChange = onAutoCollapseChange,
-            )
+            item { PermissionsCard() }
         }
     }
 }
 
 @Composable
-internal fun ActionTracesCard(
-    expandWhenRunning: Boolean,
-    expandWhenCompleted: Boolean,
-    onExpandRunningChange: (Boolean) -> Unit,
-    onExpandCompletedChange: (Boolean) -> Unit,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            SettingSwitchRow(
-                title = stringResource(R.string.session_pref_expand_running_traces_title),
-                subtitle = stringResource(R.string.session_pref_expand_running_traces_subtitle),
-                checked = expandWhenRunning,
-                onCheckedChange = onExpandRunningChange,
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            SettingSwitchRow(
-                title = stringResource(R.string.session_pref_expand_completed_traces_title),
-                subtitle = stringResource(R.string.session_pref_expand_completed_traces_subtitle),
-                checked = expandWhenCompleted,
-                onCheckedChange = onExpandCompletedChange,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun PermissionsCard() {
+private fun PermissionsCard() {
     val context = LocalContext.current
     var status by remember { mutableStateOf(readSystemPermissionStatus(context)) }
 
@@ -209,30 +151,6 @@ private fun BackgroundPermissionRow(
 }
 
 @Composable
-private fun SettingSwitchRow(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
-
-@Composable
 private fun PermissionActionRow(
     title: String,
     subtitle: String,
@@ -259,21 +177,3 @@ private fun PermissionActionRow(
         }
     }
 }
-
-@StringRes
-internal fun AppLanguage.labelRes(): Int =
-    when (this) {
-        AppLanguage.SYSTEM -> R.string.language_system
-        AppLanguage.SIMPLIFIED_CHINESE -> R.string.language_zh_hans
-        AppLanguage.TRADITIONAL_CHINESE -> R.string.language_zh_hant
-        AppLanguage.ENGLISH -> R.string.language_en
-    }
-
-@StringRes
-internal fun ChatTextSize.labelRes(): Int =
-    when (this) {
-        ChatTextSize.SMALL -> R.string.text_size_small
-        ChatTextSize.MEDIUM -> R.string.text_size_medium
-        ChatTextSize.LARGE -> R.string.text_size_large
-        ChatTextSize.EXTRA_LARGE -> R.string.text_size_extra_large
-    }

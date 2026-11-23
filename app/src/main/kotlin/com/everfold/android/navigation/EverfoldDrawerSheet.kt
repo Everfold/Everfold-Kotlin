@@ -1,4 +1,4 @@
-package com.everfold.android
+package com.everfold.android.navigation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.android.R
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import kotlinx.collections.immutable.ImmutableList

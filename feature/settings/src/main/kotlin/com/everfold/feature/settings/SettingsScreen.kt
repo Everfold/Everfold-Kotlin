@@ -43,6 +43,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.AppPreferences
+import com.everfold.feature.settings.screen.labelRes
+import com.everfold.feature.settings.system.SystemPermissionStatus
+import com.everfold.feature.settings.system.readSystemPermissionStatus
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

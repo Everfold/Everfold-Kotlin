@@ -1,4 +1,4 @@
-package com.everfold.feature.settings
+package com.everfold.feature.settings.screen
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
@@ -21,26 +24,62 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.theme.parseHexColorOrNull
 import com.everfold.core.designsystem.theme.toColor
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
+import com.everfold.feature.settings.R
+import com.everfold.feature.settings.SettingsViewModel
+import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val MAX_CHANNEL = 255
 
+@Composable
+fun AppearanceSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = koinViewModel(),
+) {
+    val prefs by viewModel.preferences.collectAsStateWithLifecycle()
+
+    SettingsSubPageScaffold(
+        title = stringResource(R.string.settings_entry_appearance_title),
+        onBack = onBack,
+        modifier = modifier,
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                AppearanceCard(
+                    prefs = prefs,
+                    onThemeModeChange = viewModel::setThemeMode,
+                    onThemeColorModeChange = viewModel::setThemeColorMode,
+                    onSeedColorChange = viewModel::setSeedColor,
+                    onCustomColorHexChange = viewModel::setCustomColorHex,
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun AppearanceCard(
+private fun AppearanceCard(
     prefs: AppPreferences,
     onThemeModeChange: (ThemeMode) -> Unit,
     onThemeColorModeChange: (ThemeColorMode) -> Unit,
@@ -65,7 +104,6 @@ internal fun AppearanceCard(
                     )
                 }
             }
-
             Text(
                 text = stringResource(R.string.appearance_theme_color_label),
                 style = MaterialTheme.typography.titleSmall,
@@ -79,31 +117,43 @@ internal fun AppearanceCard(
                     )
                 }
             }
+            ThemeColorDetails(
+                prefs = prefs,
+                onSeedColorChange = onSeedColorChange,
+                onCustomColorHexChange = onCustomColorHexChange,
+            )
+        }
+    }
+}
 
-            when (prefs.themeColorMode) {
-                ThemeColorMode.SYSTEM_DYNAMIC -> {
-                    Text(
-                        text = stringResource(R.string.appearance_dynamic_color_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+@Composable
+private fun ThemeColorDetails(
+    prefs: AppPreferences,
+    onSeedColorChange: (SeedColorPreset) -> Unit,
+    onCustomColorHexChange: (String) -> Unit,
+) {
+    when (prefs.themeColorMode) {
+        ThemeColorMode.SYSTEM_DYNAMIC -> {
+            Text(
+                text = stringResource(R.string.appearance_dynamic_color_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
-                ThemeColorMode.PRESET -> {
-                    PresetColorSwatches(
-                        selected = prefs.seedColor,
-                        onSelect = onSeedColorChange,
-                    )
-                }
+        ThemeColorMode.PRESET -> {
+            PresetColorSwatches(
+                selected = prefs.seedColor,
+                onSelect = onSeedColorChange,
+            )
+        }
 
-                ThemeColorMode.CUSTOM -> {
-                    CustomColorPicker(
-                        hex = prefs.customColorHex,
-                        fallbackColor = prefs.seedColor.toColor(),
-                        onHexChange = onCustomColorHexChange,
-                    )
-                }
-            }
+        ThemeColorMode.CUSTOM -> {
+            CustomColorPicker(
+                hex = prefs.customColorHex,
+                fallbackColor = prefs.seedColor.toColor(),
+                onHexChange = onCustomColorHexChange,
+            )
         }
     }
 }
@@ -191,15 +241,9 @@ private fun CustomColorPicker(
                 modifier = Modifier.weight(1f),
             )
         }
-        ChannelSlider(label = "R", value = red) { r ->
-            onHexChange(formatHex(r, green, blue))
-        }
-        ChannelSlider(label = "G", value = green) { g ->
-            onHexChange(formatHex(red, g, blue))
-        }
-        ChannelSlider(label = "B", value = blue) { b ->
-            onHexChange(formatHex(red, green, b))
-        }
+        ChannelSlider(label = "R", value = red) { r -> onHexChange(formatHex(r, green, blue)) }
+        ChannelSlider(label = "G", value = green) { g -> onHexChange(formatHex(red, g, blue)) }
+        ChannelSlider(label = "B", value = blue) { b -> onHexChange(formatHex(red, green, b)) }
     }
 }
 
