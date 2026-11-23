@@ -5,9 +5,12 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -36,12 +39,19 @@ internal fun EverfoldAppShell(
     val currentRoute = backStack.lastOrNull() as? AppDestination ?: AppDestination.Session(null)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val dismissIme = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
+    LaunchedEffect(drawerState.targetValue) {
+        if (drawerState.targetValue == DrawerValue.Open) dismissIme()
+    }
 
     val currentSessionRoute = currentRoute as? AppDestination.Session
-    val isRootRoute =
-        currentRoute is AppDestination.Session ||
-            currentRoute is AppDestination.Nodes ||
-            currentRoute is AppDestination.Settings
+    val isRootRoute = currentRoute.isRootDestination()
 
     fun openRoot(target: AppDestination) {
         scope.launch {
@@ -73,10 +83,16 @@ internal fun EverfoldAppShell(
     ) {
         AppNavDisplay(
             backStack = backStack,
-            onOpenDrawer = { scope.launch { drawerState.open() } },
+            onOpenDrawer = {
+                dismissIme()
+                scope.launch { drawerState.open() }
+            },
         )
     }
 }
+
+private fun AppDestination.isRootDestination(): Boolean =
+    this is AppDestination.Session || this is AppDestination.Nodes || this is AppDestination.Settings
 
 @Composable
 private fun AppNavDisplay(
