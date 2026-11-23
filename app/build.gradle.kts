@@ -57,7 +57,6 @@ dependencies {
     implementation(projects.core.gatewayMock)
     implementation(projects.core.model)
     implementation(projects.core.ui)
-    implementation(projects.feature.models)
     implementation(projects.feature.nodes)
     implementation(projects.feature.onboarding)
     implementation(projects.feature.sessions)

@@ -1,11 +1,5 @@
 <resources>
-    <string name="sessions_title">會話</string>
-    <string name="sessions_new_fab">新增智能體會話</string>
-    <string name="sessions_empty_title">還沒有活躍的智能體會話</string>
-    <string name="sessions_empty_subtitle">點擊右下角新增按鈕，向 Authority 發起一個新的 Agent Loop。</string>
-    <string name="sessions_card_meta">Loop · %1$s · %2$s</string>
-
-    <string name="session_detail_back">返回</string>
+    <string name="session_detail_open_menu">開啟導覽列</string>
     <string name="session_detail_new_title">新會話</string>
     <string name="session_detail_new_subtitle">準備向 Authority 發起新 Loop</string>
     <string name="session_detail_new_action">新增會話</string>

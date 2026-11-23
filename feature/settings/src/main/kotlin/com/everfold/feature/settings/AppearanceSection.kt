@@ -230,7 +230,7 @@ private fun formatHex(
 ): String = String.format(Locale.US, "#%02X%02X%02X", red, green, blue)
 
 @StringRes
-private fun ThemeMode.labelRes(): Int =
+internal fun ThemeMode.labelRes(): Int =
     when (this) {
         ThemeMode.SYSTEM -> R.string.theme_mode_system
         ThemeMode.LIGHT -> R.string.theme_mode_light
@@ -238,7 +238,7 @@ private fun ThemeMode.labelRes(): Int =
     }
 
 @StringRes
-private fun ThemeColorMode.labelRes(): Int =
+internal fun ThemeColorMode.labelRes(): Int =
     when (this) {
         ThemeColorMode.SYSTEM_DYNAMIC -> R.string.theme_color_system_dynamic
         ThemeColorMode.PRESET -> R.string.theme_color_preset

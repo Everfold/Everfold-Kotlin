@@ -1,5 +1,6 @@
 package com.everfold.feature.sessions
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.AddComment
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -60,7 +61,7 @@ private const val COLLAPSED_PREVIEW_CHARS = 160
 @Composable
 fun SessionDetailScreen(
     sessionId: String?,
-    onBack: () -> Unit,
+    onOpenDrawer: () -> Unit,
     onSessionCreate: (String) -> Unit,
     onNewSession: () -> Unit,
     modifier: Modifier = Modifier,
@@ -82,7 +83,7 @@ fun SessionDetailScreen(
             SessionDetailTopBar(
                 detail = detail,
                 defaultModelName = state.defaultModelName,
-                onBack = onBack,
+                onOpenDrawer = onOpenDrawer,
                 onNewSession = onNewSession,
             )
         },
@@ -141,7 +142,8 @@ private fun SessionDetailBody(
                 ObservedItemRow(
                     item = item,
                     autoCollapseLongMessages = state.autoCollapseLongMessages,
-                    showNodeBadgesInline = state.showNodeBadgesInline,
+                    expandRunningActionTraces = state.expandRunningActionTraces,
+                    expandCompletedActionTraces = state.expandCompletedActionTraces,
                 )
             }
         }
@@ -153,15 +155,15 @@ private fun SessionDetailBody(
 private fun SessionDetailTopBar(
     detail: AgentSessionDetail?,
     defaultModelName: String,
-    onBack: () -> Unit,
+    onOpenDrawer: () -> Unit,
     onNewSession: () -> Unit,
 ) {
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = onOpenDrawer) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.session_detail_back),
+                    imageVector = Icons.Rounded.Menu,
+                    contentDescription = stringResource(R.string.session_detail_open_menu),
                 )
             }
         },
@@ -206,7 +208,8 @@ private fun SessionDetailTopBar(
 private fun ObservedItemRow(
     item: ObservedItem,
     autoCollapseLongMessages: Boolean,
-    showNodeBadgesInline: Boolean,
+    expandRunningActionTraces: Boolean,
+    expandCompletedActionTraces: Boolean,
 ) {
     when (item) {
         is ObservedItem.UserMessage -> {
@@ -219,7 +222,8 @@ private fun ObservedItemRow(
         is ObservedItem.ActionGroup -> {
             ActionTraceGroupCard(
                 actions = item.actions,
-                showNodeBadgesInline = showNodeBadgesInline,
+                expandWhenRunning = expandRunningActionTraces,
+                expandWhenCompleted = expandCompletedActionTraces,
             )
         }
 
@@ -364,3 +368,14 @@ private fun SessionComposerBar(
         }
     }
 }
+
+@StringRes
+private fun LoopState.labelRes(): Int =
+    when (this) {
+        LoopState.IDLE -> R.string.loop_state_idle
+        LoopState.PLANNING -> R.string.loop_state_planning
+        LoopState.EXECUTING_ACTION -> R.string.loop_state_executing
+        LoopState.AWAITING_INPUT -> R.string.loop_state_awaiting_input
+        LoopState.COMPLETED -> R.string.loop_state_completed
+        LoopState.FAILED -> R.string.loop_state_failed
+    }

@@ -43,11 +43,14 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 fun ActionTraceGroupCard(
     actions: ImmutableList<ActionTrace>,
-    showNodeBadgesInline: Boolean,
+    expandWhenRunning: Boolean,
+    expandWhenCompleted: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val isRunning = actions.any { it.status == ActionStatus.RUNNING }
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    val defaultExpanded = if (isRunning) expandWhenRunning else expandWhenCompleted
+    var manualOverride by rememberSaveable(isRunning) { mutableStateOf<Boolean?>(null) }
+    val isExpanded = manualOverride ?: defaultExpanded
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -59,10 +62,10 @@ fun ActionTraceGroupCard(
             ActionGroupHeader(
                 actionCount = actions.size,
                 isRunning = isRunning,
-                expanded = expanded,
-                onToggle = { expanded = !expanded },
+                expanded = isExpanded,
+                onToggle = { manualOverride = !isExpanded },
             )
-            AnimatedVisibility(visible = expanded || showNodeBadgesInline) {
+            AnimatedVisibility(visible = isExpanded) {
                 Column(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),

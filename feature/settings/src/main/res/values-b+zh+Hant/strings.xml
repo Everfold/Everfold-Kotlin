@@ -1,14 +1,23 @@
 <resources>
     <string name="settings_title">設定</string>
-    <string name="settings_section_appearance">外觀</string>
-    <string name="settings_section_interface">介面</string>
-    <string name="settings_section_sessions">會話</string>
-    <string name="settings_section_permissions">權限與背景執行</string>
-    <string name="settings_section_connection_about">連線與關於</string>
+    <string name="settings_open_menu">開啟導覽列</string>
+    <string name="settings_group_appearance_interface">外觀與介面</string>
+    <string name="settings_entry_appearance_title">外觀與主題</string>
+    <string name="settings_entry_language_title">語言</string>
+    <string name="settings_group_sessions">會話與可觀測性</string>
+    <string name="settings_entry_sessions_title">會話與軌跡</string>
+    <string name="settings_group_permissions">系統與權限</string>
+    <string name="settings_entry_permissions_title">權限與背景執行</string>
+    <string name="settings_group_connection_about">連線與關於</string>
     <string name="settings_disconnect">中斷目前連線並返回引導頁</string>
     <string name="settings_about_title">關於 Everfold</string>
     <string name="settings_about_entry_subtitle">版本 v%1$s · GitHub · Apache 2.0</string>
     <string name="settings_back">返回</string>
+    <string name="settings_summary_pair">%1$s · %2$s</string>
+    <string name="settings_summary_auto_collapse_on">自動折疊長訊息</string>
+    <string name="settings_summary_auto_collapse_off">預設展開長訊息</string>
+    <string name="settings_summary_notifications_status">通知：%1$s</string>
+    <string name="settings_summary_background_status">背景：%1$s</string>
 
     <string name="appearance_theme_mode_label">淺色 / 深色模式</string>
     <string name="theme_mode_system">跟隨系統</string>
@@ -28,12 +37,13 @@
     <string name="seed_forest">森綠</string>
     <string name="seed_plum">梅紫</string>
 
-    <string name="interface_language_label">應用程式語言</string>
     <string name="language_system">跟隨系統</string>
     <string name="language_zh_hans">简体中文</string>
     <string name="language_zh_hant">繁體中文</string>
     <string name="language_en">English</string>
 
+    <string name="session_pref_section_reading">閱讀與排版</string>
+    <string name="session_pref_section_traces">動作與節點軌跡</string>
     <string name="session_pref_text_size_label">會話文字大小</string>
     <string name="text_size_small">小</string>
     <string name="text_size_medium">標準</string>
@@ -42,8 +52,10 @@
     <string name="session_pref_text_preview">預覽：Everfold 會話正文與 Markdown 回覆字級範例。</string>
     <string name="session_pref_auto_collapse_title">自動折疊長訊息</string>
     <string name="session_pref_auto_collapse_subtitle">較長的使用者或智能體回覆預設折疊，點擊展開全文</string>
-    <string name="session_pref_show_traces_title">預設展開動作與節點軌跡</string>
-    <string name="session_pref_show_traces_subtitle">關閉時對使用者無感折疊，點擊步驟卡片再檢視執行節點</string>
+    <string name="session_pref_expand_running_traces_title">執行時預設展開</string>
+    <string name="session_pref_expand_running_traces_subtitle">Agent Loop 正在執行跨節點動作時預設展開步驟卡片</string>
+    <string name="session_pref_expand_completed_traces_title">結束後預設展開</string>
+    <string name="session_pref_expand_completed_traces_subtitle">動作組全部完成後仍保持展開；關閉則自動收合以保持介面清爽</string>
 
     <string name="perm_notifications_title">通知權限</string>
     <string name="perm_notifications_subtitle">用於顯示背景 Agent Loop 進度與核准提醒</string>

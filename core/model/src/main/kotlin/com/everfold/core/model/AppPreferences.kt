@@ -51,7 +51,8 @@ data class AppPreferences(
     val language: AppLanguage = AppLanguage.SYSTEM,
     val chatTextSize: ChatTextSize = ChatTextSize.MEDIUM,
     val autoCollapseLongMessages: Boolean = true,
-    val showNodeBadgesInline: Boolean = false,
+    val expandRunningActionTraces: Boolean = true,
+    val expandCompletedActionTraces: Boolean = false,
 )
 
 data class AppInfo(

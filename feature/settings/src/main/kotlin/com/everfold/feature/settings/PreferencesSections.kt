@@ -46,43 +46,10 @@ internal data class SystemPermissionStatus(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun LanguageCard(
-    language: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
-) {
-    val context = LocalContext.current
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.interface_language_label),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AppLanguage.entries.forEach { option ->
-                    FilterChip(
-                        selected = language == option,
-                        onClick = {
-                            onLanguageChange(option)
-                            applyAppLanguage(context, option)
-                        },
-                        label = { Text(stringResource(option.labelRes())) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun SessionPreferencesCard(
+internal fun SessionReadingCard(
     prefs: AppPreferences,
     onChatTextSizeChange: (ChatTextSize) -> Unit,
     onAutoCollapseChange: (Boolean) -> Unit,
-    onShowNodeBadgesChange: (Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -114,11 +81,34 @@ internal fun SessionPreferencesCard(
                 checked = prefs.autoCollapseLongMessages,
                 onCheckedChange = onAutoCollapseChange,
             )
+        }
+    }
+}
+
+@Composable
+internal fun ActionTracesCard(
+    expandWhenRunning: Boolean,
+    expandWhenCompleted: Boolean,
+    onExpandRunningChange: (Boolean) -> Unit,
+    onExpandCompletedChange: (Boolean) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             SettingSwitchRow(
-                title = stringResource(R.string.session_pref_show_traces_title),
-                subtitle = stringResource(R.string.session_pref_show_traces_subtitle),
-                checked = prefs.showNodeBadgesInline,
-                onCheckedChange = onShowNodeBadgesChange,
+                title = stringResource(R.string.session_pref_expand_running_traces_title),
+                subtitle = stringResource(R.string.session_pref_expand_running_traces_subtitle),
+                checked = expandWhenRunning,
+                onCheckedChange = onExpandRunningChange,
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SettingSwitchRow(
+                title = stringResource(R.string.session_pref_expand_completed_traces_title),
+                subtitle = stringResource(R.string.session_pref_expand_completed_traces_subtitle),
+                checked = expandWhenCompleted,
+                onCheckedChange = onExpandCompletedChange,
             )
         }
     }
@@ -271,7 +261,7 @@ private fun PermissionActionRow(
 }
 
 @StringRes
-private fun AppLanguage.labelRes(): Int =
+internal fun AppLanguage.labelRes(): Int =
     when (this) {
         AppLanguage.SYSTEM -> R.string.language_system
         AppLanguage.SIMPLIFIED_CHINESE -> R.string.language_zh_hans
@@ -280,7 +270,7 @@ private fun AppLanguage.labelRes(): Int =
     }
 
 @StringRes
-private fun ChatTextSize.labelRes(): Int =
+internal fun ChatTextSize.labelRes(): Int =
     when (this) {
         ChatTextSize.SMALL -> R.string.text_size_small
         ChatTextSize.MEDIUM -> R.string.text_size_medium

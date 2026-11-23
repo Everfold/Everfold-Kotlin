@@ -1,14 +1,23 @@
 <resources>
     <string name="settings_title">Settings</string>
-    <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_section_interface">Interface</string>
-    <string name="settings_section_sessions">Sessions</string>
-    <string name="settings_section_permissions">Permissions &amp; Background</string>
-    <string name="settings_section_connection_about">Connection &amp; About</string>
+    <string name="settings_open_menu">Open navigation drawer</string>
+    <string name="settings_group_appearance_interface">Appearance &amp; Interface</string>
+    <string name="settings_entry_appearance_title">Appearance &amp; Theme</string>
+    <string name="settings_entry_language_title">Language</string>
+    <string name="settings_group_sessions">Sessions &amp; Observability</string>
+    <string name="settings_entry_sessions_title">Sessions &amp; Traces</string>
+    <string name="settings_group_permissions">System &amp; Permissions</string>
+    <string name="settings_entry_permissions_title">Permissions &amp; Background</string>
+    <string name="settings_group_connection_about">Connection &amp; About</string>
     <string name="settings_disconnect">Disconnect and return to onboarding</string>
     <string name="settings_about_title">About Everfold</string>
     <string name="settings_about_entry_subtitle">Version v%1$s · GitHub · Apache 2.0</string>
     <string name="settings_back">Back</string>
+    <string name="settings_summary_pair">%1$s · %2$s</string>
+    <string name="settings_summary_auto_collapse_on">Auto-collapse long messages</string>
+    <string name="settings_summary_auto_collapse_off">Full messages shown</string>
+    <string name="settings_summary_notifications_status">Notifications: %1$s</string>
+    <string name="settings_summary_background_status">Background: %1$s</string>
 
     <string name="appearance_theme_mode_label">Theme mode</string>
     <string name="theme_mode_system">Follow system</string>
@@ -28,12 +37,13 @@
     <string name="seed_forest">Forest</string>
     <string name="seed_plum">Plum</string>
 
-    <string name="interface_language_label">App language</string>
     <string name="language_system">Follow system</string>
     <string name="language_zh_hans">简体中文</string>
     <string name="language_zh_hant">繁體中文</string>
     <string name="language_en">English</string>
 
+    <string name="session_pref_section_reading">Reading &amp; Typography</string>
+    <string name="session_pref_section_traces">Action &amp; Node Traces</string>
     <string name="session_pref_text_size_label">Message text size</string>
     <string name="text_size_small">Small</string>
     <string name="text_size_medium">Standard</string>
@@ -42,8 +52,10 @@
     <string name="session_pref_text_preview">Preview: Sample session message and Markdown reply size.</string>
     <string name="session_pref_auto_collapse_title">Auto-collapse long messages</string>
     <string name="session_pref_auto_collapse_subtitle">Collapse long user or agent replies by default with a tap-to-expand toggle</string>
-    <string name="session_pref_show_traces_title">Expand action &amp; node traces by default</string>
-    <string name="session_pref_show_traces_subtitle">When off, action steps stay compact until tapped</string>
+    <string name="session_pref_expand_running_traces_title">Expand while running</string>
+    <string name="session_pref_expand_running_traces_subtitle">Automatically expand action steps while the Agent Loop is executing</string>
+    <string name="session_pref_expand_completed_traces_title">Expand after completion</string>
+    <string name="session_pref_expand_completed_traces_subtitle">Keep action &amp; node traces expanded once execution finishes</string>
 
     <string name="perm_notifications_title">Notification permission</string>
     <string name="perm_notifications_subtitle">Used for background Agent Loop progress and approval prompts</string>

@@ -5,6 +5,5 @@ import org.koin.dsl.module
 
 val sessionsModule =
     module {
-        viewModelOf(::SessionsListViewModel)
         viewModelOf(::SessionDetailViewModel)
     }

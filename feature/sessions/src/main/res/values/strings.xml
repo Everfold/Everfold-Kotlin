@@ -1,11 +1,5 @@
 <resources>
-    <string name="sessions_title">Sessions</string>
-    <string name="sessions_new_fab">New agent session</string>
-    <string name="sessions_empty_title">No active agent sessions</string>
-    <string name="sessions_empty_subtitle">Tap the button below to start a new Agent Loop via Authority.</string>
-    <string name="sessions_card_meta">Loop · %1$s · %2$s</string>
-
-    <string name="session_detail_back">Back</string>
+    <string name="session_detail_open_menu">Open navigation drawer</string>
     <string name="session_detail_new_title">New Session</string>
     <string name="session_detail_new_subtitle">Ready to start a new Loop via Authority</string>
     <string name="session_detail_new_action">New session</string>

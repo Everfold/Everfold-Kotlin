@@ -1,5 +1,6 @@
 <resources>
     <string name="nodes_title">节点管理</string>
+    <string name="nodes_open_menu">打开导航栏</string>
     <string name="nodes_refresh">刷新节点</string>
     <string name="nodes_topology_header">可见节点拓扑 (%1$d)</string>
     <string name="nodes_disconnected">未连接</string>

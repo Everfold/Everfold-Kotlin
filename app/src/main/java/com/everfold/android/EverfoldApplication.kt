@@ -3,7 +3,6 @@ package com.everfold.android
 import android.app.Application
 import com.everfold.core.gateway.mock.mockGatewayModule
 import com.everfold.core.model.AppInfo
-import com.everfold.feature.models.modelsModule
 import com.everfold.feature.nodes.nodesModule
 import com.everfold.feature.onboarding.onboardingModule
 import com.everfold.feature.sessions.sessionsModule
@@ -44,6 +43,5 @@ internal fun everfoldAppModules(): List<Module> =
         onboardingModule,
         sessionsModule,
         nodesModule,
-        modelsModule,
         settingsModule,
     )

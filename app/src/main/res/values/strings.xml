@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Everfold</string>
-    <string name="tab_sessions">Sessions</string>
-    <string name="tab_nodes">Nodes</string>
-    <string name="tab_models">Models</string>
-    <string name="tab_settings">Settings</string>
+    <string name="drawer_new_session">New session</string>
+    <string name="drawer_sessions_header">Recent sessions</string>
+    <string name="drawer_sessions_empty">No sessions yet</string>
+    <string name="drawer_nodes">Nodes</string>
+    <string name="drawer_settings">Settings</string>
 </resources>

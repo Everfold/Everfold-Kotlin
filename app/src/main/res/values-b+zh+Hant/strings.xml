@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Everfold</string>
-    <string name="tab_sessions">會話</string>
-    <string name="tab_nodes">節點</string>
-    <string name="tab_models">模型</string>
-    <string name="tab_settings">設定</string>
+    <string name="drawer_new_session">新增會話</string>
+    <string name="drawer_sessions_header">最近會話</string>
+    <string name="drawer_sessions_empty">暫無會話</string>
+    <string name="drawer_nodes">節點管理</string>
+    <string name="drawer_settings">設定</string>
 </resources>

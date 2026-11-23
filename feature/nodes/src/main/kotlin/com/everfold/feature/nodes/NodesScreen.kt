@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,6 +45,7 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NodesScreen(
+    onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NodesViewModel = koinViewModel(),
 ) {
@@ -53,6 +55,14 @@ fun NodesScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(
+                            imageVector = Icons.Rounded.Menu,
+                            contentDescription = stringResource(R.string.nodes_open_menu),
+                        )
+                    }
+                },
                 title = { Text(stringResource(R.string.nodes_title)) },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {

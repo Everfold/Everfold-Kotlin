@@ -101,7 +101,11 @@ class InMemoryAppSettingsStore : AppSettingsStore {
         _preferences.update { it.copy(autoCollapseLongMessages = enabled) }
     }
 
-    override fun updateShowNodeBadgesInline(enabled: Boolean) {
-        _preferences.update { it.copy(showNodeBadgesInline = enabled) }
+    override fun updateExpandRunningActionTraces(enabled: Boolean) {
+        _preferences.update { it.copy(expandRunningActionTraces = enabled) }
+    }
+
+    override fun updateExpandCompletedActionTraces(enabled: Boolean) {
+        _preferences.update { it.copy(expandCompletedActionTraces = enabled) }
     }
 }

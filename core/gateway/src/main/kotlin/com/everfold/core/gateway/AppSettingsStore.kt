@@ -25,5 +25,7 @@ interface AppSettingsStore {
 
     fun updateAutoCollapseLongMessages(enabled: Boolean)
 
-    fun updateShowNodeBadgesInline(enabled: Boolean)
+    fun updateExpandRunningActionTraces(enabled: Boolean)
+
+    fun updateExpandCompletedActionTraces(enabled: Boolean)
 }

@@ -24,7 +24,8 @@ data class SessionDetailUiState(
     val draft: String = "",
     val chatTextSize: ChatTextSize = ChatTextSize.MEDIUM,
     val autoCollapseLongMessages: Boolean = true,
-    val showNodeBadgesInline: Boolean = false,
+    val expandRunningActionTraces: Boolean = true,
+    val expandCompletedActionTraces: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -57,7 +58,8 @@ class SessionDetailViewModel(
                 draft = draftText,
                 chatTextSize = prefs.chatTextSize,
                 autoCollapseLongMessages = prefs.autoCollapseLongMessages,
-                showNodeBadgesInline = prefs.showNodeBadgesInline,
+                expandRunningActionTraces = prefs.expandRunningActionTraces,
+                expandCompletedActionTraces = prefs.expandCompletedActionTraces,
             )
         }.stateIn(
             scope = viewModelScope,

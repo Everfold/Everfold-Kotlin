@@ -1,6 +1,5 @@
 package com.everfold.feature.settings
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +43,6 @@ internal fun AboutScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    BackHandler(onBack = onBack)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

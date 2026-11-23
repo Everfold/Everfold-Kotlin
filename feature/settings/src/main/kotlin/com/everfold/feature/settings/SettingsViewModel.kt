@@ -35,7 +35,9 @@ class SettingsViewModel(
 
     fun setAutoCollapseLongMessages(enabled: Boolean) = settingsStore.updateAutoCollapseLongMessages(enabled)
 
-    fun setShowNodeBadgesInline(enabled: Boolean) = settingsStore.updateShowNodeBadgesInline(enabled)
+    fun setExpandRunningActionTraces(enabled: Boolean) = settingsStore.updateExpandRunningActionTraces(enabled)
+
+    fun setExpandCompletedActionTraces(enabled: Boolean) = settingsStore.updateExpandCompletedActionTraces(enabled)
 
     fun disconnectAuthority() {
         viewModelScope.launch {
