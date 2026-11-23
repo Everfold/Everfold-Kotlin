@@ -78,9 +78,9 @@
     <string name="perm_action_allow">申請允許</string>
 
     <string name="perm_battery_title">耗電管理（允許完全背景行為）</string>
-    <string name="perm_battery_subtitle">一鍵前往系統耗電管理，手動開啟「允許完全背景行為 / 無限制」</string>
+    <string name="perm_battery_subtitle">前往本應用程式詳情頁，進入「耗電管理 / 電池」開啟「完全允許背景行為 / 無限制」</string>
     <string name="perm_status_manual">手動設定</string>
-    <string name="perm_action_open_battery">前往耗電管理</string>
+    <string name="perm_action_open_battery">前往應用程式詳情</string>
 
     <string name="about_version_label">軟體版本</string>
     <string name="about_version_value">v%1$s (Build %2$d)</string>

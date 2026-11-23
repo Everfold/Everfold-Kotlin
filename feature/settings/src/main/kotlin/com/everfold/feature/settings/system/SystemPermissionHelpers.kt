@@ -58,11 +58,7 @@ internal fun requestIgnoreBatteryOptimizations(context: Context) {
 }
 
 internal fun openBatteryManagementSettings(context: Context) {
-    val batteryIntent =
-        Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-    launchSafely(context, batteryIntent) { openAppDetailsSettings(context) }
+    openAppDetailsSettings(context)
 }
 
 internal fun openAppDetailsSettings(context: Context) {

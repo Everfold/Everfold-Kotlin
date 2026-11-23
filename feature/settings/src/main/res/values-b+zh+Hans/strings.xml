@@ -78,9 +78,9 @@
     <string name="perm_action_allow">申请允许</string>
 
     <string name="perm_battery_title">耗电管理（允许完全后台行为）</string>
-    <string name="perm_battery_subtitle">一键前往系统耗电管理，手动开启「允许完全后台行为 / 无限制」</string>
+    <string name="perm_battery_subtitle">前往本应用详情页，进入「耗电管理 / 电池」开启「完全允许后台行为 / 无限制」</string>
     <string name="perm_status_manual">手动配置</string>
-    <string name="perm_action_open_battery">前往耗电管理</string>
+    <string name="perm_action_open_battery">前往应用详情</string>
 
     <string name="about_version_label">软件版本</string>
     <string name="about_version_value">v%1$s (Build %2$d)</string>

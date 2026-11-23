@@ -78,9 +78,9 @@
     <string name="perm_action_allow">Allow</string>
 
     <string name="perm_battery_title">Battery management (Unrestricted background)</string>
-    <string name="perm_battery_subtitle">Jump directly to system battery settings to enable unrestricted background activity</string>
+    <string name="perm_battery_subtitle">Open Everfold\'s App Info page, then go to Battery to allow unrestricted background activity</string>
     <string name="perm_status_manual">Manual setup</string>
-    <string name="perm_action_open_battery">Open battery settings</string>
+    <string name="perm_action_open_battery">Open App Info</string>
 
     <string name="about_version_label">Version</string>
     <string name="about_version_value">v%1$s (Build %2$d)</string>
