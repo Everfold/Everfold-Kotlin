@@ -26,25 +26,38 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldEmptyState
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AgentSessionDetail
+import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.ObservedItem
 import com.everfold.core.ui.ActionTraceGroupCard
 import com.everfold.core.ui.MarkdownMessageContent
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val LONG_MESSAGE_CHAR_LIMIT = 240
+private const val COLLAPSED_PREVIEW_CHARS = 160
+
 @Composable
 internal fun SessionDetailPane(
     detail: AgentSessionDetail,
     draft: String,
+    chatTextSize: ChatTextSize,
+    autoCollapseLongMessages: Boolean,
     showNodeBadgesInline: Boolean,
     onBack: () -> Unit,
     onDraftChange: (String) -> Unit,
@@ -76,16 +89,25 @@ internal fun SessionDetailPane(
                 modifier = Modifier.padding(innerPadding),
             )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(detail.items, key = { it.id }) { item ->
-                    ObservedItemRow(
-                        item = item,
-                        showNodeBadgesInline = showNodeBadgesInline,
-                    )
+            val currentDensity = LocalDensity.current
+            val scaledDensity =
+                Density(
+                    density = currentDensity.density,
+                    fontScale = currentDensity.fontScale * chatTextSize.scale,
+                )
+            CompositionLocalProvider(LocalDensity provides scaledDensity) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(detail.items, key = { it.id }) { item ->
+                        ObservedItemRow(
+                            item = item,
+                            autoCollapseLongMessages = autoCollapseLongMessages,
+                            showNodeBadgesInline = showNodeBadgesInline,
+                        )
+                    }
                 }
             }
         }
@@ -131,24 +153,15 @@ private fun SessionDetailTopBar(
 @Composable
 private fun ObservedItemRow(
     item: ObservedItem,
+    autoCollapseLongMessages: Boolean,
     showNodeBadgesInline: Boolean,
 ) {
     when (item) {
         is ObservedItem.UserMessage -> {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.widthIn(max = 320.dp),
-                ) {
-                    Text(
-                        text = item.content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    )
-                }
-            }
+            UserMessageBubble(
+                content = item.content,
+                autoCollapseLongMessages = autoCollapseLongMessages,
+            )
         }
 
         is ObservedItem.ActionGroup -> {
@@ -159,16 +172,79 @@ private fun ObservedItemRow(
         }
 
         is ObservedItem.AssistantMessage -> {
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                tonalElevation = 1.dp,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                MarkdownMessageContent(
-                    content = item.markdown,
-                    modifier = Modifier.padding(16.dp),
+            AssistantMessageCard(
+                item = item,
+                autoCollapseLongMessages = autoCollapseLongMessages,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UserMessageBubble(
+    content: String,
+    autoCollapseLongMessages: Boolean,
+) {
+    val isLong = autoCollapseLongMessages && content.length > LONG_MESSAGE_CHAR_LIMIT
+    var expanded by rememberSaveable(content, autoCollapseLongMessages) { mutableStateOf(!isLong) }
+
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.widthIn(max = 320.dp),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(
+                    text = if (expanded) content else "${content.take(COLLAPSED_PREVIEW_CHARS)}…",
+                    style = MaterialTheme.typography.bodyLarge,
                 )
+                if (isLong) {
+                    TextButton(
+                        onClick = { expanded = !expanded },
+                        modifier = Modifier.align(Alignment.End),
+                    ) {
+                        Text(if (expanded) "收起" else "展开全文")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssistantMessageCard(
+    item: ObservedItem.AssistantMessage,
+    autoCollapseLongMessages: Boolean,
+) {
+    val isLong =
+        autoCollapseLongMessages &&
+            !item.isStreaming &&
+            item.markdown.length > LONG_MESSAGE_CHAR_LIMIT
+    var expanded by rememberSaveable(item.id, autoCollapseLongMessages) { mutableStateOf(!isLong) }
+    val rendered =
+        if (expanded || item.isStreaming) {
+            item.markdown
+        } else {
+            "${item.markdown.take(COLLAPSED_PREVIEW_CHARS)}…"
+        }
+
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            MarkdownMessageContent(content = rendered)
+            if (isLong) {
+                TextButton(
+                    onClick = { expanded = !expanded },
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(if (expanded) "收起" else "展开全文")
+                }
             }
         }
     }

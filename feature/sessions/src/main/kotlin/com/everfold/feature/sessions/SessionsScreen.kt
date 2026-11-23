@@ -46,6 +46,8 @@ fun SessionsScreen(
         SessionDetailPane(
             detail = detail,
             draft = state.draft,
+            chatTextSize = state.chatTextSize,
+            autoCollapseLongMessages = state.autoCollapseLongMessages,
             showNodeBadgesInline = state.showNodeBadgesInline,
             onBack = viewModel::closeSession,
             onDraftChange = viewModel::updateDraft,

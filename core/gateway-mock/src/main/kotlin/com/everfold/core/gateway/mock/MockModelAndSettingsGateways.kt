@@ -2,10 +2,13 @@ package com.everfold.core.gateway.mock
 
 import com.everfold.core.gateway.AppSettingsStore
 import com.everfold.core.gateway.ModelGateway
+import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
+import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.ModelCapability
 import com.everfold.core.model.ModelDescriptor
 import com.everfold.core.model.SeedColorPreset
+import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -74,12 +77,28 @@ class InMemoryAppSettingsStore : AppSettingsStore {
         _preferences.update { it.copy(themeMode = mode) }
     }
 
-    override fun updateDynamicColor(enabled: Boolean) {
-        _preferences.update { it.copy(useDynamicColor = enabled) }
+    override fun updateThemeColorMode(mode: ThemeColorMode) {
+        _preferences.update { it.copy(themeColorMode = mode) }
     }
 
     override fun updateSeedColor(preset: SeedColorPreset) {
         _preferences.update { it.copy(seedColor = preset) }
+    }
+
+    override fun updateCustomColorHex(hex: String) {
+        _preferences.update { it.copy(customColorHex = hex) }
+    }
+
+    override fun updateLanguage(language: AppLanguage) {
+        _preferences.update { it.copy(language = language) }
+    }
+
+    override fun updateChatTextSize(size: ChatTextSize) {
+        _preferences.update { it.copy(chatTextSize = size) }
+    }
+
+    override fun updateAutoCollapseLongMessages(enabled: Boolean) {
+        _preferences.update { it.copy(autoCollapseLongMessages = enabled) }
     }
 
     override fun updateShowNodeBadgesInline(enabled: Boolean) {

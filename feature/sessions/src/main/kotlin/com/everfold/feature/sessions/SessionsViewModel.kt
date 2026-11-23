@@ -6,6 +6,7 @@ import com.everfold.core.gateway.AppSettingsStore
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AgentSessionSummary
+import com.everfold.core.model.ChatTextSize
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,8 @@ data class SessionsUiState(
     val sessions: ImmutableList<AgentSessionSummary> = persistentListOf(),
     val activeDetail: AgentSessionDetail? = null,
     val draft: String = "",
+    val chatTextSize: ChatTextSize = ChatTextSize.MEDIUM,
+    val autoCollapseLongMessages: Boolean = true,
     val showNodeBadgesInline: Boolean = false,
 )
 
@@ -49,6 +52,8 @@ class SessionsViewModel(
                 sessions = sessions,
                 activeDetail = detail,
                 draft = draftText,
+                chatTextSize = prefs.chatTextSize,
+                autoCollapseLongMessages = prefs.autoCollapseLongMessages,
                 showNodeBadgesInline = prefs.showNodeBadgesInline,
             )
         }.stateIn(
