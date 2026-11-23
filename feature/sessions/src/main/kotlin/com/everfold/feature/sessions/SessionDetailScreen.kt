@@ -1,6 +1,14 @@
 package com.everfold.feature.sessions
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,13 +45,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.designsystem.component.EverfoldStatusPill
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.model.AgentSessionDetail
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
 import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
 import org.koin.androidx.compose.koinViewModel
 
 private const val EMPTY_LOGO_ALPHA = 0.75f
+private const val SESSION_BODY_ENTER_MS = 140
+private const val SESSION_BODY_EXIT_MS = 100
 
 @Composable
 fun SessionDetailScreen(
@@ -96,12 +109,45 @@ private fun SessionDetailBody(
     state: SessionDetailUiState,
     modifier: Modifier = Modifier,
 ) {
-    val detail = state.detail
-    if (detail == null || detail.items.isEmpty()) {
-        SessionEmptyPlaceholder(modifier = modifier)
-        return
+    val animationSpeed = LocalAnimationSpeed.current
+    AnimatedContent(
+        targetState = state,
+        contentKey = { it.sessionId },
+        transitionSpec = { sessionBodyTransition(animationSpeed) },
+        modifier = modifier,
+        label = "SessionBody",
+    ) { bodyState ->
+        SessionBodyContent(state = bodyState, modifier = Modifier.fillMaxSize())
     }
+}
 
+@Composable
+private fun SessionBodyContent(
+    state: SessionDetailUiState,
+    modifier: Modifier = Modifier,
+) {
+    val detail = state.detail
+    when {
+        state.sessionId == null || (detail != null && detail.items.isEmpty()) -> {
+            SessionEmptyPlaceholder(modifier = modifier)
+        }
+
+        detail == null -> {
+            Box(modifier = modifier)
+        }
+
+        else -> {
+            SessionMessageList(detail = detail, state = state, modifier = modifier)
+        }
+    }
+}
+
+@Composable
+private fun SessionMessageList(
+    detail: AgentSessionDetail,
+    state: SessionDetailUiState,
+    modifier: Modifier = Modifier,
+) {
     val currentDensity = LocalDensity.current
     val scaledDensity =
         Density(
@@ -125,6 +171,14 @@ private fun SessionDetailBody(
         }
     }
 }
+
+private fun sessionBodyTransition(speed: AnimationSpeed): ContentTransform =
+    if (speed == AnimationSpeed.OFF) {
+        EnterTransition.None togetherWith ExitTransition.None
+    } else {
+        fadeIn(tween(speed.scaleDuration(SESSION_BODY_ENTER_MS))) togetherWith
+            fadeOut(tween(speed.scaleDuration(SESSION_BODY_EXIT_MS)))
+    }
 
 @Composable
 private fun SessionEmptyPlaceholder(modifier: Modifier = Modifier) {

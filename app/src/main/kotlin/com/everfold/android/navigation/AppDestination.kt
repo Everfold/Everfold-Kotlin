@@ -7,9 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal sealed interface AppDestination : NavKey {
     @Serializable
-    data class Session(
-        val sessionId: String? = null,
-    ) : AppDestination
+    data object Session : AppDestination
 
     @Serializable
     data object Nodes : AppDestination
