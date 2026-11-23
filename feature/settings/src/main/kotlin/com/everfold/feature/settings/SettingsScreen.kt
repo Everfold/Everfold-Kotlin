@@ -23,7 +23,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -85,7 +84,6 @@ fun SettingsScreen(
             permissionStatus = permissionStatus,
             versionName = viewModel.appInfo.versionName,
             onOpenSection = onOpenSection,
-            onDisconnect = viewModel::disconnectAuthority,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
@@ -97,7 +95,6 @@ private fun SettingsHubList(
     permissionStatus: SystemPermissionStatus,
     versionName: String,
     onOpenSection: (SettingsSection) -> Unit,
-    onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -135,11 +132,6 @@ private fun SettingsHubList(
                 subtitle = stringResource(R.string.settings_about_entry_subtitle, versionName),
                 onClick = { onOpenSection(SettingsSection.ABOUT) },
             )
-        }
-        item {
-            OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_disconnect))
-            }
         }
     }
 }

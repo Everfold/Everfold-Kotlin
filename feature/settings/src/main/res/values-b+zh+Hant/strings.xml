@@ -8,8 +8,7 @@
     <string name="settings_entry_sessions_title">會話與軌跡</string>
     <string name="settings_group_permissions">系統與權限</string>
     <string name="settings_entry_permissions_title">權限與背景執行</string>
-    <string name="settings_group_connection_about">連線與關於</string>
-    <string name="settings_disconnect">中斷目前連線並返回引導頁</string>
+    <string name="settings_group_connection_about">關於</string>
     <string name="settings_about_title">關於 Everfold</string>
     <string name="settings_about_entry_subtitle">版本 v%1$s · GitHub · Apache 2.0</string>
     <string name="settings_back">返回</string>
