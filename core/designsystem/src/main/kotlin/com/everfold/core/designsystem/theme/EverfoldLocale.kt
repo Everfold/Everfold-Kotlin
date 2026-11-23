@@ -15,28 +15,29 @@ internal fun ProvideAppLocale(
     language: AppLanguage,
     content: @Composable () -> Unit,
 ) {
-    if (language == AppLanguage.SYSTEM) {
-        content()
-        return
-    }
-
     val baseContext = LocalContext.current
     val baseConfig = LocalConfiguration.current
-    val (localizedContext, localizedConfig) =
-        remember(language, baseContext, baseConfig) {
-            val locale = Locale.forLanguageTag(language.languageTag)
-            val config =
-                Configuration(baseConfig).apply {
-                    setLocale(locale)
-                    setLayoutDirection(locale)
-                }
-            baseContext.createConfigurationContext(config) to config
+    val baseResources = LocalResources.current
+    val (targetContext, targetConfig, targetResources) =
+        remember(language, baseContext, baseConfig, baseResources) {
+            if (language == AppLanguage.SYSTEM) {
+                Triple(baseContext, baseConfig, baseResources)
+            } else {
+                val locale = Locale.forLanguageTag(language.languageTag)
+                val config =
+                    Configuration(baseConfig).apply {
+                        setLocale(locale)
+                        setLayoutDirection(locale)
+                    }
+                val localizedContext = baseContext.createConfigurationContext(config)
+                Triple(localizedContext, config, localizedContext.resources)
+            }
         }
 
     CompositionLocalProvider(
-        LocalConfiguration provides localizedConfig,
-        LocalContext provides localizedContext,
-        LocalResources provides localizedContext.resources,
+        LocalConfiguration provides targetConfig,
+        LocalContext provides targetContext,
+        LocalResources provides targetResources,
         content = content,
     )
 }
