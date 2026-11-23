@@ -2,11 +2,13 @@ package com.everfold.feature.sessions
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -23,20 +25,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.everfold.core.designsystem.component.EverfoldEmptyState
+import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.LoopState
 import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
 import org.koin.androidx.compose.koinViewModel
+
+private const val EMPTY_LOGO_ALPHA = 0.75f
 
 @Composable
 fun SessionDetailScreen(
@@ -91,18 +98,7 @@ private fun SessionDetailBody(
 ) {
     val detail = state.detail
     if (detail == null || detail.items.isEmpty()) {
-        EverfoldEmptyState(
-            title =
-                stringResource(
-                    if (detail == null) {
-                        R.string.session_detail_empty_new_title
-                    } else {
-                        R.string.session_detail_empty_existing_title
-                    },
-                ),
-            subtitle = stringResource(R.string.session_detail_empty_subtitle),
-            modifier = modifier,
-        )
+        SessionEmptyPlaceholder(modifier = modifier)
         return
     }
 
@@ -126,6 +122,27 @@ private fun SessionDetailBody(
                     expandCompletedActionTraces = state.expandCompletedActionTraces,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SessionEmptyPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            EverfoldLogo(modifier = Modifier.size(88.dp).alpha(EMPTY_LOGO_ALPHA))
+            Text(
+                text = stringResource(R.string.session_detail_empty_quote),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

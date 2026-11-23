@@ -3,9 +3,7 @@
     <string name="session_detail_new_title">New Session</string>
     <string name="session_detail_new_subtitle">Ready to start a new Loop via Authority</string>
     <string name="session_detail_new_action">New session</string>
-    <string name="session_detail_empty_new_title">Start a new agent session</string>
-    <string name="session_detail_empty_existing_title">Begin a new Agent Loop</string>
-    <string name="session_detail_empty_subtitle">Enter any instruction and Authority will route actions to the best-suited nodes.</string>
+    <string name="session_detail_empty_quote">A journey of a thousand miles begins with a single step</string>
     <string name="session_detail_host_label">Loop · %1$s</string>
     <string name="session_detail_composer_hint">Send an instruction to the agent…</string>
     <string name="session_detail_send">Send</string>

@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.designsystem.component.EverfoldStatusPill
@@ -79,24 +80,21 @@ private fun AboutHeroCard(versionName: String) {
             ),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                EverfoldLogo(modifier = Modifier.size(44.dp))
-                Text(
-                    text = "Everfold",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            EverfoldLogo(modifier = Modifier.size(72.dp))
+            Text(
+                text = "Everfold",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
             Text(
                 text = stringResource(R.string.about_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center,
             )
             EverfoldStatusPill(text = "v$versionName")
         }
