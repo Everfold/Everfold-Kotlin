@@ -49,7 +49,7 @@ nix flake update
 
 ```bash
 # Create Android Emulator
-avdmanager create avd --name everfold --package 'system-images;android-37.2;google_apis;x86_64' --device pixel_10_pro
+avdmanager create avd --name everfold --package 'system-images;android-37.2;google_apis_ps16k;x86_64' --device pixel_10_pro
 
 # Run in Android Emulator
 emulator -avd everfold -gpu host

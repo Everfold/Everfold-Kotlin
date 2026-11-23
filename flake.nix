@@ -24,7 +24,7 @@
             buildToolsVersions = [ buildToolsVersion ];
             includeEmulator = true;
             includeSystemImages = true;
-            systemImageTypes = [ "google_apis" ];
+            systemImageTypes = [ "google_apis_ps16k" ];
             abiVersions = [ "x86_64" ];
             includeSources = false;
           };
