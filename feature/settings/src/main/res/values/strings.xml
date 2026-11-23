@@ -75,7 +75,6 @@
     <string name="perm_status_manual">Manual setup</string>
     <string name="perm_action_open_battery">Open battery settings</string>
 
-    <string name="about_tagline">Cross-node AI Agent Control &amp; Observability Client</string>
     <string name="about_version_label">Version</string>
     <string name="about_version_value">v%1$s (Build %2$d)</string>
     <string name="about_repo_label">GitHub Repository</string>

@@ -75,7 +75,6 @@
     <string name="perm_status_manual">手動設定</string>
     <string name="perm_action_open_battery">前往耗電管理</string>
 
-    <string name="about_tagline">跨節點 AI 智能體控制與可觀測性終端</string>
     <string name="about_version_label">軟體版本</string>
     <string name="about_version_value">v%1$s (Build %2$d)</string>
     <string name="about_repo_label">GitHub 儲存庫</string>
