@@ -19,14 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.model.AppLanguage
 import com.everfold.feature.settings.R
 import com.everfold.feature.settings.SettingsViewModel
-import com.everfold.feature.settings.system.applyAppLanguage
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -36,7 +34,6 @@ fun LanguageSettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     SettingsSubPageScaffold(
         title = stringResource(R.string.settings_entry_language_title),
@@ -58,10 +55,7 @@ fun LanguageSettingsScreen(
                             LanguageOptionRow(
                                 option = option,
                                 selected = prefs.language == option,
-                                onClick = {
-                                    viewModel.setLanguage(option)
-                                    applyAppLanguage(context, option)
-                                },
+                                onClick = { viewModel.setLanguage(option) },
                             )
                         }
                     }

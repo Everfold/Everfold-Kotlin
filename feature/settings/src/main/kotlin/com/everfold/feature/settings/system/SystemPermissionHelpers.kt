@@ -2,20 +2,17 @@ package com.everfold.feature.settings.system
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.LocaleManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.LocaleList
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.everfold.core.model.AppLanguage
 
 internal fun readSystemPermissionStatus(context: Context): SystemPermissionStatus =
     SystemPermissionStatus(
@@ -68,21 +65,6 @@ internal fun openAppDetailsSettings(context: Context) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     launchSafely(context, intent)
-}
-
-internal fun applyAppLanguage(
-    context: Context,
-    language: AppLanguage,
-) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val localeManager = context.getSystemService(LocaleManager::class.java) ?: return
-        localeManager.applicationLocales =
-            if (language.languageTag.isEmpty()) {
-                LocaleList.getEmptyLocaleList()
-            } else {
-                LocaleList.forLanguageTags(language.languageTag)
-            }
-    }
 }
 
 internal fun openUrlInCustomTab(
