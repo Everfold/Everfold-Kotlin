@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +42,8 @@ import org.koin.compose.koinInject
 @Composable
 internal fun EverfoldAppShell(
     modifier: Modifier = Modifier,
+    pendingSessionId: String? = null,
+    onConsumePendingSession: () -> Unit = {},
     sessionGateway: SessionGateway = koinInject(),
 ) {
     val sessions by sessionGateway.sessions.collectAsStateWithLifecycle()
@@ -59,12 +62,18 @@ internal fun EverfoldAppShell(
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
     }
-    LaunchedEffect(drawerState.targetValue) {
-        if (drawerState.targetValue == DrawerValue.Open) dismissIme()
-    }
-    LaunchedEffect(currentRoute, activeSessionId) {
-        if (currentRoute !is AppDestination.SessionSearch) dismissIme()
-    }
+    ShellSideEffects(
+        pendingSessionId = pendingSessionId,
+        drawerTargetValue = drawerState.targetValue,
+        currentRoute = currentRoute,
+        activeSessionId = activeSessionId,
+        dismissIme = dismissIme,
+        onOpenPendingSession = { sessionId ->
+            activeSessionId = sessionId
+            backStack.replaceRoot(AppDestination.Session)
+            onConsumePendingSession()
+        },
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         EverfoldShellDrawer(
@@ -214,6 +223,31 @@ private fun EverfoldDrawerContent(
         onOpenNodes = { onOpenRoot(AppDestination.Nodes) },
         onOpenSettings = { onOpenRoot(AppDestination.Settings) },
     )
+}
+
+@Composable
+private fun ShellSideEffects(
+    pendingSessionId: String?,
+    drawerTargetValue: DrawerValue,
+    currentRoute: AppDestination,
+    activeSessionId: String?,
+    dismissIme: () -> Unit,
+    onOpenPendingSession: (String) -> Unit,
+) {
+    val latestDismissIme by rememberUpdatedState(dismissIme)
+    val latestOnOpenPendingSession by rememberUpdatedState(onOpenPendingSession)
+
+    LaunchedEffect(pendingSessionId) {
+        if (!pendingSessionId.isNullOrBlank()) {
+            latestOnOpenPendingSession(pendingSessionId)
+        }
+    }
+    LaunchedEffect(drawerTargetValue) {
+        if (drawerTargetValue == DrawerValue.Open) latestDismissIme()
+    }
+    LaunchedEffect(currentRoute, activeSessionId) {
+        if (currentRoute !is AppDestination.SessionSearch) latestDismissIme()
+    }
 }
 
 private fun NavBackStack<NavKey>.replaceRoot(target: AppDestination) {

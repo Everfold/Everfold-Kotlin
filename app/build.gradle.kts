@@ -55,6 +55,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.gateway)
     implementation(projects.core.gatewayMock)
+    implementation(projects.core.liveactivity)
     implementation(projects.core.model)
     implementation(projects.core.ui)
     implementation(projects.feature.nodes)
