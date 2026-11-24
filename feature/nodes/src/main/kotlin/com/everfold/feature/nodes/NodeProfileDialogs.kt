@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.StickyNote2
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -105,6 +106,7 @@ private fun NodeSheetRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun EditNodeNoteDialog(
     profile: ConnectionProfile,
@@ -125,18 +127,19 @@ internal fun EditNodeNoteDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(note) }) {
+            TextButton(onClick = { onConfirm(note) }, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.nodes_dialog_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.nodes_dialog_cancel))
             }
         },
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun DeleteNodeProfileDialog(
     profile: ConnectionProfile,
@@ -156,13 +159,14 @@ internal fun DeleteNodeProfileDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
+                shapes = ButtonDefaults.shapes(),
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
                 Text(stringResource(R.string.nodes_action_delete))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.nodes_dialog_cancel))
             }
         },

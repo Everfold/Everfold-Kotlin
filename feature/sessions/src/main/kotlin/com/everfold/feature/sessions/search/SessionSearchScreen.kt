@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -153,6 +155,7 @@ private fun SessionSearchBody(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SessionSearchEmptyBody(
     hasCriteria: Boolean,
@@ -172,7 +175,7 @@ private fun SessionSearchEmptyBody(
                 subtitle = stringResource(R.string.session_search_empty_subtitle),
             )
             if (hasCriteria) {
-                FilledTonalButton(onClick = onResetSearch) {
+                FilledTonalButton(onClick = onResetSearch, shapes = ButtonDefaults.shapes()) {
                     Text(stringResource(R.string.session_search_reset))
                 }
             }

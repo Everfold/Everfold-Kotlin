@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Inventory2
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.feature.sessions.R
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ArchivedSessionBottomBar(
     onRestore: () -> Unit,
@@ -48,7 +51,7 @@ internal fun ArchivedSessionBottomBar(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            FilledTonalButton(onClick = onRestore) {
+            FilledTonalButton(onClick = onRestore, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.session_archived_restore_cta))
             }
         }

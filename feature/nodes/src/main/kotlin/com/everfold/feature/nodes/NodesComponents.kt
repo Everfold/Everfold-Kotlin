@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -30,6 +32,7 @@ import com.everfold.core.model.ConnectionProfile
 import com.everfold.core.ui.connection.summaryLine
 import kotlinx.collections.immutable.ImmutableList
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ConnectionSummaryCard(
     isLocalConnected: Boolean,
@@ -74,7 +77,10 @@ internal fun ConnectionSummaryCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            OutlinedButton(onClick = if (isConnected) onDisconnectAll else onConnectLocal) {
+            OutlinedButton(
+                onClick = if (isConnected) onDisconnectAll else onConnectLocal,
+                shapes = ButtonDefaults.shapes(),
+            ) {
                 Text(
                     stringResource(
                         if (isConnected) R.string.nodes_action_disconnect_all else R.string.nodes_action_use_local,
@@ -148,9 +154,15 @@ internal fun SavedProfileCard(
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 if (isActive) {
-                    OutlinedButton(onClick = onDisconnect) { Text(stringResource(R.string.nodes_action_disconnect)) }
+                    OutlinedButton(onClick = onDisconnect, shapes = ButtonDefaults.shapes()) {
+                        Text(stringResource(R.string.nodes_action_disconnect))
+                    }
                 } else {
-                    FilledTonalButton(onClick = onConnect, enabled = !isConnecting) {
+                    FilledTonalButton(
+                        onClick = onConnect,
+                        shapes = ButtonDefaults.shapes(),
+                        enabled = !isConnecting,
+                    ) {
                         if (isConnecting) {
                             LoadingIndicator(modifier = Modifier.size(20.dp))
                         } else {
@@ -163,6 +175,7 @@ internal fun SavedProfileCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SavedProfileHeader(
     profile: ConnectionProfile,
@@ -184,7 +197,7 @@ private fun SavedProfileHeader(
         if (isActive) {
             EverfoldStatusPill(text = stringResource(R.string.nodes_profile_connected_badge))
         }
-        IconButton(onClick = onOpenMenu) {
+        IconButton(onClick = onOpenMenu, shapes = IconButtonDefaults.shapes()) {
             Icon(
                 imageVector = Icons.Rounded.MoreVert,
                 contentDescription = stringResource(R.string.nodes_action_more),

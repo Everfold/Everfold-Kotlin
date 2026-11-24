@@ -36,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
@@ -163,6 +164,7 @@ private fun ComposerCardSurface(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ComposerTextInputRow(
     draft: String,
@@ -183,7 +185,11 @@ private fun ComposerTextInputRow(
             placeholderMaxLines = 2,
             modifier = Modifier.weight(1f).padding(top = 6.dp, bottom = 2.dp),
         )
-        IconButton(onClick = onOpenFullscreen, modifier = Modifier.size(32.dp)) {
+        IconButton(
+            onClick = onOpenFullscreen,
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.size(32.dp),
+        ) {
             Icon(
                 imageVector = Icons.Rounded.OpenInFull,
                 contentDescription = stringResource(R.string.session_composer_expand),
@@ -231,6 +237,7 @@ internal fun ComposerToolbarRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ComposerAttachMenuButton(
     onPickFile: () -> Unit,
@@ -238,7 +245,11 @@ private fun ComposerAttachMenuButton(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        IconButton(onClick = { expanded = true }, modifier = Modifier.size(36.dp)) {
+        IconButton(
+            onClick = { expanded = true },
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.size(36.dp),
+        ) {
             Icon(
                 imageVector = Icons.Rounded.Add,
                 contentDescription = stringResource(R.string.session_composer_attach),
@@ -347,12 +358,18 @@ private enum class ComposerActionMode {
     PAUSED,
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun IdleSendButton(
     hasInput: Boolean,
     onSend: () -> Unit,
 ) {
-    FilledIconButton(onClick = onSend, enabled = hasInput, modifier = Modifier.size(36.dp)) {
+    FilledIconButton(
+        onClick = onSend,
+        shapes = IconButtonDefaults.shapes(),
+        enabled = hasInput,
+        modifier = Modifier.size(36.dp),
+    ) {
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.Send,
             contentDescription = stringResource(R.string.session_detail_send),

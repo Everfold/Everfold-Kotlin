@@ -19,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -90,6 +92,7 @@ internal fun SessionAttachmentStrip(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AttachmentChipItem(
     attachment: SessionAttachment,
@@ -119,6 +122,7 @@ private fun AttachmentChipItem(
             )
             IconButton(
                 onClick = onRemove,
+                shapes = IconButtonDefaults.shapes(),
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(

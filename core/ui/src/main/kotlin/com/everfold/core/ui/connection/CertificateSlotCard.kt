@@ -16,9 +16,12 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.UploadFile
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -82,6 +85,7 @@ fun CertificateSlotCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SlotActionButtonsRow(
     enabled: Boolean,
@@ -93,6 +97,7 @@ private fun SlotActionButtonsRow(
     ) {
         OutlinedButton(
             onClick = onChooseFile,
+            shapes = ButtonDefaults.shapes(),
             enabled = enabled,
             modifier = Modifier.weight(1f),
         ) {
@@ -110,6 +115,7 @@ private fun SlotActionButtonsRow(
         }
         OutlinedButton(
             onClick = {},
+            shapes = ButtonDefaults.shapes(),
             enabled = enabled,
             modifier = Modifier.weight(1f),
         ) {
@@ -128,6 +134,7 @@ private fun SlotActionButtonsRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SlotHeaderRow(
     title: String,
@@ -171,7 +178,7 @@ private fun SlotHeaderRow(
             }
         }
         if (payload != null) {
-            IconButton(onClick = onClear, enabled = enabled) {
+            IconButton(onClick = onClear, shapes = IconButtonDefaults.shapes(), enabled = enabled) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(R.string.conn_cert_clear),

@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -95,6 +97,7 @@ internal fun CustomColorBottomSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SheetHeaderRow(onDismiss: () -> Unit) {
     Row(
@@ -106,7 +109,7 @@ private fun SheetHeaderRow(onDismiss: () -> Unit) {
             text = stringResource(R.string.appearance_custom_color_sheet_title),
             style = MaterialTheme.typography.titleMedium,
         )
-        TextButton(onClick = onDismiss) {
+        TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
             Text(text = stringResource(R.string.appearance_custom_color_done))
         }
     }

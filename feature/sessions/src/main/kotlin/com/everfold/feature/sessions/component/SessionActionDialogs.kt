@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -132,6 +133,7 @@ private fun SheetActionRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RenameSessionDialog(
     currentTitle: String,
@@ -163,18 +165,23 @@ fun RenameSessionDialog(
             )
         },
         confirmButton = {
-            TextButton(enabled = canConfirm, onClick = { onConfirm(title.trim()) }) {
+            TextButton(
+                enabled = canConfirm,
+                shapes = ButtonDefaults.shapes(),
+                onClick = { onConfirm(title.trim()) },
+            ) {
                 Text(stringResource(R.string.session_rename_dialog_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.session_dialog_cancel))
             }
         },
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteSessionDialog(
     summary: AgentSessionSummary,
@@ -199,13 +206,14 @@ fun DeleteSessionDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
+                shapes = ButtonDefaults.shapes(),
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
                 Text(stringResource(R.string.session_delete_dialog_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
                 Text(stringResource(R.string.session_dialog_cancel))
             }
         },

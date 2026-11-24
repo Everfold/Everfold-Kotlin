@@ -144,8 +144,10 @@ private fun DrawerTopActionRow(
                 )
             }
         }
+        @OptIn(ExperimentalMaterial3ExpressiveApi::class)
         FilledTonalIconButton(
             onClick = onNewSession,
+            shapes = IconButtonDefaults.shapes(),
             modifier = Modifier.size(48.dp),
             colors = newSessionColors,
         ) {

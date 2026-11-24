@@ -7,8 +7,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -142,6 +144,7 @@ private fun UserPasswordFields(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SecretTextField(
     value: String,
@@ -159,7 +162,11 @@ private fun SecretTextField(
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {
-            IconButton(onClick = { visible = !visible }, enabled = enabled) {
+            IconButton(
+                onClick = { visible = !visible },
+                shapes = IconButtonDefaults.shapes(),
+                enabled = enabled,
+            ) {
                 Icon(
                     imageVector = if (visible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                     contentDescription =

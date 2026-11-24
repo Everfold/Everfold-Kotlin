@@ -22,10 +22,12 @@ import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,6 +66,7 @@ import com.everfold.core.ui.R as CoreUiR
 private const val MAX_TITLE_LINES = 2
 private const val MAX_PREVIEW_LINES = 2
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SessionSearchTopBar(
     query: String,
@@ -80,7 +83,7 @@ internal fun SessionSearchTopBar(
                 modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = stringResource(CoreUiR.string.common_back),
@@ -104,7 +107,7 @@ internal fun SessionSearchTopBar(
                     modifier = Modifier.weight(1f).focusRequester(focusRequester),
                 )
                 if (query.isNotEmpty()) {
-                    IconButton(onClick = onClearQuery) {
+                    IconButton(onClick = onClearQuery, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = stringResource(R.string.session_search_clear_query),

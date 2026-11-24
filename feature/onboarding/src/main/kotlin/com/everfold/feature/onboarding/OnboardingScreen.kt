@@ -26,9 +26,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
@@ -203,7 +205,11 @@ private fun OnboardingTopBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (step != OnboardingStep.SHOWCASE) {
-            IconButton(onClick = onBack, enabled = !isConnecting) {
+            IconButton(
+                onClick = onBack,
+                shapes = IconButtonDefaults.shapes(),
+                enabled = !isConnecting,
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = stringResource(CoreUiR.string.common_back),
@@ -217,7 +223,11 @@ private fun OnboardingTopBar(
             modifier = Modifier.weight(1f),
         )
         if (canSkip) {
-            TextButton(onClick = onSkip, enabled = !isConnecting) {
+            TextButton(
+                onClick = onSkip,
+                shapes = ButtonDefaults.shapes(),
+                enabled = !isConnecting,
+            ) {
                 Text(stringResource(R.string.onboarding_skip))
             }
         } else {
@@ -329,6 +339,7 @@ private fun OnboardingBottomBar(
         Box(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 14.dp)) {
             Button(
                 onClick = onPrimaryClick,
+                shapes = ButtonDefaults.shapes(),
                 enabled = !state.isConnecting,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {

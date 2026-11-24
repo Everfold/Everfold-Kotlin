@@ -19,9 +19,11 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloseFullscreen
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -146,6 +148,7 @@ private fun FullscreenFooter(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FullscreenHeaderRow(
     charCount: Int,
@@ -167,7 +170,7 @@ private fun FullscreenHeaderRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onDismiss) {
+        IconButton(onClick = onDismiss, shapes = IconButtonDefaults.shapes()) {
             Icon(
                 imageVector = Icons.Rounded.CloseFullscreen,
                 contentDescription = stringResource(R.string.session_composer_collapse),

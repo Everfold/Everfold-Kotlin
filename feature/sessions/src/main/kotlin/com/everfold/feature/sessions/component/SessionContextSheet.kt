@@ -23,10 +23,13 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -175,6 +178,7 @@ private fun ContextPickerResults(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ContextSearchField(
     query: String,
@@ -188,7 +192,7 @@ private fun ContextSearchField(
         leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
+                IconButton(onClick = { onQueryChange("") }, shapes = IconButtonDefaults.shapes()) {
                     Icon(imageVector = Icons.Rounded.Close, contentDescription = null)
                 }
             }
@@ -380,6 +384,7 @@ private fun WorkspaceOptionCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EmptyNodesPickerState(
     onOpenNodes: () -> Unit,
@@ -404,6 +409,7 @@ private fun EmptyNodesPickerState(
                 onDismiss()
                 onOpenNodes()
             },
+            shapes = ButtonDefaults.shapes(),
         ) {
             Text(stringResource(R.string.session_context_go_to_nodes))
         }
