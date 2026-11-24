@@ -1,0 +1,52 @@
+<resources>
+    <string name="conn_profile_name_label">Node name (optional)</string>
+    <string name="conn_profile_name_hint">Auto-generated if left blank</string>
+    <string name="conn_profile_note_label">Note (optional)</string>
+
+    <string name="conn_host_label">Host / IP</string>
+    <string name="conn_host_optional_label">Host / IP (optional)</string>
+    <string name="conn_host_hint">192.168.1.10 or example.com</string>
+    <string name="conn_port_label">Port</string>
+
+    <string name="conn_zenoh_access_label">Access mode</string>
+    <string name="conn_zenoh_mode_p2p">P2P</string>
+    <string name="conn_zenoh_mode_explicit">Explicit</string>
+    <string name="conn_zenoh_p2p_hint">Relies on multicast auto-discovery on the local network; host and port can stay blank.</string>
+
+    <string name="conn_protocol_label">Transport protocol</string>
+    <string name="conn_protocol_tcp">TCP</string>
+    <string name="conn_protocol_tls">TLS</string>
+    <string name="conn_protocol_quic">QUIC</string>
+    <string name="conn_protocol_websocket">WebSocket</string>
+
+    <string name="conn_auth_label">Authentication</string>
+    <string name="conn_auth_none">None</string>
+    <string name="conn_auth_token">Token</string>
+    <string name="conn_auth_user_password">Username &amp; Password</string>
+    <string name="conn_auth_tls_one_way">One-way TLS</string>
+    <string name="conn_auth_mtls">mTLS</string>
+    <string name="conn_nats_mtls_tls_hint">mTLS requires an encrypted TLS or WebSocket transport (TCP disabled).</string>
+
+    <string name="conn_token_label">Token</string>
+    <string name="conn_username_label">Username</string>
+    <string name="conn_password_label">Password</string>
+    <string name="conn_secret_show">Show secret</string>
+    <string name="conn_secret_hide">Hide secret</string>
+
+    <string name="conn_cert_ca_title">CA Root Certificate</string>
+    <string name="conn_cert_client_title">Client Certificate</string>
+    <string name="conn_cert_key_title">Client Private Key</string>
+    <string name="conn_cert_empty">Not imported</string>
+    <string name="conn_cert_choose_file">Choose file</string>
+    <string name="conn_cert_scan_qr">Scan QR</string>
+    <string name="conn_cert_clear">Clear certificate</string>
+
+    <string name="conn_error_host_required">Please enter a host or IP address.</string>
+    <string name="conn_error_invalid_port">Please enter a valid port between 1 and 65535.</string>
+    <string name="conn_error_token_required">Please enter an authentication token.</string>
+    <string name="conn_error_credentials_required">Please enter both username and password.</string>
+    <string name="conn_error_ca_cert_required">Please import the CA root certificate for One-way TLS.</string>
+    <string name="conn_error_mtls_certs_required">Please import CA root certificate, client certificate, and client private key.</string>
+    <string name="conn_error_handshake_failed">Unable to reach remote node (simulated failure). Adjust parameters and try again.</string>
+    <string name="conn_error_profile_not_found">Connection profile no longer exists.</string>
+</resources>

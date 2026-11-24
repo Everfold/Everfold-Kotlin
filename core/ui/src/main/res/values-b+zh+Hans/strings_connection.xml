@@ -1,0 +1,52 @@
+<resources>
+    <string name="conn_profile_name_label">节点名称（可选）</string>
+    <string name="conn_profile_name_hint">留空将按协议与地址自动生成</string>
+    <string name="conn_profile_note_label">备注（可选）</string>
+
+    <string name="conn_host_label">主机 / IP</string>
+    <string name="conn_host_optional_label">主机 / IP（可选）</string>
+    <string name="conn_host_hint">192.168.1.10 或 example.com</string>
+    <string name="conn_port_label">端口</string>
+
+    <string name="conn_zenoh_access_label">接入模式</string>
+    <string name="conn_zenoh_mode_p2p">P2P</string>
+    <string name="conn_zenoh_mode_explicit">显式连接</string>
+    <string name="conn_zenoh_p2p_hint">依赖局域网组播自动发现节点，主机与端口可留空。</string>
+
+    <string name="conn_protocol_label">传输协议</string>
+    <string name="conn_protocol_tcp">TCP</string>
+    <string name="conn_protocol_tls">TLS</string>
+    <string name="conn_protocol_quic">QUIC</string>
+    <string name="conn_protocol_websocket">WebSocket</string>
+
+    <string name="conn_auth_label">认证方式</string>
+    <string name="conn_auth_none">无</string>
+    <string name="conn_auth_token">Token</string>
+    <string name="conn_auth_user_password">用户名密码</string>
+    <string name="conn_auth_tls_one_way">单向 TLS</string>
+    <string name="conn_auth_mtls">mTLS</string>
+    <string name="conn_nats_mtls_tls_hint">使用 mTLS 认证需配合 TLS 或 WebSocket 加密传输（已自动禁用 TCP）。</string>
+
+    <string name="conn_token_label">Token 字符串</string>
+    <string name="conn_username_label">用户名</string>
+    <string name="conn_password_label">密码</string>
+    <string name="conn_secret_show">显示内容</string>
+    <string name="conn_secret_hide">隐藏内容</string>
+
+    <string name="conn_cert_ca_title">CA 根证书</string>
+    <string name="conn_cert_client_title">客户端证书</string>
+    <string name="conn_cert_key_title">客户端私钥</string>
+    <string name="conn_cert_empty">尚未导入</string>
+    <string name="conn_cert_choose_file">选择文件</string>
+    <string name="conn_cert_scan_qr">扫描二维码</string>
+    <string name="conn_cert_clear">清除证书</string>
+
+    <string name="conn_error_host_required">请填写主机名或 IP 地址。</string>
+    <string name="conn_error_invalid_port">请填写 1–65535 之间的有效端口号。</string>
+    <string name="conn_error_token_required">请填写认证所需的 Token。</string>
+    <string name="conn_error_credentials_required">请完整填写用户名与密码。</string>
+    <string name="conn_error_ca_cert_required">单向 TLS 需要先导入 CA 根证书。</string>
+    <string name="conn_error_mtls_certs_required">mTLS 需要完整导入 CA 根证书、客户端证书与客户端私钥。</string>
+    <string name="conn_error_handshake_failed">连接远程节点握手失败（模拟失败），请检查配置后重试。</string>
+    <string name="conn_error_profile_not_found">未找到对应的节点配置。</string>
+</resources>

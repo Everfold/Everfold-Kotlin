@@ -1,0 +1,52 @@
+<resources>
+    <string name="conn_profile_name_label">節點名稱（選填）</string>
+    <string name="conn_profile_name_hint">留空將依通訊協定與位址自動產生</string>
+    <string name="conn_profile_note_label">備註（選填）</string>
+
+    <string name="conn_host_label">主機 / IP</string>
+    <string name="conn_host_optional_label">主機 / IP（選填）</string>
+    <string name="conn_host_hint">192.168.1.10 或 example.com</string>
+    <string name="conn_port_label">連接埠</string>
+
+    <string name="conn_zenoh_access_label">連線模式</string>
+    <string name="conn_zenoh_mode_p2p">P2P</string>
+    <string name="conn_zenoh_mode_explicit">明確連線</string>
+    <string name="conn_zenoh_p2p_hint">依賴區域網路多播自動探索節點，主機與連接埠可留空。</string>
+
+    <string name="conn_protocol_label">傳輸協定</string>
+    <string name="conn_protocol_tcp">TCP</string>
+    <string name="conn_protocol_tls">TLS</string>
+    <string name="conn_protocol_quic">QUIC</string>
+    <string name="conn_protocol_websocket">WebSocket</string>
+
+    <string name="conn_auth_label">驗證方式</string>
+    <string name="conn_auth_none">無</string>
+    <string name="conn_auth_token">Token</string>
+    <string name="conn_auth_user_password">使用者名稱密碼</string>
+    <string name="conn_auth_tls_one_way">單向 TLS</string>
+    <string name="conn_auth_mtls">mTLS</string>
+    <string name="conn_nats_mtls_tls_hint">使用 mTLS 驗證須配合 TLS 或 WebSocket 加密傳輸（已自動停用 TCP）。</string>
+
+    <string name="conn_token_label">Token 字串</string>
+    <string name="conn_username_label">使用者名稱</string>
+    <string name="conn_password_label">密碼</string>
+    <string name="conn_secret_show">顯示內容</string>
+    <string name="conn_secret_hide">隱藏內容</string>
+
+    <string name="conn_cert_ca_title">CA 根憑證</string>
+    <string name="conn_cert_client_title">用戶端憑證</string>
+    <string name="conn_cert_key_title">用戶端私鑰</string>
+    <string name="conn_cert_empty">尚未匯入</string>
+    <string name="conn_cert_choose_file">選擇檔案</string>
+    <string name="conn_cert_scan_qr">掃描 QR Code</string>
+    <string name="conn_cert_clear">清除憑證</string>
+
+    <string name="conn_error_host_required">請填寫主機名稱或 IP 位址。</string>
+    <string name="conn_error_invalid_port">請填寫 1–65535 之間的有效連接埠號。</string>
+    <string name="conn_error_token_required">請填寫驗證所需的 Token。</string>
+    <string name="conn_error_credentials_required">請完整填寫使用者名稱與密碼。</string>
+    <string name="conn_error_ca_cert_required">單向 TLS 須先匯入 CA 根憑證。</string>
+    <string name="conn_error_mtls_certs_required">mTLS 須完整匯入 CA 根憑證、用戶端憑證與用戶端私鑰。</string>
+    <string name="conn_error_handshake_failed">連線遠端節點握手失敗（模擬失敗），請檢查設定後重試。</string>
+    <string name="conn_error_profile_not_found">找不到對應的節點設定。</string>
+</resources>
