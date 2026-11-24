@@ -44,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.android.R
-import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import kotlinx.collections.immutable.ImmutableList
@@ -71,7 +70,7 @@ internal fun EverfoldDrawerSheet(
         modifier = modifier,
         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        DrawerBrandHeader()
+        Spacer(modifier = Modifier.height(12.dp))
         DrawerTopActionRow(
             isNewSessionSelected = isNewSessionSelected,
             onOpenSearch = onOpenSearch,
@@ -93,23 +92,6 @@ internal fun EverfoldDrawerSheet(
             isSettingsSelected = isSettingsSelected,
             onOpenNodes = onOpenNodes,
             onOpenSettings = onOpenSettings,
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun DrawerBrandHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        EverfoldLogo(modifier = Modifier.size(28.dp))
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
