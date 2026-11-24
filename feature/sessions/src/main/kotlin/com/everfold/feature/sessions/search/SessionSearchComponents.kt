@@ -1,40 +1,35 @@
 package com.everfold.feature.sessions.search
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SelectableDropdownMenuItem
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -51,79 +45,23 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldStatusPill
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.SessionSearchFilter
 import com.everfold.core.model.SessionSearchHit
 import com.everfold.feature.sessions.R
 import com.everfold.feature.sessions.labelRes
 import kotlinx.collections.immutable.ImmutableList
-import com.everfold.core.ui.R as CoreUiR
 
 private const val MAX_TITLE_LINES = 2
 private const val MAX_PREVIEW_LINES = 2
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-internal fun SessionSearchTopBar(
-    query: String,
-    focusRequester: FocusRequester,
-    onQueryChange: (String) -> Unit,
-    onClearQuery: () -> Unit,
-    onBack: () -> Unit,
-    onSearchAction: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(CoreUiR.string.common_back),
-                    )
-                }
-                TextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    placeholder = { Text(stringResource(R.string.session_search_hint)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { onSearchAction() }),
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    modifier = Modifier.weight(1f).focusRequester(focusRequester),
-                )
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = onClearQuery, shapes = IconButtonDefaults.shapes()) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(R.string.session_search_clear_query),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+private const val CHEVRON_EXPANDED_DEGREES = 180f
 
 @Composable
 internal fun SessionSearchFilterRow(
@@ -140,7 +78,7 @@ internal fun SessionSearchFilterRow(
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -172,27 +110,52 @@ internal fun SessionSearchFilterRow(
             )
         }
         item(key = "archived") {
-            FilterChip(
+            ArchivedToggleChip(
                 selected = filter.includeArchived,
-                onClick = {
-                    onDismissIme()
-                    onToggleArchiveFilter()
-                },
-                label = { Text(stringResource(R.string.session_search_filter_include_archived)) },
+                onClick = { onDismissIme().also { onToggleArchiveFilter() } },
             )
         }
         if (filter.hasActiveFilters) {
             item(key = "clear") {
                 AssistChip(
-                    onClick = {
-                        onDismissIme()
-                        onClearFilters()
+                    onClick = { onDismissIme().also { onClearFilters() } },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(AssistChipDefaults.IconSize),
+                        )
                     },
                     label = { Text(stringResource(R.string.session_search_clear_filters)) },
+                    modifier = Modifier.animateItem(),
                 )
             }
         }
     }
+}
+
+@Composable
+private fun ArchivedToggleChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        leadingIcon =
+            if (selected) {
+                {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                    )
+                }
+            } else {
+                null
+            },
+        label = { Text(stringResource(R.string.session_search_filter_include_archived)) },
+    )
 }
 
 @Composable
@@ -227,6 +190,12 @@ private fun <T> OptionFilterChip(
     var expanded by remember { mutableStateOf(false) }
     val chipLabel = selectedOption?.let(optionLabel) ?: defaultLabel
     val totalCount = options.size + 1
+    val chevronRotation by
+        animateFloatAsState(
+            targetValue = if (expanded) CHEVRON_EXPANDED_DEGREES else 0f,
+            animationSpec = LocalAnimationSpeed.current.spatialSpec(),
+            label = "filter_chevron",
+        )
     Box {
         FilterChip(
             selected = selectedOption != null,
@@ -235,7 +204,13 @@ private fun <T> OptionFilterChip(
                 expanded = true
             },
             label = { Text(text = chipLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            trailingIcon = { Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp).rotate(chevronRotation),
+                )
+            },
         )
         DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 1)) {
@@ -284,6 +259,7 @@ private fun FilterOptionMenuItem(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SessionSearchHitCard(
     index: Int,
@@ -321,7 +297,7 @@ internal fun SessionSearchHitCard(
             ) {
                 Text(
                     text = buildHighlightedText(summary.title, query, highlightBg, highlightFg),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                     maxLines = MAX_TITLE_LINES,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -351,6 +327,7 @@ internal fun SessionSearchHitCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SearchHitMetadataRow(
     workspaceName: String,
@@ -359,20 +336,16 @@ private fun SearchHitMetadataRow(
     isArchived: Boolean,
 ) {
     val (pillBg, pillFg) = loopStateColors(loopState)
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        MetadataTag(
-            icon = Icons.Rounded.FolderOpen,
-            label = workspaceName,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        MetadataTag(
-            icon = Icons.Rounded.Hub,
-            label = nodeName,
-            modifier = Modifier.weight(1f),
+        EverfoldStatusPill(
+            text = stringResource(loopState.labelRes()),
+            containerColor = pillBg,
+            contentColor = pillFg,
         )
         if (isArchived) {
             EverfoldStatusPill(
@@ -381,11 +354,8 @@ private fun SearchHitMetadataRow(
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        EverfoldStatusPill(
-            text = stringResource(loopState.labelRes()),
-            containerColor = pillBg,
-            contentColor = pillFg,
-        )
+        MetadataTag(icon = Icons.Rounded.FolderOpen, label = workspaceName)
+        MetadataTag(icon = Icons.Rounded.Hub, label = nodeName)
     }
 }
 

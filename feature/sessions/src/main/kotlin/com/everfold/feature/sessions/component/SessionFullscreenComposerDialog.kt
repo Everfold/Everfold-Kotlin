@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -211,6 +213,8 @@ internal fun SyncedBasicTextField(
     lineLimits: TextFieldLineLimits,
     modifier: Modifier = Modifier,
     placeholderMaxLines: Int = Int.MAX_VALUE,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
 ) {
     val textFieldState = rememberTextFieldState(initialText = value)
     val latestOnValueChange by rememberUpdatedState(onValueChange)
@@ -240,6 +244,8 @@ internal fun SyncedBasicTextField(
             state = textFieldState,
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = keyboardOptions,
+            onKeyboardAction = onKeyboardAction,
             lineLimits = lineLimits,
             modifier = Modifier.fillMaxWidth(),
         )
