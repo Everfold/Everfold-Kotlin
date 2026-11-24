@@ -3,20 +3,16 @@ package com.everfold.feature.settings.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,79 +21,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldConnectedButtonGroup
-import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.designsystem.component.MonetTriToneDisc
 import com.everfold.core.designsystem.theme.parseHexColorOrNull
 import com.everfold.core.designsystem.theme.rememberMonetSwatchPalette
 import com.everfold.core.designsystem.theme.toColor
-import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeColorSpec
 import com.everfold.core.model.ThemePaletteStyle
 import com.everfold.core.model.ThemePreferences
+import com.everfold.core.ui.appearance.AccentColorCarousel
+import com.everfold.core.ui.appearance.MonetOptionTile
 import com.everfold.feature.settings.R
-
-@Composable
-internal fun MonetDynamicCard(
-    checked: Boolean,
-    enabled: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    EverfoldGroupedItem(
-        index = 0,
-        count = 1,
-        modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Rounded.Wallpaper,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.appearance_monet_dynamic_title),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    text =
-                        stringResource(
-                            if (enabled) {
-                                R.string.appearance_monet_dynamic_subtitle
-                            } else {
-                                R.string.appearance_monet_dynamic_unsupported
-                            },
-                        ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                checked = checked,
-                enabled = enabled,
-                onCheckedChange = onCheckedChange,
-            )
-        }
-    }
-}
 
 @Composable
 internal fun ManualMonetSections(
@@ -108,6 +43,7 @@ internal fun ManualMonetSections(
     modifier: Modifier = Modifier,
 ) {
     val activeSeedColor = resolveActiveSeedColor(theme)
+    val isCustomMode = theme.colorMode == ThemeColorMode.CUSTOM
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -124,7 +60,14 @@ internal fun ManualMonetSections(
                     ),
                 )
             },
-            onOpenCustomPicker = onOpenCustomPicker,
+            trailingItem = {
+                CustomAccentTile(
+                    theme = theme,
+                    isCustomMode = isCustomMode,
+                    isDark = isDark,
+                    onClick = onOpenCustomPicker,
+                )
+            },
         )
         PaletteStyleCarousel(
             activeSeedColor = activeSeedColor,
@@ -138,50 +81,6 @@ internal fun ManualMonetSections(
             selectedStyle = theme.paletteStyle,
             onSelect = { spec -> onThemeChange(theme.copy(colorSpec = spec)) },
         )
-    }
-}
-
-@Composable
-private fun AccentColorCarousel(
-    theme: ThemePreferences,
-    isDark: Boolean,
-    onSelectPreset: (SeedColorPreset) -> Unit,
-    onOpenCustomPicker: () -> Unit,
-) {
-    val isCustomMode = theme.colorMode == ThemeColorMode.CUSTOM
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        EverfoldSectionHeader(title = stringResource(R.string.appearance_accent_source_label))
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items(SeedColorPreset.entries) { preset ->
-                val palette =
-                    rememberMonetSwatchPalette(
-                        seedColor = preset.toColor(),
-                        isDark = isDark,
-                        paletteStyle = theme.paletteStyle,
-                        colorSpec = theme.colorSpec,
-                    )
-                val selected = !isCustomMode && theme.seedColor == preset
-                MonetOptionTile(
-                    label = stringResource(preset.labelRes()),
-                    selected = selected,
-                    onClick = { onSelectPreset(preset) },
-                    containerColor = palette.surface,
-                ) {
-                    MonetTriToneDisc(palette = palette, selected = selected)
-                }
-            }
-            item {
-                CustomAccentTile(
-                    theme = theme,
-                    isCustomMode = isCustomMode,
-                    isDark = isDark,
-                    onClick = onOpenCustomPicker,
-                )
-            }
-        }
     }
 }
 

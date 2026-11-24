@@ -6,31 +6,12 @@
     <string name="appearance_preview_tool_badge">git log</string>
     <string name="appearance_preview_input_placeholder">傳送訊息…</string>
 
-    <string name="appearance_theme_mode_label">外觀模式</string>
-    <string name="theme_mode_system">自動</string>
-    <string name="theme_mode_light">淺色</string>
-    <string name="theme_mode_dark">深色</string>
-
-    <string name="appearance_monet_dynamic_title">桌布動態取色</string>
-    <string name="appearance_monet_dynamic_subtitle">自動跟隨 Android 12+ 系統桌布配色</string>
-    <string name="appearance_monet_dynamic_unsupported">需要 Android 12+，目前使用下方自訂配色</string>
-
-    <string name="appearance_accent_source_label">強調色</string>
     <string name="theme_color_system_dynamic">桌布動態取色</string>
     <string name="theme_color_preset">預設強調色</string>
     <string name="theme_color_custom">自訂</string>
     <string name="appearance_custom_color_sheet_title">自訂強調色</string>
     <string name="appearance_custom_color_done">完成</string>
     <string name="appearance_custom_hex_label">自訂 Hex (#RRGGBB)</string>
-
-    <string name="seed_baseline">紫藤</string>
-    <string name="seed_blue">晴藍</string>
-    <string name="seed_teal">青碧</string>
-    <string name="seed_green">森綠</string>
-    <string name="seed_amber">琥珀</string>
-    <string name="seed_orange">陶橙</string>
-    <string name="seed_rose">緋櫻</string>
-    <string name="seed_violet">梅紫</string>
 
     <string name="appearance_palette_style_label">調色風格</string>
     <string name="palette_style_tonal_spot">標準</string>

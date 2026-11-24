@@ -1,0 +1,12 @@
+<resources>
+    <string name="language_label">應用程式語言</string>
+    <string name="language_system">跟隨系統</string>
+    <string name="language_system_current">目前系統：%1$s</string>
+    <string name="language_summary_system">跟隨系統 · %1$s</string>
+    <string name="language_search_hint">搜尋語言</string>
+    <string name="language_empty_search">找不到相符的語言</string>
+
+    <string name="language_localized_zh_hans">簡體中文</string>
+    <string name="language_localized_zh_hant">繁體中文</string>
+    <string name="language_localized_en">英語</string>
+</resources>

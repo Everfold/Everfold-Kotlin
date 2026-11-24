@@ -46,6 +46,8 @@ import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ThemeColorMode
+import com.everfold.core.ui.appearance.labelRes
+import com.everfold.core.ui.language.summaryLabel
 import com.everfold.core.ui.system.SystemPermissionStatus
 import com.everfold.core.ui.system.readSystemPermissionStatus
 import com.everfold.feature.settings.screen.labelRes
@@ -197,7 +199,7 @@ private fun AppearanceInterfaceHubGroup(
             SettingsEntryRow(
                 icon = Icons.Rounded.Language,
                 title = stringResource(R.string.settings_entry_language_title),
-                subtitle = stringResource(prefs.language.labelRes()),
+                subtitle = prefs.language.summaryLabel(),
             )
         }
     }

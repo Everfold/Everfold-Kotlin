@@ -1,20 +1,10 @@
 package com.everfold.feature.settings.screen
 
 import androidx.annotation.StringRes
-import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeColorSpec
-import com.everfold.core.model.ThemeMode
 import com.everfold.core.model.ThemePaletteStyle
 import com.everfold.feature.settings.R
-
-@StringRes
-internal fun ThemeMode.labelRes(): Int =
-    when (this) {
-        ThemeMode.SYSTEM -> R.string.theme_mode_system
-        ThemeMode.LIGHT -> R.string.theme_mode_light
-        ThemeMode.DARK -> R.string.theme_mode_dark
-    }
 
 @StringRes
 internal fun ThemeColorMode.labelRes(): Int =
@@ -22,19 +12,6 @@ internal fun ThemeColorMode.labelRes(): Int =
         ThemeColorMode.SYSTEM_DYNAMIC -> R.string.theme_color_system_dynamic
         ThemeColorMode.PRESET -> R.string.theme_color_preset
         ThemeColorMode.CUSTOM -> R.string.theme_color_custom
-    }
-
-@StringRes
-internal fun SeedColorPreset.labelRes(): Int =
-    when (this) {
-        SeedColorPreset.BASELINE -> R.string.seed_baseline
-        SeedColorPreset.BLUE -> R.string.seed_blue
-        SeedColorPreset.TEAL -> R.string.seed_teal
-        SeedColorPreset.GREEN -> R.string.seed_green
-        SeedColorPreset.AMBER -> R.string.seed_amber
-        SeedColorPreset.ORANGE -> R.string.seed_orange
-        SeedColorPreset.ROSE -> R.string.seed_rose
-        SeedColorPreset.VIOLET -> R.string.seed_violet
     }
 
 @StringRes
