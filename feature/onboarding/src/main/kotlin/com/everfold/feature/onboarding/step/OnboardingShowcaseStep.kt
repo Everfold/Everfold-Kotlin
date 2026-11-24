@@ -1,6 +1,8 @@
 package com.everfold.feature.onboarding.step
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,15 +29,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldLogo
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.effectsSpec
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.feature.onboarding.R
+
+private const val SELECTED_DOT_WIDTH_DP = 20
+private const val UNSELECTED_DOT_WIDTH_DP = 8
+private const val DOT_HEIGHT_DP = 8
 
 private data class ShowcaseSlide(
     val icon: ImageVector,
@@ -105,21 +117,35 @@ internal fun OnboardingShowcaseStep(
 
 @Composable
 private fun ShowcasePageIndicators(currentPage: Int) {
+    val animationSpeed = LocalAnimationSpeed.current
+    val widthSpec = animationSpeed.spatialSpec<Dp>()
+    val colorSpec = animationSpeed.effectsSpec<Color>()
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(SHOWCASE_PAGE_COUNT) { index ->
             val selected = currentPage == index
+            val width by
+                animateDpAsState(
+                    targetValue = if (selected) SELECTED_DOT_WIDTH_DP.dp else UNSELECTED_DOT_WIDTH_DP.dp,
+                    animationSpec = widthSpec,
+                    label = "showcase_dot_width",
+                )
+            val color by
+                animateColorAsState(
+                    targetValue =
+                        if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                    animationSpec = colorSpec,
+                    label = "showcase_dot_color",
+                )
             Box(
                 modifier =
                     Modifier
-                        .size(width = if (selected) 20.dp else 8.dp, height = 8.dp)
+                        .size(width = width, height = DOT_HEIGHT_DP.dp)
                         .clip(CircleShape)
-                        .background(
-                            if (selected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant
-                            },
-                        ),
+                        .background(color),
             )
         }
     }

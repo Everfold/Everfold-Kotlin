@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Image
@@ -123,7 +122,7 @@ private fun UserMessageAttachmentPills(attachments: ImmutableList<SessionAttachm
     ) {
         attachments.forEach { attachment ->
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {

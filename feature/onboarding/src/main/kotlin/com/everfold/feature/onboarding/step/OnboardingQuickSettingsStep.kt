@@ -2,6 +2,10 @@ package com.everfold.feature.onboarding.step
 
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.effectsSpec
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.SeedColorPreset
@@ -77,6 +85,9 @@ private fun OnboardingQuickSettingsList(
         }
     val supportsDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val isUsingSystemDynamic = supportsDynamicColor && theme.colorMode == ThemeColorMode.SYSTEM_DYNAMIC
+    val animationSpeed = LocalAnimationSpeed.current
+    val expandSpec = animationSpeed.spatialSpec<IntSize>()
+    val fadeSpec = animationSpeed.effectsSpec<Float>()
 
     Column(
         modifier =
@@ -107,7 +118,11 @@ private fun OnboardingQuickSettingsList(
                 )
             },
         )
-        AnimatedVisibility(visible = !isUsingSystemDynamic) {
+        AnimatedVisibility(
+            visible = !isUsingSystemDynamic,
+            enter = expandVertically(animationSpec = expandSpec) + fadeIn(animationSpec = fadeSpec),
+            exit = shrinkVertically(animationSpec = expandSpec) + fadeOut(animationSpec = fadeSpec),
+        ) {
             AccentColorCarousel(
                 theme = theme,
                 isDark = isDark,

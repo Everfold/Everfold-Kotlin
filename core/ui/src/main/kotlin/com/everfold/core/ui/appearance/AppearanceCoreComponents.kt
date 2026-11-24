@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.DarkMode
@@ -45,7 +44,6 @@ import com.everfold.core.model.ThemePreferences
 import com.everfold.core.ui.R
 
 private const val TILE_WIDTH_DP = 76
-private const val TILE_CORNER_DP = 18
 private const val UNSELECTED_BORDER_ALPHA = 0.45f
 
 @Composable
@@ -157,7 +155,7 @@ fun MonetOptionTile(
     Surface(
         onClick = onClick,
         modifier = modifier.width(TILE_WIDTH_DP.dp),
-        shape = RoundedCornerShape(TILE_CORNER_DP.dp),
+        shape = MaterialTheme.shapes.large,
         color = containerColor,
         border = border,
     ) {

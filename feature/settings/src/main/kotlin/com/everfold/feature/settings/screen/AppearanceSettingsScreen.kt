@@ -2,6 +2,10 @@ package com.everfold.feature.settings.screen
 
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,8 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.effectsSpec
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.core.designsystem.theme.toColor
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppPreferences
@@ -86,6 +94,9 @@ private fun AppearanceSettingsList(
     modifier: Modifier = Modifier,
 ) {
     val theme = prefs.theme
+    val animationSpeed = LocalAnimationSpeed.current
+    val expandSpec = animationSpeed.spatialSpec<IntSize>()
+    val fadeSpec = animationSpeed.effectsSpec<Float>()
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
@@ -110,7 +121,11 @@ private fun AppearanceSettingsList(
             )
         }
         item {
-            AnimatedVisibility(visible = !isUsingSystemDynamic) {
+            AnimatedVisibility(
+                visible = !isUsingSystemDynamic,
+                enter = expandVertically(animationSpec = expandSpec) + fadeIn(animationSpec = fadeSpec),
+                exit = shrinkVertically(animationSpec = expandSpec) + fadeOut(animationSpec = fadeSpec),
+            ) {
                 ManualMonetSections(
                     theme = theme,
                     isDark = isDark,
