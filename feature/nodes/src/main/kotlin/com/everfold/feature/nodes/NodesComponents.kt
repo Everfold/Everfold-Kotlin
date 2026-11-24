@@ -8,14 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +24,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.ConnectionProfile
 import com.everfold.core.ui.connection.summaryLine
@@ -35,6 +36,7 @@ internal fun ConnectionSummaryCard(
     connectedProfiles: ImmutableList<ConnectionProfile>,
     onDisconnectAll: () -> Unit,
     onConnectLocal: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val totalCount = connectedProfiles.size + if (isLocalConnected) 1 else 0
     val isConnected = totalCount > 0
@@ -49,9 +51,10 @@ internal fun ConnectionSummaryCard(
     val subtitleColor =
         if (isConnected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = containerColor,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -108,18 +111,23 @@ private fun connectionSummaryTexts(
     return title to subtitle
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SavedProfileCard(
+    index: Int,
+    count: Int,
     profile: ConnectionProfile,
     isActive: Boolean,
     isConnecting: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onOpenMenu: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    EverfoldGroupedItem(
+        index = index,
+        count = count,
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -144,7 +152,7 @@ internal fun SavedProfileCard(
                 } else {
                     FilledTonalButton(onClick = onConnect, enabled = !isConnecting) {
                         if (isConnecting) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            LoadingIndicator(modifier = Modifier.size(20.dp))
                         } else {
                             Text(stringResource(R.string.nodes_action_connect))
                         }

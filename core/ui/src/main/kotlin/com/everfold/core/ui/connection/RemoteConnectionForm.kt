@@ -13,15 +13,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldConnectedButtonGroup
 import com.everfold.core.model.NatsAuthType
 import com.everfold.core.model.NatsProtocol
 import com.everfold.core.model.RemoteTransportConfig
@@ -102,17 +101,13 @@ private fun BackendSelectorRow(
     enabled: Boolean,
     onSelect: (TransportBackend) -> Unit,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        TransportBackend.entries.forEachIndexed { index, backend ->
-            SegmentedButton(
-                selected = selected == backend,
-                onClick = { if (selected != backend) onSelect(backend) },
-                enabled = enabled,
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = TransportBackend.entries.size),
-                label = { Text(if (backend == TransportBackend.NATS) "NATS" else "Zenoh") },
-            )
-        }
-    }
+    EverfoldConnectedButtonGroup(
+        options = TransportBackend.entries,
+        selected = selected,
+        onSelect = { backend -> if (selected != backend) onSelect(backend) },
+        label = { backend -> if (backend == TransportBackend.NATS) "NATS" else "Zenoh" },
+        enabled = enabled,
+    )
 }
 
 @Composable
@@ -260,21 +255,18 @@ private fun ZenohAccessSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(text = stringResource(R.string.conn_zenoh_access_label), style = MaterialTheme.typography.titleSmall)
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            ZenohAccessMode.entries.forEachIndexed { index, mode ->
-                SegmentedButton(
-                    selected = accessMode == mode,
-                    onClick = { onSelect(mode) },
-                    enabled = enabled,
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = ZenohAccessMode.entries.size),
-                    label = { Text(stringResource(mode.labelRes())) },
-                )
-            }
-        }
+        EverfoldConnectedButtonGroup(
+            options = ZenohAccessMode.entries,
+            selected = accessMode,
+            onSelect = onSelect,
+            label = { mode -> stringResource(mode.labelRes()) },
+            enabled = enabled,
+        )
         if (accessMode == ZenohAccessMode.P2P) {
-            Card(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 Text(
                     text = stringResource(R.string.conn_zenoh_p2p_hint),

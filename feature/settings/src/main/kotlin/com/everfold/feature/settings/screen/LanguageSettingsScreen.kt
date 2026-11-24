@@ -1,17 +1,17 @@
 package com.everfold.feature.settings.screen
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.model.AppLanguage
 import com.everfold.feature.settings.R
 import com.everfold.feature.settings.SettingsViewModel
@@ -34,6 +36,7 @@ fun LanguageSettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
+    val options = AppLanguage.entries
 
     SettingsSubPageScaffold(
         title = stringResource(R.string.settings_entry_language_title),
@@ -46,17 +49,21 @@ fun LanguageSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        AppLanguage.entries.forEachIndexed { index, option ->
-                            if (index > 0) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            }
-                            LanguageOptionRow(
-                                option = option,
-                                selected = prefs.language == option,
-                                onClick = { viewModel.setLanguage(option) },
-                            )
+                EverfoldGroupedList {
+                    options.forEachIndexed { index, option ->
+                        val selected = prefs.language == option
+                        EverfoldGroupedItem(
+                            index = index,
+                            count = options.size,
+                            containerColor =
+                                if (selected) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                },
+                            onClick = { viewModel.setLanguage(option) },
+                        ) {
+                            LanguageOptionRow(option = option, selected = selected)
                         }
                     }
                 }
@@ -69,14 +76,15 @@ fun LanguageSettingsScreen(
 private fun LanguageOptionRow(
     option: AppLanguage,
     selected: Boolean,
-    onClick: () -> Unit,
 ) {
+    val contentColor =
+        if (selected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -84,8 +92,17 @@ private fun LanguageOptionRow(
         Text(
             text = stringResource(option.labelRes()),
             style = MaterialTheme.typography.bodyLarge,
+            color = contentColor,
             modifier = Modifier.weight(1f),
         )
+        if (selected) {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 

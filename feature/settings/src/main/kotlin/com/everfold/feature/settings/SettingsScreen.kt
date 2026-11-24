@@ -1,14 +1,16 @@
 package com.everfold.feature.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -17,13 +19,12 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Security
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -40,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ThemeColorMode
@@ -105,41 +108,60 @@ private fun SettingsHubList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { EverfoldSectionHeader(stringResource(R.string.settings_group_appearance_interface)) }
-        item {
-            AppearanceInterfaceHubCard(prefs = prefs, onOpenSection = onOpenSection)
-        }
+        item { AppearanceInterfaceHubGroup(prefs = prefs, onOpenSection = onOpenSection) }
         item { EverfoldSectionHeader(stringResource(R.string.settings_group_sessions)) }
         item {
-            SettingsEntryCard(
-                icon = Icons.Rounded.ChatBubbleOutline,
-                title = stringResource(R.string.settings_entry_sessions_title),
-                subtitle = sessionsSummary(prefs),
-                onClick = { onOpenSection(SettingsSection.SESSIONS) },
-            )
+            EverfoldGroupedList {
+                EverfoldGroupedItem(
+                    index = 0,
+                    count = 1,
+                    onClick = { onOpenSection(SettingsSection.SESSIONS) },
+                ) {
+                    SettingsEntryRow(
+                        icon = Icons.Rounded.ChatBubbleOutline,
+                        title = stringResource(R.string.settings_entry_sessions_title),
+                        subtitle = sessionsSummary(prefs),
+                    )
+                }
+            }
         }
         item { EverfoldSectionHeader(stringResource(R.string.settings_group_permissions)) }
         item {
-            SettingsEntryCard(
-                icon = Icons.Rounded.Security,
-                title = stringResource(R.string.settings_entry_permissions_title),
-                subtitle = permissionsSummary(permissionStatus),
-                onClick = { onOpenSection(SettingsSection.PERMISSIONS) },
-            )
+            EverfoldGroupedList {
+                EverfoldGroupedItem(
+                    index = 0,
+                    count = 1,
+                    onClick = { onOpenSection(SettingsSection.PERMISSIONS) },
+                ) {
+                    SettingsEntryRow(
+                        icon = Icons.Rounded.Security,
+                        title = stringResource(R.string.settings_entry_permissions_title),
+                        subtitle = permissionsSummary(permissionStatus),
+                    )
+                }
+            }
         }
         item { EverfoldSectionHeader(stringResource(R.string.settings_group_connection_about)) }
         item {
-            SettingsEntryCard(
-                icon = Icons.Rounded.Info,
-                title = stringResource(R.string.settings_about_title),
-                subtitle = stringResource(R.string.settings_about_entry_subtitle, versionName),
-                onClick = { onOpenSection(SettingsSection.ABOUT) },
-            )
+            EverfoldGroupedList {
+                EverfoldGroupedItem(
+                    index = 0,
+                    count = 1,
+                    onClick = { onOpenSection(SettingsSection.ABOUT) },
+                ) {
+                    SettingsEntryRow(
+                        icon = Icons.Rounded.Info,
+                        title = stringResource(R.string.settings_about_title),
+                        subtitle = stringResource(R.string.settings_about_entry_subtitle, versionName),
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun AppearanceInterfaceHubCard(
+private fun AppearanceInterfaceHubGroup(
     prefs: AppPreferences,
     onOpenSection: (SettingsSection) -> Unit,
 ) {
@@ -150,8 +172,12 @@ private fun AppearanceInterfaceHubCard(
             prefs.theme.paletteStyle.labelRes()
         }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+    EverfoldGroupedList {
+        EverfoldGroupedItem(
+            index = 0,
+            count = 2,
+            onClick = { onOpenSection(SettingsSection.APPEARANCE) },
+        ) {
             SettingsEntryRow(
                 icon = Icons.Rounded.Palette,
                 title = stringResource(R.string.settings_entry_appearance_title),
@@ -161,33 +187,19 @@ private fun AppearanceInterfaceHubCard(
                         stringResource(prefs.theme.themeMode.labelRes()),
                         stringResource(colorSummaryRes),
                     ),
-                onClick = { onOpenSection(SettingsSection.APPEARANCE) },
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        EverfoldGroupedItem(
+            index = 1,
+            count = 2,
+            onClick = { onOpenSection(SettingsSection.LANGUAGE) },
+        ) {
             SettingsEntryRow(
                 icon = Icons.Rounded.Language,
                 title = stringResource(R.string.settings_entry_language_title),
                 subtitle = stringResource(prefs.language.labelRes()),
-                onClick = { onOpenSection(SettingsSection.LANGUAGE) },
             )
         }
-    }
-}
-
-@Composable
-private fun SettingsEntryCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        SettingsEntryRow(
-            icon = icon,
-            title = title,
-            subtitle = subtitle,
-            onClick = onClick,
-        )
     }
 }
 
@@ -196,18 +208,26 @@ private fun SettingsEntryRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),

@@ -10,16 +10,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Wallpaper
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -29,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldConnectedButtonGroup
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.designsystem.theme.parseHexColorOrNull
 import com.everfold.core.designsystem.theme.rememberMonetSwatchPalette
@@ -40,8 +37,6 @@ import com.everfold.core.model.ThemePaletteStyle
 import com.everfold.core.model.ThemePreferences
 import com.everfold.feature.settings.R
 
-private const val DYNAMIC_CARD_CORNER_DP = 20
-
 @Composable
 internal fun MonetDynamicCard(
     checked: Boolean,
@@ -49,9 +44,10 @@ internal fun MonetDynamicCard(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(DYNAMIC_CARD_CORNER_DP.dp),
+    EverfoldGroupedItem(
+        index = 0,
+        count = 1,
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -300,16 +296,12 @@ private fun ColorSpecRow(
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         EverfoldSectionHeader(title = stringResource(R.string.appearance_color_spec_label))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            specs.forEachIndexed { index, spec ->
-                SegmentedButton(
-                    selected = selected == spec,
-                    onClick = { onSelect(spec) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = specs.size),
-                    label = { Text(stringResource(spec.labelRes())) },
-                )
-            }
-        }
+        EverfoldConnectedButtonGroup(
+            options = specs,
+            selected = selected,
+            onSelect = onSelect,
+            label = { spec -> stringResource(spec.labelRes()) },
+        )
         Text(
             text = stringResource(hintRes),
             style = MaterialTheme.typography.bodySmall,

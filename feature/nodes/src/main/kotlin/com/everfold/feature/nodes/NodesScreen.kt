@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Menu
@@ -30,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldEmptyState
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.ConnectionProfile
 import com.everfold.core.ui.connection.labelRes
@@ -195,16 +195,41 @@ private fun NodesListContent(
                 )
             }
         } else {
-            items(state.savedProfiles, key = { it.id }) { profile ->
-                SavedProfileCard(
-                    profile = profile,
-                    isActive = profile.id in state.connectedProfileIds,
-                    isConnecting = profile.id in state.connectingProfileIds,
-                    onConnect = { onConnectProfile(profile.id) },
-                    onDisconnect = { onDisconnectProfile(profile.id) },
-                    onOpenMenu = { onOpenMenu(profile) },
+            item(key = "profiles-group") {
+                SavedProfilesGroup(
+                    profiles = state.savedProfiles,
+                    connectedProfileIds = state.connectedProfileIds,
+                    connectingProfileIds = state.connectingProfileIds,
+                    onConnectProfile = onConnectProfile,
+                    onDisconnectProfile = onDisconnectProfile,
+                    onOpenMenu = onOpenMenu,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SavedProfilesGroup(
+    profiles: List<ConnectionProfile>,
+    connectedProfileIds: ImmutableSet<String>,
+    connectingProfileIds: ImmutableSet<String>,
+    onConnectProfile: (String) -> Unit,
+    onDisconnectProfile: (String) -> Unit,
+    onOpenMenu: (ConnectionProfile) -> Unit,
+) {
+    EverfoldGroupedList {
+        profiles.forEachIndexed { index, profile ->
+            SavedProfileCard(
+                index = index,
+                count = profiles.size,
+                profile = profile,
+                isActive = profile.id in connectedProfileIds,
+                isConnecting = profile.id in connectingProfileIds,
+                onConnect = { onConnectProfile(profile.id) },
+                onDisconnect = { onDisconnectProfile(profile.id) },
+                onOpenMenu = { onOpenMenu(profile) },
+            )
         }
     }
 }

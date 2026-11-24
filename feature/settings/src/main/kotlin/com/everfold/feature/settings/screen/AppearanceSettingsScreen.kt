@@ -16,9 +16,6 @@ import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,9 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.everfold.core.designsystem.component.EverfoldConnectedButtonGroup
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.designsystem.theme.toColor
 import com.everfold.core.model.AnimationSpeed
@@ -146,32 +143,21 @@ private fun ThemeModeSection(
     selected: ThemeMode,
     onSelect: (ThemeMode) -> Unit,
 ) {
-    val modes = ThemeMode.entries
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         EverfoldSectionHeader(title = stringResource(R.string.appearance_theme_mode_label))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            modes.forEachIndexed { index, mode ->
-                SegmentedButton(
-                    selected = selected == mode,
-                    onClick = { onSelect(mode) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
-                    icon = {
-                        Icon(
-                            imageVector = mode.icon(),
-                            contentDescription = null,
-                            modifier = Modifier.size(SegmentedButtonDefaults.IconSize),
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(mode.labelRes()),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
+        EverfoldConnectedButtonGroup(
+            options = ThemeMode.entries,
+            selected = selected,
+            onSelect = onSelect,
+            label = { mode -> stringResource(mode.labelRes()) },
+            icon = { mode ->
+                Icon(
+                    imageVector = mode.icon(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                 )
-            }
-        }
+            },
+        )
     }
 }
 

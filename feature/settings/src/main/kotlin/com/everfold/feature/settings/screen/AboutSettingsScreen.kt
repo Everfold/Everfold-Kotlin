@@ -1,7 +1,7 @@
 package com.everfold.feature.settings.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,15 +10,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.model.AppInfo
 import com.everfold.feature.settings.R
@@ -55,7 +58,7 @@ fun AboutSettingsScreen(
         ) {
             item { AboutBrandHeader() }
             item {
-                AboutLinksCard(
+                AboutLinksGroup(
                     appInfo = appInfo,
                     onOpenRepo = { openUrlInCustomTab(context, appInfo.repositoryUrl) },
                     onOpenLicense = {
@@ -67,6 +70,7 @@ fun AboutSettingsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AboutBrandHeader() {
     Column(
@@ -77,20 +81,21 @@ private fun AboutBrandHeader() {
         EverfoldLogo(modifier = Modifier.size(72.dp))
         Text(
             text = "Everfold",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMediumEmphasized,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
 @Composable
-private fun AboutLinksCard(
+private fun AboutLinksGroup(
     appInfo: AppInfo,
     onOpenRepo: () -> Unit,
     onOpenLicense: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+    val itemCount = 3
+    EverfoldGroupedList {
+        EverfoldGroupedItem(index = 0, count = itemCount) {
             AboutInfoRow(
                 icon = Icons.Rounded.Info,
                 title = stringResource(R.string.about_version_label),
@@ -101,21 +106,21 @@ private fun AboutLinksCard(
                         appInfo.versionCode,
                     ),
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        EverfoldGroupedItem(index = 1, count = itemCount, onClick = onOpenRepo) {
             AboutInfoRow(
                 icon = Icons.Rounded.Link,
                 title = stringResource(R.string.about_repo_label),
                 subtitle = appInfo.repositoryUrl,
                 trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
-                onClick = onOpenRepo,
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        EverfoldGroupedItem(index = 2, count = itemCount, onClick = onOpenLicense) {
             AboutInfoRow(
                 icon = Icons.Rounded.Gavel,
                 title = stringResource(R.string.about_license_label),
                 subtitle = stringResource(R.string.about_license_value, appInfo.licenseName),
                 trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
-                onClick = onOpenLicense,
             )
         }
     }
@@ -127,22 +132,26 @@ private fun AboutInfoRow(
     title: String,
     subtitle: String,
     trailingIcon: ImageVector? = null,
-    onClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        Surface(
+            modifier = Modifier.size(38.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),

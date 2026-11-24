@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -26,8 +24,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.ui.R
+
+private const val PROMOTED_ITEMS_COUNT = 4
+private const val STANDARD_ITEMS_COUNT = 3
 
 @Composable
 fun SystemPermissionsCard(modifier: Modifier = Modifier) {
@@ -43,11 +46,12 @@ fun SystemPermissionsCard(modifier: Modifier = Modifier) {
             status = readSystemPermissionStatus(context)
         }
 
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+    val totalCount = if (status.promotedNotificationsSupported) PROMOTED_ITEMS_COUNT else STANDARD_ITEMS_COUNT
+    val backgroundIndex = if (status.promotedNotificationsSupported) 2 else 1
+    val batteryIndex = totalCount - 1
+
+    EverfoldGroupedList(modifier = modifier) {
+        EverfoldGroupedItem(index = 0, count = totalCount) {
             NotificationPermissionRow(
                 granted = status.notificationsGranted,
                 onAction = {
@@ -58,14 +62,16 @@ fun SystemPermissionsCard(modifier: Modifier = Modifier) {
                     }
                 },
             )
-            if (status.promotedNotificationsSupported) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (status.promotedNotificationsSupported) {
+            EverfoldGroupedItem(index = 1, count = totalCount) {
                 PromotedNotificationsRow(
                     granted = status.promotedNotificationsGranted,
                     onAction = { openPromotedNotificationSettings(context) },
                 )
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        EverfoldGroupedItem(index = backgroundIndex, count = totalCount) {
             BackgroundPermissionRow(
                 allowed = status.backgroundUnrestricted,
                 onAction = {
@@ -76,7 +82,8 @@ fun SystemPermissionsCard(modifier: Modifier = Modifier) {
                     }
                 },
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        EverfoldGroupedItem(index = batteryIndex, count = totalCount) {
             PermissionActionRow(
                 title = stringResource(R.string.perm_battery_title),
                 subtitle = stringResource(R.string.perm_battery_subtitle),
@@ -156,7 +163,10 @@ private fun PermissionActionRow(
     buttonText: String,
     onAction: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
