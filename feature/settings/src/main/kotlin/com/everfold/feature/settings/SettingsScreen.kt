@@ -42,9 +42,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.AppPreferences
+import com.everfold.core.ui.system.SystemPermissionStatus
+import com.everfold.core.ui.system.readSystemPermissionStatus
 import com.everfold.feature.settings.screen.labelRes
-import com.everfold.feature.settings.system.SystemPermissionStatus
-import com.everfold.feature.settings.system.readSystemPermissionStatus
 import org.koin.androidx.compose.koinViewModel
 import com.everfold.core.ui.R as CoreUiR
 
@@ -239,14 +239,14 @@ private fun permissionsSummary(status: SystemPermissionStatus): String {
         stringResource(
             R.string.settings_summary_notifications_status,
             stringResource(
-                if (status.notificationsGranted) R.string.perm_status_granted else R.string.perm_status_denied,
+                if (status.notificationsGranted) CoreUiR.string.perm_status_granted else CoreUiR.string.perm_status_denied,
             ),
         )
     val backgroundText =
         stringResource(
             R.string.settings_summary_background_status,
             stringResource(
-                if (status.backgroundUnrestricted) R.string.perm_status_allowed else R.string.perm_status_restricted,
+                if (status.backgroundUnrestricted) CoreUiR.string.perm_status_allowed else CoreUiR.string.perm_status_restricted,
             ),
         )
     return stringResource(R.string.settings_summary_pair, notificationText, backgroundText)

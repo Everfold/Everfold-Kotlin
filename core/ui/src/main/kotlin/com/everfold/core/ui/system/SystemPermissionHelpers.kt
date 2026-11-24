@@ -1,4 +1,4 @@
-package com.everfold.feature.settings.system
+package com.everfold.core.ui.system
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -9,18 +9,17 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 
-internal fun readSystemPermissionStatus(context: Context): SystemPermissionStatus =
+fun readSystemPermissionStatus(context: Context): SystemPermissionStatus =
     SystemPermissionStatus(
         notificationsGranted = hasNotificationPermission(context),
         backgroundUnrestricted = isIgnoringBatteryOptimizations(context),
     )
 
-internal fun hasNotificationPermission(context: Context): Boolean =
+fun hasNotificationPermission(context: Context): Boolean =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         ContextCompat.checkSelfPermission(
             context,
@@ -30,12 +29,12 @@ internal fun hasNotificationPermission(context: Context): Boolean =
         NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-internal fun isIgnoringBatteryOptimizations(context: Context): Boolean {
+fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val powerManager = context.getSystemService(PowerManager::class.java) ?: return false
     return powerManager.isIgnoringBatteryOptimizations(context.packageName)
 }
 
-internal fun openNotificationSettings(context: Context) {
+fun openNotificationSettings(context: Context) {
     val intent =
         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -45,7 +44,7 @@ internal fun openNotificationSettings(context: Context) {
 }
 
 @SuppressLint("BatteryLife")
-internal fun requestIgnoreBatteryOptimizations(context: Context) {
+fun requestIgnoreBatteryOptimizations(context: Context) {
     val intent =
         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
             data = "package:${context.packageName}".toUri()
@@ -54,29 +53,17 @@ internal fun requestIgnoreBatteryOptimizations(context: Context) {
     launchSafely(context, intent) { openBatteryManagementSettings(context) }
 }
 
-internal fun openBatteryManagementSettings(context: Context) {
+fun openBatteryManagementSettings(context: Context) {
     openAppDetailsSettings(context)
 }
 
-internal fun openAppDetailsSettings(context: Context) {
+fun openAppDetailsSettings(context: Context) {
     val intent =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = "package:${context.packageName}".toUri()
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     launchSafely(context, intent)
-}
-
-internal fun openUrlInCustomTab(
-    context: Context,
-    url: String,
-) {
-    val uri = url.toUri()
-    try {
-        CustomTabsIntent.Builder().build().launchUrl(context, uri)
-    } catch (_: ActivityNotFoundException) {
-        launchSafely(context, Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }
 }
 
 private fun launchSafely(

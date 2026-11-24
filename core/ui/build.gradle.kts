@@ -10,7 +10,10 @@ android {
 dependencies {
     api(projects.core.designsystem)
     api(projects.core.model)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.markdown.renderer.m3)
 }
