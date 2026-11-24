@@ -19,21 +19,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AddComment
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,23 +37,27 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldLogo
-import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
+import com.everfold.core.model.NodeDescriptor
+import com.everfold.core.model.ReasoningEffort
+import com.everfold.core.model.WorkspaceDescriptor
 import com.everfold.feature.sessions.component.ArchivedSessionBottomBar
 import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
+import com.everfold.feature.sessions.component.SessionContextDetailSheet
+import com.everfold.feature.sessions.component.SessionContextPickerSheet
+import com.everfold.feature.sessions.component.SessionDetailTopBar
+import com.everfold.feature.sessions.component.SessionModelEffortSheet
 import org.koin.androidx.compose.koinViewModel
-import com.everfold.core.ui.R as CoreUiR
 
 private const val EMPTY_LOGO_ALPHA = 0.75f
 private const val SESSION_BODY_OUT_MS = 80
@@ -72,66 +71,136 @@ fun SessionDetailScreen(
     onSessionCreate: (String) -> Unit,
     onNewSession: () -> Unit,
     onOpenSessionMenu: (AgentSessionSummary) -> Unit,
+    onOpenNodes: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SessionDetailViewModel = koinViewModel(),
 ) {
-    LaunchedEffect(sessionId) {
-        viewModel.bindSession(sessionId)
-    }
-
+    LaunchedEffect(sessionId) { viewModel.bindSession(sessionId) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    SessionDetailScreenContent(
+        state = state,
+        onOpenDrawer = onOpenDrawer,
+        onNewSession = onNewSession,
+        onOpenSessionMenu = onOpenSessionMenu,
+        onOpenNodes = onOpenNodes,
+        onRestore = viewModel::restoreActiveSession,
+        onDraftChange = viewModel::updateDraft,
+        onSend = { viewModel.sendDraft(onSessionCreate) },
+        onCancel = viewModel::cancelActiveLoop,
+        onSelectContext = viewModel::selectRuntimeContext,
+        onSelectModelAndEffort = viewModel::selectModelAndEffort,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SessionDetailScreenContent(
+    state: SessionDetailUiState,
+    onOpenDrawer: () -> Unit,
+    onNewSession: () -> Unit,
+    onOpenSessionMenu: (AgentSessionSummary) -> Unit,
+    onOpenNodes: () -> Unit,
+    onRestore: () -> Unit,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onCancel: () -> Unit,
+    onSelectContext: (NodeDescriptor, WorkspaceDescriptor?) -> Unit,
+    onSelectModelAndEffort: (String, ReasoningEffort?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val detail = state.detail
-    val isRunning =
-        detail?.summary?.loopState == LoopState.PLANNING ||
-            detail?.summary?.loopState == LoopState.EXECUTING_ACTION
+    val isRunning = detail?.summary?.loopState == LoopState.PLANNING || detail?.summary?.loopState == LoopState.EXECUTING_ACTION
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val dismissIme: () -> Unit = {
-        focusManager.clearFocus(force = true)
-        keyboardController?.hide()
+    val dismissIme: () -> Unit = { focusManager.clearFocus(force = true).also { keyboardController?.hide() } }
+    var showContextPicker by rememberSaveable { mutableStateOf(false) }
+    var showContextDetail by rememberSaveable { mutableStateOf(false) }
+    var showModelSheet by rememberSaveable { mutableStateOf(false) }
+    val handleContextClick: () -> Unit = {
+        dismissIme()
+        if (detail != null) {
+            showContextDetail = true
+        } else if (state.hasConnectedRelay) {
+            showContextPicker = true
+        } else {
+            onOpenNodes()
+        }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().imePadding(),
-        topBar = {
-            SessionDetailTopBar(
-                detail = detail,
-                defaultModelName = state.defaultModelName,
-                onOpenDrawer = {
-                    dismissIme()
-                    onOpenDrawer()
-                },
-                onNewSession = {
-                    dismissIme()
-                    onNewSession()
-                },
-                onOpenMenu = { summary ->
-                    dismissIme()
-                    onOpenSessionMenu(summary)
-                },
-            )
-        },
-        bottomBar = {
-            SessionDetailBottomBar(
-                isArchived = detail?.summary?.isArchived == true,
-                draft = state.draft,
-                isRunning = isRunning,
-                onRestore = viewModel::restoreActiveSession,
-                onDraftChange = viewModel::updateDraft,
-                onSend = {
-                    dismissIme()
-                    viewModel.sendDraft(onSessionCreate)
-                },
-                onCancel = {
-                    dismissIme()
-                    viewModel.cancelActiveLoop()
-                },
-            )
-        },
-    ) { innerPadding ->
-        SessionDetailBody(
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize().imePadding(),
+            topBar = {
+                SessionDetailTopBar(
+                    state = state,
+                    onOpenDrawer = { dismissIme().also { onOpenDrawer() } },
+                    onContextClick = handleContextClick,
+                    onNewSession = { dismissIme().also { onNewSession() } },
+                    onOpenMenu = { summary -> dismissIme().also { onOpenSessionMenu(summary) } },
+                )
+            },
+            bottomBar = {
+                SessionDetailBottomBar(
+                    isArchived = detail?.summary?.isArchived == true,
+                    draft = state.draft,
+                    isRunning = isRunning,
+                    onRestore = onRestore,
+                    onDraftChange = onDraftChange,
+                    onSend = { dismissIme().also { onSend() } },
+                    onCancel = { dismissIme().also { onCancel() } },
+                )
+            },
+        ) { innerPadding ->
+            SessionDetailBody(state = state, modifier = Modifier.fillMaxSize().padding(innerPadding).clearFocusOnTouch(dismissIme))
+        }
+        SessionDetailSheets(
             state = state,
-            modifier = Modifier.fillMaxSize().padding(innerPadding).clearFocusOnTouch(dismissIme),
+            showContextPicker = showContextPicker,
+            showContextDetail = showContextDetail,
+            showModelSheet = showModelSheet,
+            onSelectContext = onSelectContext,
+            onSelectModelAndEffort = onSelectModelAndEffort,
+            onOpenNodes = onOpenNodes,
+            onDismissPicker = { showContextPicker = false },
+            onDismissDetail = { showContextDetail = false },
+            onDismissModel = { showModelSheet = false },
+        )
+    }
+}
+
+@Composable
+private fun SessionDetailSheets(
+    state: SessionDetailUiState,
+    showContextPicker: Boolean,
+    showContextDetail: Boolean,
+    showModelSheet: Boolean,
+    onSelectContext: (NodeDescriptor, WorkspaceDescriptor?) -> Unit,
+    onSelectModelAndEffort: (String, ReasoningEffort?) -> Unit,
+    onOpenNodes: () -> Unit,
+    onDismissPicker: () -> Unit,
+    onDismissDetail: () -> Unit,
+    onDismissModel: () -> Unit,
+) {
+    if (showContextPicker && state.detail == null) {
+        SessionContextPickerSheet(
+            nodes = state.availableNodes,
+            selectedContext = state.activeContext,
+            onSelect = onSelectContext,
+            onOpenNodes = onOpenNodes,
+            onDismiss = onDismissPicker,
+        )
+    }
+    val detailContext = state.activeContext
+    if (showContextDetail && state.detail != null && detailContext != null) {
+        SessionContextDetailSheet(context = detailContext, onDismiss = onDismissDetail)
+    }
+    if (showModelSheet) {
+        SessionModelEffortSheet(
+            models = state.availableModels,
+            activeModel = state.activeModel,
+            activeEffort = state.activeEffort,
+            onSelectModelAndEffort = onSelectModelAndEffort,
+            onDismiss = onDismissModel,
         )
     }
 }
@@ -257,73 +326,4 @@ private fun SessionEmptyPlaceholder(modifier: Modifier = Modifier) {
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SessionDetailTopBar(
-    detail: AgentSessionDetail?,
-    defaultModelName: String,
-    onOpenDrawer: () -> Unit,
-    onNewSession: () -> Unit,
-    onOpenMenu: (AgentSessionSummary) -> Unit,
-) {
-    TopAppBar(
-        navigationIcon = {
-            IconButton(onClick = onOpenDrawer) {
-                Icon(
-                    imageVector = Icons.Rounded.Menu,
-                    contentDescription = stringResource(CoreUiR.string.common_open_menu),
-                )
-            }
-        },
-        title = {
-            Column {
-                Text(
-                    text = detail?.summary?.title ?: stringResource(R.string.session_detail_new_title),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                val subtitle =
-                    if (detail != null) {
-                        stringResource(R.string.session_detail_host_label, detail.summary.loopHostNodeName)
-                    } else {
-                        defaultModelName.ifBlank { stringResource(R.string.session_detail_new_subtitle) }
-                    }
-                Text(
-                    text = subtitle,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        actions = {
-            if (detail != null) {
-                if (detail.summary.isArchived) {
-                    EverfoldStatusPill(
-                        text = stringResource(R.string.session_archived_badge),
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    EverfoldStatusPill(text = stringResource(detail.summary.loopState.labelRes()))
-                    IconButton(onClick = onNewSession) {
-                        Icon(
-                            imageVector = Icons.Rounded.AddComment,
-                            contentDescription = stringResource(CoreUiR.string.common_new_session),
-                        )
-                    }
-                }
-                IconButton(onClick = { onOpenMenu(detail.summary) }) {
-                    Icon(
-                        imageVector = Icons.Rounded.MoreVert,
-                        contentDescription = stringResource(R.string.session_menu_more_actions),
-                    )
-                }
-            }
-        },
-    )
 }

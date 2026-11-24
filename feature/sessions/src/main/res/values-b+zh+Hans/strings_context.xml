@@ -1,0 +1,30 @@
+<resources>
+    <string name="session_context_disconnected_action">未连接通道 · 去连接 ›</string>
+    <string name="session_context_picker_title">选择运行节点与工作空间</string>
+    <string name="session_context_search_hint">搜索节点、工作空间、路径或能力…</string>
+    <string name="session_context_filter_all">全部</string>
+    <string name="session_context_filter_online_only">仅在线节点</string>
+    <string name="session_context_empty_nodes_title">暂无可用运行节点</string>
+    <string name="session_context_empty_nodes_subtitle">请先在「节点」页连接至少一个 NATS、Zenoh 或本机通道。</string>
+    <string name="session_context_go_to_nodes">前往节点页</string>
+    <string name="session_context_no_search_match">未找到匹配的节点或工作空间</string>
+    <string name="session_context_no_workspace">无工作区（纯对话）</string>
+    <string name="session_context_inspector_title">会话运行环境</string>
+    <string name="session_context_locked_note">发出首条消息后，运行节点与工作空间边界已锁定。</string>
+    <string name="session_context_field_relay">所属通道</string>
+    <string name="session_context_field_node">Loop 宿主机节点</string>
+    <string name="session_context_field_workspace">工作空间</string>
+    <string name="session_context_field_scope">文件范围</string>
+    <string name="session_context_field_permission">权限级别</string>
+    <string name="session_context_field_capabilities">系统能力</string>
+    <string name="session_context_latency_ms">%1$dms</string>
+    <string name="workspace_perm_read_only">只读</string>
+    <string name="workspace_perm_write">工作区读写</string>
+    <string name="workspace_perm_full">完全权限</string>
+    <string name="workspace_cap_file_edit">文件编辑</string>
+    <string name="workspace_cap_network">网络</string>
+    <string name="session_model_sheet_title">模型与推理强度</string>
+    <string name="session_model_effort_label">推理强度 (Effort)</string>
+    <string name="session_model_effort_unsupported">当前所选模型暂不支持调节推理强度。</string>
+    <string name="session_model_apply_next_turn">切换后将应用于下一轮推理，不影响历史记录。</string>
+</resources>

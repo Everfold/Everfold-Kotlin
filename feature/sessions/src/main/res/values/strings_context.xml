@@ -1,0 +1,37 @@
+<resources>
+    <string name="session_context_disconnected_action">No connected relay · Connect ›</string>
+    <string name="session_context_picker_title">Select Runtime Environment</string>
+    <string name="session_context_search_hint">Search nodes, workspaces, paths, or capabilities…</string>
+    <string name="session_context_filter_all">All</string>
+    <string name="session_context_filter_online_only">Online only</string>
+    <string name="session_context_empty_nodes_title">No connected relay endpoints</string>
+    <string name="session_context_empty_nodes_subtitle">Connect a NATS, Zenoh, or local runtime in Nodes first.</string>
+    <string name="session_context_go_to_nodes">Go to Nodes</string>
+    <string name="session_context_no_search_match">No matching nodes or workspaces</string>
+    <string name="session_context_no_workspace">No workspace (chat only)</string>
+    <string name="session_context_inspector_title">Session Runtime Environment</string>
+    <string name="session_context_locked_note">Node and workspace boundary are locked once the first message is sent.</string>
+    <string name="session_context_field_relay">Relay</string>
+    <string name="session_context_field_node">Loop Host Node</string>
+    <string name="session_context_field_workspace">Workspace</string>
+    <string name="session_context_field_scope">File Scope</string>
+    <string name="session_context_field_permission">Permission Level</string>
+    <string name="session_context_field_capabilities">Capabilities</string>
+    <string name="session_context_latency_ms">%1$dms</string>
+    <string name="workspace_perm_read_only">Read-only</string>
+    <string name="workspace_perm_write">Workspace write</string>
+    <string name="workspace_perm_full">Full access</string>
+    <string name="workspace_cap_shell" translatable="false">Shell</string>
+    <string name="workspace_cap_file_edit">File edit</string>
+    <string name="workspace_cap_mcp" translatable="false">MCP</string>
+    <string name="workspace_cap_code_mode" translatable="false">CodeMode</string>
+    <string name="workspace_cap_network">Network</string>
+    <string name="session_model_sheet_title">Model &amp; Reasoning Effort</string>
+    <string name="session_model_effort_label">Reasoning Effort</string>
+    <string name="session_model_effort_unsupported">This model does not expose reasoning effort tiers.</string>
+    <string name="session_model_apply_next_turn">Changes apply to the next reasoning turn.</string>
+    <string name="effort_low" translatable="false">Low</string>
+    <string name="effort_medium" translatable="false">Medium</string>
+    <string name="effort_high" translatable="false">High</string>
+    <string name="effort_max" translatable="false">Max</string>
+</resources>

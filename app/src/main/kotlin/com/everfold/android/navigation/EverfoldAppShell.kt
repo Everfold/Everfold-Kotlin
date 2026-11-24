@@ -149,6 +149,7 @@ private fun EverfoldShellDrawer(
                 backStack.replaceRoot(AppDestination.Session)
             },
             onOpenSessionMenu = onOpenSessionMenu,
+            onOpenNodes = { openRoot(AppDestination.Nodes) },
             onDismissIme = onDismissIme,
             onOpenDrawer = { onToggleDrawer(true) },
         )

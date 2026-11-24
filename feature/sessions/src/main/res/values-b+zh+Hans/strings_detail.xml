@@ -1,8 +1,6 @@
 <resources>
     <string name="session_detail_new_title">新会话</string>
-    <string name="session_detail_new_subtitle">准备向 Authority 发起新 Loop</string>
     <string name="session_detail_empty_quote">千里之行，始于足下</string>
-    <string name="session_detail_host_label">Loop · %1$s</string>
     <string name="session_detail_composer_hint">向智能体发送指令…</string>
     <string name="session_detail_send">发送</string>
     <string name="session_detail_stop">停止执行</string>

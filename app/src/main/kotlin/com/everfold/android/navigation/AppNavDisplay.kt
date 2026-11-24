@@ -50,6 +50,7 @@ internal fun AppNavDisplay(
     onNewSession: () -> Unit,
     onSelectSessionFromSubPage: (String) -> Unit,
     onOpenSessionMenu: (AgentSessionSummary) -> Unit,
+    onOpenNodes: () -> Unit,
     onDismissIme: () -> Unit,
     onOpenDrawer: () -> Unit,
 ) {
@@ -81,6 +82,7 @@ internal fun AppNavDisplay(
                         onSessionCreate = onSessionCreate,
                         onNewSession = onNewSession,
                         onOpenSessionMenu = onOpenSessionMenu,
+                        onOpenNodes = onOpenNodes,
                     )
                 }
                 entry<AppDestination.SessionSearch> {
