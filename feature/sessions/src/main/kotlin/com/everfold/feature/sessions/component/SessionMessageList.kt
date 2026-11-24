@@ -8,6 +8,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,10 +34,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -49,11 +54,13 @@ import com.everfold.core.model.LoopState
 import com.everfold.core.model.ObservedItem
 import com.everfold.feature.sessions.R
 import com.everfold.feature.sessions.SessionDetailUiState
-import kotlinx.coroutines.launch
 
 private const val BOTTOM_ANCHOR_KEY = "__session_bottom_anchor__"
 private const val FAB_ANIM_DURATION_MS = 160
 private const val FAB_INITIAL_SCALE = 0.85f
+private const val TELEPORT_ITEM_THRESHOLD = 8
+private const val MAX_SCROLL_CONVERGE_PASSES = 8
+private const val LARGE_SCROLL_OFFSET_PX = 1_000_000
 
 @Composable
 internal fun SessionMessageList(
@@ -62,22 +69,21 @@ internal fun SessionMessageList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val animationSpeed = LocalAnimationSpeed.current
     val showScrollToBottom by remember { derivedStateOf { listState.canScrollForward } }
+    var stickToBottom by remember(detail.summary.id) { mutableStateOf(true) }
+    var scrollToBottomNonce by remember(detail.summary.id) { mutableIntStateOf(0) }
     val currentDensity = LocalDensity.current
-    val scaledDensity =
-        Density(
-            density = currentDensity.density,
-            fontScale = currentDensity.fontScale * state.chatTextSize.scale,
-        )
-    val isPaused = detail.summary.loopState == LoopState.PAUSED
+    val scaledDensity = Density(currentDensity.density, currentDensity.fontScale * state.chatTextSize.scale)
 
     SessionMessageScrollEffects(
         detail = detail,
         listState = listState,
-        isAtBottom = !showScrollToBottom,
+        stickToBottom = stickToBottom,
+        scrollToBottomNonce = scrollToBottomNonce,
         animationSpeed = animationSpeed,
+        onStickToBottomChange = { stickToBottom = it },
+        onRequestAnimatedScroll = { scrollToBottomNonce++ },
     )
 
     Box(modifier = modifier) {
@@ -91,30 +97,19 @@ internal fun SessionMessageList(
                 items(detail.items, key = { it.id }) { item ->
                     ObservedItemRow(
                         item = item,
-                        isPaused = isPaused,
+                        isPaused = detail.summary.loopState == LoopState.PAUSED,
                         autoCollapseLongMessages = state.autoCollapseLongMessages,
                         expandRunningActionTraces = state.expandRunningActionTraces,
                         expandCompletedActionTraces = state.expandCompletedActionTraces,
                     )
                 }
-                item(key = BOTTOM_ANCHOR_KEY) {
-                    Spacer(modifier = Modifier.height(1.dp))
-                }
+                item(key = BOTTOM_ANCHOR_KEY) { Spacer(modifier = Modifier.height(1.dp)) }
             }
         }
         ScrollToLatestButton(
             visible = showScrollToBottom,
             animationSpeed = animationSpeed,
-            onClick = {
-                scope.launch {
-                    val bottomIndex = detail.items.size
-                    if (animationSpeed == AnimationSpeed.OFF) {
-                        listState.scrollToItem(bottomIndex)
-                    } else {
-                        listState.animateScrollToItem(bottomIndex)
-                    }
-                }
-            },
+            onClick = { stickToBottom = true.also { scrollToBottomNonce++ } },
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
         )
     }
@@ -124,34 +119,55 @@ internal fun SessionMessageList(
 private fun SessionMessageScrollEffects(
     detail: AgentSessionDetail,
     listState: LazyListState,
-    isAtBottom: Boolean,
+    stickToBottom: Boolean,
+    scrollToBottomNonce: Int,
     animationSpeed: AnimationSpeed,
+    onStickToBottomChange: (Boolean) -> Unit,
+    onRequestAnimatedScroll: () -> Unit,
 ) {
-    var wasAtBottom by remember { mutableStateOf(true) }
-    val bottomIndex = detail.items.size
+    val isDragged by listState.interactionSource.collectIsDraggedAsState()
+    val latestIsDragged by rememberUpdatedState(isDragged)
+    val latestOnStickChange by rememberUpdatedState(onStickToBottomChange)
+    val latestRequestScroll by rememberUpdatedState(onRequestAnimatedScroll)
     val lastItem = detail.items.lastOrNull()
-    val streamingLength = (lastItem as? ObservedItem.AssistantMessage)?.takeIf { it.isStreaming }?.markdown?.length
+    val streamingLen = (lastItem as? ObservedItem.AssistantMessage)?.takeIf { it.isStreaming }?.markdown?.length
+    val bottomSignature by remember {
+        derivedStateOf {
+            listState.layoutInfo.totalItemsCount to
+                listState.layoutInfo.visibleItemsInfo
+                    .lastOrNull()
+                    ?.let { it.index to (it.offset + it.size) }
+        }
+    }
 
-    LaunchedEffect(isAtBottom) {
-        wasAtBottom = isAtBottom
+    LaunchedEffect(isDragged, listState.isScrollInProgress, listState.canScrollForward) {
+        if (isDragged) {
+            latestOnStickChange(false)
+        } else if (!listState.isScrollInProgress && !listState.canScrollForward) {
+            latestOnStickChange(true)
+        }
     }
     LaunchedEffect(detail.summary.id) {
         if (detail.items.isNotEmpty()) {
-            listState.scrollToItem(bottomIndex)
+            listState.scrollToAbsoluteBottom(animate = false) { latestIsDragged }
+        }
+    }
+    LaunchedEffect(scrollToBottomNonce) {
+        if (scrollToBottomNonce > 0 && detail.items.isNotEmpty()) {
+            listState.scrollToAbsoluteBottom(animate = animationSpeed != AnimationSpeed.OFF) { latestIsDragged }
         }
     }
     LaunchedEffect(detail.items.size, lastItem?.id) {
-        if (detail.items.isNotEmpty() && (lastItem is ObservedItem.UserMessage || wasAtBottom)) {
-            if (animationSpeed == AnimationSpeed.OFF) {
-                listState.scrollToItem(bottomIndex)
-            } else {
-                listState.animateScrollToItem(bottomIndex)
-            }
+        if (detail.items.isNotEmpty() && lastItem is ObservedItem.UserMessage) {
+            latestOnStickChange(true)
+            latestRequestScroll()
         }
     }
-    LaunchedEffect(streamingLength) {
-        if (streamingLength != null && wasAtBottom && detail.items.isNotEmpty()) {
-            listState.scrollToItem(bottomIndex)
+    val needsSettle = stickToBottom && listState.canScrollForward
+    val isUserIdle = !isDragged && !listState.isScrollInProgress
+    LaunchedEffect(stickToBottom, listState.canScrollForward, bottomSignature, streamingLen) {
+        if (needsSettle && isUserIdle) {
+            listState.scrollToAbsoluteBottom(animate = false) { latestIsDragged }
         }
     }
 }
@@ -190,4 +206,55 @@ private fun ScrollToLatestButton(
             )
         }
     }
+}
+
+private suspend fun LazyListState.scrollToAbsoluteBottom(
+    animate: Boolean,
+    isUserDragging: () -> Boolean,
+) {
+    val totalCount = layoutInfo.totalItemsCount
+    if (totalCount <= 0 || isUserDragging()) return
+
+    val lastIndex = totalCount - 1
+    val lastVisibleIndex =
+        layoutInfo.visibleItemsInfo
+            .lastOrNull()
+            ?.index
+            ?: 0
+    if (animate && lastIndex - lastVisibleIndex > TELEPORT_ITEM_THRESHOLD) {
+        scrollToItem((lastIndex - TELEPORT_ITEM_THRESHOLD).coerceAtLeast(0))
+    }
+
+    var pass = 0
+    while (canScrollForward && !isUserDragging() && pass < MAX_SCROLL_CONVERGE_PASSES) {
+        pass++
+        runSingleScrollPass(animate = animate)
+        withFrameNanos { }
+    }
+}
+
+private suspend fun LazyListState.runSingleScrollPass(animate: Boolean) {
+    val totalCount = layoutInfo.totalItemsCount
+    if (totalCount <= 0) return
+    val lastIndex = totalCount - 1
+    val remaining = remainingBottomPx(lastIndex)
+    if (animate) {
+        if (remaining != null && remaining > 0f) {
+            animateScrollBy(remaining)
+        } else {
+            animateScrollToItem(lastIndex, LARGE_SCROLL_OFFSET_PX)
+        }
+    } else {
+        if (remaining != null && remaining > 0f) {
+            scrollBy(remaining)
+        } else {
+            scrollToItem(lastIndex, LARGE_SCROLL_OFFSET_PX)
+        }
+    }
+}
+
+private fun LazyListState.remainingBottomPx(lastIndex: Int): Float? {
+    val lastVisible = layoutInfo.visibleItemsInfo.firstOrNull { it.index == lastIndex } ?: return null
+    val viewportBottom = layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
+    return (lastVisible.offset + lastVisible.size - viewportBottom).toFloat()
 }
