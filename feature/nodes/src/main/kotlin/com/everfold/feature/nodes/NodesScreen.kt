@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -214,6 +215,7 @@ private fun NodesListContent(
                 EverfoldEmptyState(
                     title = stringResource(R.string.nodes_profiles_empty_title),
                     subtitle = stringResource(R.string.nodes_profiles_empty_subtitle),
+                    icon = Icons.Rounded.Hub,
                 )
             }
         } else {

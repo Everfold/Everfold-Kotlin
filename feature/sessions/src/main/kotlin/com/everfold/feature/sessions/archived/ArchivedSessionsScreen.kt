@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -117,6 +118,7 @@ private fun ArchivedSessionsContent(
             EverfoldEmptyState(
                 title = stringResource(R.string.archived_sessions_empty_title),
                 subtitle = stringResource(R.string.archived_sessions_empty_subtitle),
+                icon = Icons.Rounded.Inventory2,
             )
         }
     } else {

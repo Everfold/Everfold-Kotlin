@@ -94,6 +94,7 @@ internal fun SessionContextPickerSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ContextPickerBody(
     nodes: ImmutableList<NodeDescriptor>,
@@ -120,7 +121,7 @@ private fun ContextPickerBody(
     ) {
         Text(
             text = stringResource(R.string.session_context_picker_title),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLargeEmphasized,
         )
         ContextSearchField(query = query, onQueryChange = onQueryChange)
         ContextFilterChipsRow(

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -27,7 +28,7 @@ import com.everfold.core.model.SessionRuntimeContext
 import com.everfold.core.model.WorkspacePermissionLevel
 import com.everfold.feature.sessions.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SessionContextDetailSheet(
     context: SessionRuntimeContext,
@@ -50,7 +51,7 @@ internal fun SessionContextDetailSheet(
                 )
                 Text(
                     text = stringResource(R.string.session_context_inspector_title),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLargeEmphasized,
                 )
             }
             Text(

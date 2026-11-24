@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -173,6 +175,7 @@ private fun SessionSearchEmptyBody(
             EverfoldEmptyState(
                 title = stringResource(R.string.session_search_empty_title),
                 subtitle = stringResource(R.string.session_search_empty_subtitle),
+                icon = Icons.Rounded.Search,
             )
             if (hasCriteria) {
                 FilledTonalButton(onClick = onResetSearch, shapes = ButtonDefaults.shapes()) {

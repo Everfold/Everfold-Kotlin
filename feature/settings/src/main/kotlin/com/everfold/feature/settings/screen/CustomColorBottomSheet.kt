@@ -108,7 +108,7 @@ private fun SheetHeaderRow(onDismiss: () -> Unit) {
     ) {
         Text(
             text = stringResource(R.string.appearance_custom_color_sheet_title),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLargeEmphasized,
         )
         TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
             Text(text = stringResource(R.string.appearance_custom_color_done))
