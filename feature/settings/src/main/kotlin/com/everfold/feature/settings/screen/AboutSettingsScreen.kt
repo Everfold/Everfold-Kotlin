@@ -77,12 +77,12 @@ private fun AboutHeroCard() {
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
             ),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            EverfoldLogo(modifier = Modifier.size(72.dp))
+            EverfoldLogo(modifier = Modifier.size(56.dp))
             Text(
                 text = "Everfold",
                 style = MaterialTheme.typography.headlineMedium,
