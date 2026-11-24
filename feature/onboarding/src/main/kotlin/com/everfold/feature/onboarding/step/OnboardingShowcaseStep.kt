@@ -19,12 +19,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Lan
 import androidx.compose.material.icons.rounded.Timeline
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ private val showcaseSlides =
 
 internal const val SHOWCASE_PAGE_COUNT = 3
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun OnboardingShowcaseStep(
     pagerState: PagerState,
@@ -73,11 +75,19 @@ internal fun OnboardingShowcaseStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        EverfoldLogo(modifier = Modifier.size(64.dp))
-        Spacer(modifier = Modifier.height(12.dp))
+        Surface(
+            modifier = Modifier.size(88.dp),
+            shape = MaterialShapes.Cookie9Sided.toShape(),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                EverfoldLogo(modifier = Modifier.size(56.dp))
+            }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
         Text(
             text = "Everfold",
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineLargeEmphasized,
             color = MaterialTheme.colorScheme.primary,
         )
         Spacer(modifier = Modifier.height(28.dp))
@@ -89,32 +99,39 @@ internal fun OnboardingShowcaseStep(
             ShowcaseSlideCard(slide = slide)
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            repeat(SHOWCASE_PAGE_COUNT) { index ->
-                val selected = pagerState.currentPage == index
-                Box(
-                    modifier =
-                        Modifier
-                            .size(width = if (selected) 20.dp else 8.dp, height = 8.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (selected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                },
-                            ),
-                )
-            }
-        }
+        ShowcasePageIndicators(currentPage = pagerState.currentPage)
     }
 }
 
 @Composable
+private fun ShowcasePageIndicators(currentPage: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        repeat(SHOWCASE_PAGE_COUNT) { index ->
+            val selected = currentPage == index
+            Box(
+                modifier =
+                    Modifier
+                        .size(width = if (selected) 20.dp else 8.dp, height = 8.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (selected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                        ),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
 private fun ShowcaseSlideCard(slide: ShowcaseSlide) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -122,9 +139,9 @@ private fun ShowcaseSlideCard(slide: ShowcaseSlide) {
             verticalArrangement = Arrangement.Center,
         ) {
             Surface(
-                shape = CircleShape,
+                shape = MaterialShapes.SoftBurst.toShape(),
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(64.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -138,7 +155,7 @@ private fun ShowcaseSlideCard(slide: ShowcaseSlide) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = stringResource(slide.titleRes),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLargeEmphasized,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))

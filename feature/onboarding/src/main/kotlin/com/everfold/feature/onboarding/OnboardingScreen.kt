@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -27,10 +26,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -44,10 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
-import com.everfold.core.designsystem.theme.scaleDuration
+import com.everfold.core.designsystem.theme.effectsSpecFor
+import com.everfold.core.designsystem.theme.spatialSpecFor
 import com.everfold.core.designsystem.theme.toMotionDurationScale
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppLanguage
@@ -66,7 +68,6 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import com.everfold.core.ui.R as CoreUiR
 
-private const val STEP_TRANSITION_MS = 220
 private const val STEP_SLIDE_DIVISOR = 10
 
 private data class OnboardingActions(
@@ -186,6 +187,7 @@ private fun OnboardingScaffold(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OnboardingTopBar(
     step: OnboardingStep,
@@ -210,7 +212,7 @@ private fun OnboardingTopBar(
         } else {
             Box(modifier = Modifier.size(48.dp))
         }
-        LinearProgressIndicator(
+        LinearWavyProgressIndicator(
             progress = { progress },
             modifier = Modifier.weight(1f),
         )
@@ -290,6 +292,7 @@ private fun OnboardingStepContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OnboardingBottomBar(
     state: OnboardingUiState,
@@ -330,9 +333,8 @@ private fun OnboardingBottomBar(
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {
                 if (state.isConnecting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                    LoadingIndicator(
+                        modifier = Modifier.size(22.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
@@ -350,8 +352,9 @@ private fun stepSlideTransition(
     if (speed == AnimationSpeed.OFF) {
         EnterTransition.None togetherWith ExitTransition.None
     } else {
-        val ms = speed.scaleDuration(STEP_TRANSITION_MS)
+        val spatialOffsetSpec = speed.spatialSpecFor<IntOffset>()
+        val effectsFloatSpec = speed.effectsSpecFor<Float>()
         val sign = if (forward) 1 else -1
-        (fadeIn(tween(ms)) + slideInHorizontally(tween(ms)) { sign * it / STEP_SLIDE_DIVISOR }) togetherWith
-            (fadeOut(tween(ms)) + slideOutHorizontally(tween(ms)) { -sign * it / STEP_SLIDE_DIVISOR })
+        (fadeIn(effectsFloatSpec) + slideInHorizontally(spatialOffsetSpec) { sign * it / STEP_SLIDE_DIVISOR }) togetherWith
+            (fadeOut(effectsFloatSpec) + slideOutHorizontally(spatialOffsetSpec) { -sign * it / STEP_SLIDE_DIVISOR })
     }
