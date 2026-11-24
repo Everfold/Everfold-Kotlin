@@ -1,0 +1,10 @@
+<resources>
+    <string name="archived_sessions_title">已封存會話</string>
+    <string name="archived_sessions_empty_title">暫無已封存會話</string>
+    <string name="archived_sessions_empty_subtitle">封存後的會話會移出側欄清單，但仍會完整保留歷史訊息與執行軌跡。</string>
+    <string name="archived_sessions_restore">還原封存</string>
+    <string name="archived_sessions_delete">刪除</string>
+    <string name="session_archived_badge">已封存</string>
+    <string name="session_archived_readonly_hint">此會話已封存，目前為唯讀狀態。還原後即可繼續傳送指令。</string>
+    <string name="session_archived_restore_cta">還原封存</string>
+</resources>

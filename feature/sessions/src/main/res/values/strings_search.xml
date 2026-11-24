@@ -7,6 +7,7 @@
     <string name="session_search_filter_all_workspaces">All workspaces</string>
     <string name="session_search_filter_all_nodes">All nodes</string>
     <string name="session_search_filter_all_states">All statuses</string>
+    <string name="session_search_filter_include_archived">Include archived</string>
     <string name="session_search_clear_filters">Clear filters</string>
     <string name="session_search_recent_header">All sessions</string>
     <plurals name="session_search_result_count">

@@ -1,0 +1,10 @@
+<resources>
+    <string name="archived_sessions_title">已归档会话</string>
+    <string name="archived_sessions_empty_title">暂无已归档会话</string>
+    <string name="archived_sessions_empty_subtitle">归档后的会话会移出侧栏列表，但仍会完整保留历史消息与执行轨迹。</string>
+    <string name="archived_sessions_restore">恢复归档</string>
+    <string name="archived_sessions_delete">删除</string>
+    <string name="session_archived_badge">已归档</string>
+    <string name="session_archived_readonly_hint">此会话已归档，当前为只读状态。恢复后可继续发送指令。</string>
+    <string name="session_archived_restore_cta">恢复归档</string>
+</resources>

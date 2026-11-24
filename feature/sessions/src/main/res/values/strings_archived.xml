@@ -1,0 +1,10 @@
+<resources>
+    <string name="archived_sessions_title">Archived sessions</string>
+    <string name="archived_sessions_empty_title">No archived sessions</string>
+    <string name="archived_sessions_empty_subtitle">Archived sessions stay out of your drawer while keeping full history and traces accessible.</string>
+    <string name="archived_sessions_restore">Restore</string>
+    <string name="archived_sessions_delete">Delete</string>
+    <string name="session_archived_badge">Archived</string>
+    <string name="session_archived_readonly_hint">This session is archived. Restore it to send new instructions.</string>
+    <string name="session_archived_restore_cta">Restore</string>
+</resources>

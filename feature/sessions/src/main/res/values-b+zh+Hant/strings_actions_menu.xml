@@ -1,0 +1,17 @@
+<resources>
+    <string name="session_menu_more_actions">會話操作</string>
+    <string name="session_action_pin">置頂會話</string>
+    <string name="session_action_unpin">取消置頂</string>
+    <string name="session_action_rename">重新命名</string>
+    <string name="session_action_archive">封存會話</string>
+    <string name="session_action_unarchive">還原封存</string>
+    <string name="session_action_delete">刪除會話</string>
+    <string name="session_rename_dialog_title">重新命名會話</string>
+    <string name="session_rename_dialog_hint">會話標題</string>
+    <string name="session_rename_dialog_save">儲存</string>
+    <string name="session_delete_dialog_title">刪除會話？</string>
+    <string name="session_delete_dialog_body">確定要永久刪除「%1$s」嗎？刪除後將無法復原。</string>
+    <string name="session_delete_dialog_running_body">確定要終止正在執行的 Agent Loop 並永久刪除「%1$s」嗎？刪除後將無法復原。</string>
+    <string name="session_delete_dialog_confirm">刪除</string>
+    <string name="session_dialog_cancel">取消</string>
+</resources>

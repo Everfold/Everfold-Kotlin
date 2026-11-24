@@ -30,11 +30,12 @@ internal fun filterAndSearchSessions(
 }
 
 private fun AgentSessionDetail.matchesFilter(filter: SessionSearchFilter): Boolean {
+    val archiveOk = filter.includeArchived || !summary.isArchived
     val workspaceOk =
         filter.workspaceName == null || summary.workspaceName == filter.workspaceName
     val stateOk = filter.loopState == null || summary.loopState == filter.loopState
     val nodeOk = filter.nodeName == null || matchesNode(filter.nodeName!!)
-    return workspaceOk && stateOk && nodeOk
+    return archiveOk && workspaceOk && stateOk && nodeOk
 }
 
 private fun AgentSessionDetail.matchesNode(nodeName: String): Boolean {

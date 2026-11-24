@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name" translatable="false">Everfold</string>
     <string name="drawer_search_sessions">Search sessions</string>
+    <string name="drawer_sessions_pinned_header">Pinned</string>
     <string name="drawer_sessions_header">Recent sessions</string>
     <string name="drawer_sessions_empty">No sessions yet</string>
+    <string name="drawer_archived_sessions">Archived</string>
+    <string name="drawer_session_archived_snackbar">Session archived</string>
+    <string name="drawer_session_undo">Undo</string>
     <string name="drawer_nodes">Nodes</string>
     <string name="drawer_settings">Settings</string>
 </resources>

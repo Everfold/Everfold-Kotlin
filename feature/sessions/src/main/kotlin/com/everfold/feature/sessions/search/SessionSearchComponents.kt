@@ -125,6 +125,7 @@ internal fun SessionSearchFilterRow(
     onSelectWorkspace: (String?) -> Unit,
     onSelectNode: (String?) -> Unit,
     onSelectLoopState: (LoopState?) -> Unit,
+    onToggleArchiveFilter: () -> Unit,
     onClearFilters: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -136,39 +137,39 @@ internal fun SessionSearchFilterRow(
     ) {
         item(key = "workspace") {
             OptionFilterChip(
-                label = filter.workspaceName ?: stringResource(R.string.session_search_filter_workspace),
-                selected = filter.workspaceName != null,
+                defaultLabel = stringResource(R.string.session_search_filter_workspace),
                 allLabel = stringResource(R.string.session_search_filter_all_workspaces),
                 options = availableWorkspaces,
                 selectedOption = filter.workspaceName,
-                optionLabel = { it },
                 onOpenMenu = onDismissIme,
                 onSelect = onSelectWorkspace,
             )
         }
         item(key = "node") {
             OptionFilterChip(
-                label = filter.nodeName ?: stringResource(R.string.session_search_filter_node),
-                selected = filter.nodeName != null,
+                defaultLabel = stringResource(R.string.session_search_filter_node),
                 allLabel = stringResource(R.string.session_search_filter_all_nodes),
                 options = availableNodes,
                 selectedOption = filter.nodeName,
-                optionLabel = { it },
                 onOpenMenu = onDismissIme,
                 onSelect = onSelectNode,
             )
         }
         item(key = "state") {
-            val stateLabels = LoopState.entries.associateWith { stringResource(it.labelRes()) }
-            OptionFilterChip(
-                label = filter.loopState?.let { stateLabels[it] } ?: stringResource(R.string.session_search_filter_state),
-                selected = filter.loopState != null,
-                allLabel = stringResource(R.string.session_search_filter_all_states),
-                options = LoopState.entries,
-                selectedOption = filter.loopState,
-                optionLabel = { stateLabels[it].orEmpty() },
+            SessionStateFilterChip(
+                selectedState = filter.loopState,
                 onOpenMenu = onDismissIme,
-                onSelect = onSelectLoopState,
+                onSelectLoopState = onSelectLoopState,
+            )
+        }
+        item(key = "archived") {
+            FilterChip(
+                selected = filter.includeArchived,
+                onClick = {
+                    onDismissIme()
+                    onToggleArchiveFilter()
+                },
+                label = { Text(stringResource(R.string.session_search_filter_include_archived)) },
             )
         }
         if (filter.hasActiveFilters) {
@@ -186,27 +187,45 @@ internal fun SessionSearchFilterRow(
 }
 
 @Composable
+private fun SessionStateFilterChip(
+    selectedState: LoopState?,
+    onOpenMenu: () -> Unit,
+    onSelectLoopState: (LoopState?) -> Unit,
+) {
+    val stateLabels = LoopState.entries.associateWith { stringResource(it.labelRes()) }
+    OptionFilterChip(
+        defaultLabel = stringResource(R.string.session_search_filter_state),
+        allLabel = stringResource(R.string.session_search_filter_all_states),
+        options = LoopState.entries,
+        selectedOption = selectedState,
+        optionLabel = { stateLabels[it].orEmpty() },
+        onOpenMenu = onOpenMenu,
+        onSelect = onSelectLoopState,
+    )
+}
+
+@Composable
 private fun <T> OptionFilterChip(
-    label: String,
-    selected: Boolean,
+    defaultLabel: String,
     allLabel: String,
     options: List<T>,
     selectedOption: T?,
-    optionLabel: (T) -> String,
     onOpenMenu: () -> Unit,
     onSelect: (T?) -> Unit,
+    optionLabel: (T) -> String = { it.toString() },
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val chipLabel = selectedOption?.let(optionLabel) ?: defaultLabel
     Box {
         FilterChip(
-            selected = selected,
+            selected = selectedOption != null,
             onClick = {
                 onOpenMenu()
                 expanded = true
             },
             label = {
                 Text(
-                    text = label,
+                    text = chipLabel,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -328,6 +347,7 @@ internal fun SessionSearchHitCard(
                 workspaceName = summary.workspaceName,
                 nodeName = summary.loopHostNodeName,
                 loopState = summary.loopState,
+                isArchived = summary.isArchived,
             )
         }
     }
@@ -338,11 +358,12 @@ private fun SearchHitMetadataRow(
     workspaceName: String,
     nodeName: String,
     loopState: LoopState,
+    isArchived: Boolean,
 ) {
     val (pillBg, pillFg) = loopStateColors(loopState)
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetadataTag(
@@ -355,6 +376,13 @@ private fun SearchHitMetadataRow(
             label = nodeName,
             modifier = Modifier.weight(1f),
         )
+        if (isArchived) {
+            EverfoldStatusPill(
+                text = stringResource(R.string.session_archived_badge),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         EverfoldStatusPill(
             text = stringResource(loopState.labelRes()),
             containerColor = pillBg,

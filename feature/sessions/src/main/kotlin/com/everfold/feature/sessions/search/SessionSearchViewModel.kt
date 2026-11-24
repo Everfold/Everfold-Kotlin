@@ -106,6 +106,10 @@ class SessionSearchViewModel(
         filterFlow.update { it.copy(loopState = state) }
     }
 
+    fun toggleIncludeArchived() {
+        filterFlow.update { it.copy(includeArchived = !it.includeArchived) }
+    }
+
     fun clearFilters() {
         filterFlow.value = SessionSearchFilter()
     }

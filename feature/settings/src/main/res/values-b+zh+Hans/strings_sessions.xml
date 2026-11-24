@@ -13,4 +13,10 @@
     <string name="session_pref_expand_running_traces_subtitle">Agent Loop 正在执行跨节点动作时默认展开步骤卡片</string>
     <string name="session_pref_expand_completed_traces_title">结束后默认展开</string>
     <string name="session_pref_expand_completed_traces_subtitle">动作组全部完成后仍保持展开；关闭则自动收起以保持界面清爽</string>
+    <string name="session_pref_section_management">会话管理</string>
+    <string name="session_pref_archived_title">已归档会话</string>
+    <string name="session_pref_archived_empty">暂无已归档会话</string>
+    <plurals name="session_pref_archived_count">
+        <item quantity="other">当前共 %1$d 条已归档会话</item>
+    </plurals>
 </resources>

@@ -81,6 +81,12 @@ class SessionDetailViewModel(
     }
 
     fun sendDraft(onSessionCreate: (String) -> Unit) {
+        if (uiState.value.detail
+                ?.summary
+                ?.isArchived == true
+        ) {
+            return
+        }
         val text = draft.value.trim()
         if (text.isEmpty()) return
         draft.value = ""
@@ -97,6 +103,13 @@ class SessionDetailViewModel(
                     createdId
                 }
             sessionGateway.sendMessage(sessionId = targetId, content = text)
+        }
+    }
+
+    fun restoreActiveSession() {
+        val sessionId = currentSessionId.value ?: return
+        viewModelScope.launch {
+            sessionGateway.setSessionArchived(sessionId = sessionId, archived = false)
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddComment
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,8 +51,10 @@ import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.model.AgentSessionDetail
+import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
+import com.everfold.feature.sessions.component.ArchivedSessionBottomBar
 import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
 import org.koin.androidx.compose.koinViewModel
@@ -68,6 +71,7 @@ fun SessionDetailScreen(
     onOpenDrawer: () -> Unit,
     onSessionCreate: (String) -> Unit,
     onNewSession: () -> Unit,
+    onOpenSessionMenu: (AgentSessionSummary) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SessionDetailViewModel = koinViewModel(),
 ) {
@@ -101,12 +105,18 @@ fun SessionDetailScreen(
                     dismissIme()
                     onNewSession()
                 },
+                onOpenMenu = { summary ->
+                    dismissIme()
+                    onOpenSessionMenu(summary)
+                },
             )
         },
         bottomBar = {
-            SessionComposerBar(
+            SessionDetailBottomBar(
+                isArchived = detail?.summary?.isArchived == true,
                 draft = state.draft,
                 isRunning = isRunning,
+                onRestore = viewModel::restoreActiveSession,
                 onDraftChange = viewModel::updateDraft,
                 onSend = {
                     dismissIme()
@@ -122,6 +132,29 @@ fun SessionDetailScreen(
         SessionDetailBody(
             state = state,
             modifier = Modifier.fillMaxSize().padding(innerPadding).clearFocusOnTouch(dismissIme),
+        )
+    }
+}
+
+@Composable
+private fun SessionDetailBottomBar(
+    isArchived: Boolean,
+    draft: String,
+    isRunning: Boolean,
+    onRestore: () -> Unit,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    if (isArchived) {
+        ArchivedSessionBottomBar(onRestore = onRestore)
+    } else {
+        SessionComposerBar(
+            draft = draft,
+            isRunning = isRunning,
+            onDraftChange = onDraftChange,
+            onSend = onSend,
+            onCancel = onCancel,
         )
     }
 }
@@ -233,6 +266,7 @@ private fun SessionDetailTopBar(
     defaultModelName: String,
     onOpenDrawer: () -> Unit,
     onNewSession: () -> Unit,
+    onOpenMenu: (AgentSessionSummary) -> Unit,
 ) {
     TopAppBar(
         navigationIcon = {
@@ -268,11 +302,25 @@ private fun SessionDetailTopBar(
         },
         actions = {
             if (detail != null) {
-                EverfoldStatusPill(text = stringResource(detail.summary.loopState.labelRes()))
-                IconButton(onClick = onNewSession) {
+                if (detail.summary.isArchived) {
+                    EverfoldStatusPill(
+                        text = stringResource(R.string.session_archived_badge),
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    EverfoldStatusPill(text = stringResource(detail.summary.loopState.labelRes()))
+                    IconButton(onClick = onNewSession) {
+                        Icon(
+                            imageVector = Icons.Rounded.AddComment,
+                            contentDescription = stringResource(CoreUiR.string.common_new_session),
+                        )
+                    }
+                }
+                IconButton(onClick = { onOpenMenu(detail.summary) }) {
                     Icon(
-                        imageVector = Icons.Rounded.AddComment,
-                        contentDescription = stringResource(CoreUiR.string.common_new_session),
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.session_menu_more_actions),
                     )
                 }
             }

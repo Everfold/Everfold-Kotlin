@@ -1,0 +1,17 @@
+<resources>
+    <string name="session_menu_more_actions">Session actions</string>
+    <string name="session_action_pin">Pin to top</string>
+    <string name="session_action_unpin">Unpin</string>
+    <string name="session_action_rename">Rename</string>
+    <string name="session_action_archive">Archive</string>
+    <string name="session_action_unarchive">Restore from archive</string>
+    <string name="session_action_delete">Delete</string>
+    <string name="session_rename_dialog_title">Rename session</string>
+    <string name="session_rename_dialog_hint">Session title</string>
+    <string name="session_rename_dialog_save">Save</string>
+    <string name="session_delete_dialog_title">Delete session?</string>
+    <string name="session_delete_dialog_body">Permanently delete "%1$s"? This action cannot be undone.</string>
+    <string name="session_delete_dialog_running_body">Stop the active Agent Loop and permanently delete "%1$s"? This action cannot be undone.</string>
+    <string name="session_delete_dialog_confirm">Delete</string>
+    <string name="session_dialog_cancel">Cancel</string>
+</resources>

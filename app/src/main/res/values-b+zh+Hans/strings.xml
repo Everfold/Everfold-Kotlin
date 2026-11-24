@@ -1,7 +1,11 @@
 <resources>
     <string name="drawer_search_sessions">搜索会话</string>
+    <string name="drawer_sessions_pinned_header">置顶会话</string>
     <string name="drawer_sessions_header">最近会话</string>
     <string name="drawer_sessions_empty">暂无会话</string>
+    <string name="drawer_archived_sessions">已归档</string>
+    <string name="drawer_session_archived_snackbar">已归档会话</string>
+    <string name="drawer_session_undo">撤销</string>
     <string name="drawer_nodes">节点管理</string>
     <string name="drawer_settings">设置</string>
 </resources>

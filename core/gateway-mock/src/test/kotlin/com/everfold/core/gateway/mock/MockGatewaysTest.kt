@@ -12,7 +12,9 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -136,6 +138,75 @@ class MockGatewaysTest {
                             ),
                     ).first()
             assertEquals(listOf("session-mcp-sandbox"), combinedHits.map { it.summary.id })
+        }
+
+    @Test
+    fun pinRenameArchiveAndDeleteMutateSessionsAsExpected() =
+        runTest {
+            val sessions = createSeededSessionsGateway()
+
+            sessions.setSessionPinned("session-compose-perf", pinned = true)
+            assertEquals(
+                "session-compose-perf",
+                sessions.sessions.value
+                    .first()
+                    .id,
+            )
+
+            sessions.renameSession("session-compose-perf", "  重命名后的性能会话  ")
+            sessions.renameSession("session-compose-perf", "   ")
+            assertEquals(
+                "重命名后的性能会话",
+                sessions.sessions.value
+                    .first()
+                    .title,
+            )
+
+            sessions.setSessionArchived("session-compose-perf", archived = true)
+            val archivedSummary = sessions.sessions.value.first { it.id == "session-compose-perf" }
+            assertTrue(archivedSummary.isArchived)
+            assertFalse(archivedSummary.isPinned)
+
+            val defaultSearchIds =
+                sessions.searchSessions(query = "重命名").first().map { it.summary.id }
+            assertTrue(defaultSearchIds.isEmpty())
+
+            val archivedSearchIds =
+                sessions
+                    .searchSessions(
+                        query = "重命名",
+                        filter = SessionSearchFilter(includeArchived = true),
+                    ).first()
+                    .map { it.summary.id }
+            assertEquals(listOf("session-compose-perf"), archivedSearchIds)
+
+            val countBeforeSend =
+                sessions
+                    .observeSession("session-compose-perf")
+                    .first()
+                    ?.items
+                    ?.size
+            sessions.sendMessage("session-compose-perf", "归档状态下不应允许发送")
+            advanceUntilIdle()
+            assertEquals(
+                countBeforeSend,
+                sessions
+                    .observeSession("session-compose-perf")
+                    .first()
+                    ?.items
+                    ?.size,
+            )
+
+            sessions.setSessionArchived("session-compose-perf", archived = false)
+            assertFalse(
+                sessions.sessions.value
+                    .first { it.id == "session-compose-perf" }
+                    .isArchived,
+            )
+
+            sessions.deleteSession("session-compose-perf")
+            assertNull(sessions.observeSession("session-compose-perf").first())
+            assertFalse(sessions.sessions.value.any { it.id == "session-compose-perf" })
         }
 
     private suspend fun TestScope.createSeededSessionsGateway(): MockSessionGateway {

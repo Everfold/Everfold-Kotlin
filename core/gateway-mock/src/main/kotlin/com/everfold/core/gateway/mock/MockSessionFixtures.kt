@@ -23,6 +23,7 @@ internal object MockSessionFixtures {
             gatewayRefactorSession(mode),
             composePerfSession(mode),
             mcpSandboxSession(mode = mode, loopHost = loopHost),
+            legacyMigrationSession(loopHost = loopHost),
         )
 
     private fun gatewayRefactorSession(mode: ConnectionMode): AgentSessionDetail {
@@ -186,4 +187,33 @@ internal object MockSessionFixtures {
                 ),
         )
     }
+
+    private fun legacyMigrationSession(loopHost: String): AgentSessionDetail =
+        AgentSessionDetail(
+            summary =
+                AgentSessionSummary(
+                    id = "session-legacy-migration",
+                    title = "旧版配置 Schema 迁移记录",
+                    modelId = "model-claude-sonnet",
+                    loopState = LoopState.COMPLETED,
+                    loopHostNodeName = loopHost,
+                    lastMessagePreview = "已完成旧版 YAML 到模块配置的结构转换，归档备查。",
+                    updatedAtLabel = "3 天前",
+                    workspaceName = "Infra Ops",
+                    isArchived = true,
+                ),
+            items =
+                persistentListOf(
+                    ObservedItem.UserMessage(
+                        id = "msg-mig-u-1",
+                        content = "请检查旧版配置 Schema 迁移日志，确认所有历史字段已兼容。",
+                        timestampLabel = "3 天前",
+                    ),
+                    ObservedItem.AssistantMessage(
+                        id = "msg-mig-a-1",
+                        markdown = "迁移检查通过，所有历史配置字段均已映射到新结构，可安全归档保留。",
+                        timestampLabel = "3 天前",
+                    ),
+                ),
+        )
 }

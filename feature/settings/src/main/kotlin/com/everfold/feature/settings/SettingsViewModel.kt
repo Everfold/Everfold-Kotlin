@@ -1,7 +1,9 @@
 package com.everfold.feature.settings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.everfold.core.gateway.AppSettingsStore
+import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppInfo
 import com.everfold.core.model.AppLanguage
@@ -10,13 +12,26 @@ import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class SettingsViewModel(
     private val settingsStore: AppSettingsStore,
+    sessionGateway: SessionGateway,
     val appInfo: AppInfo,
 ) : ViewModel() {
     val preferences: StateFlow<AppPreferences> = settingsStore.preferences
+
+    val archivedSessionCount: StateFlow<Int> =
+        sessionGateway.sessions
+            .map { sessions -> sessions.count { it.isArchived } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+                initialValue = 0,
+            )
 
     fun setThemeMode(mode: ThemeMode) = settingsStore.updateThemeMode(mode)
 
@@ -37,4 +52,8 @@ class SettingsViewModel(
     fun setExpandRunningActionTraces(enabled: Boolean) = settingsStore.updateExpandRunningActionTraces(enabled)
 
     fun setExpandCompletedActionTraces(enabled: Boolean) = settingsStore.updateExpandCompletedActionTraces(enabled)
+
+    private companion object {
+        const val STOP_TIMEOUT_MS = 5_000L
+    }
 }

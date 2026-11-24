@@ -29,4 +29,21 @@ interface SessionGateway {
     )
 
     suspend fun cancelLoop(sessionId: String)
+
+    suspend fun setSessionPinned(
+        sessionId: String,
+        pinned: Boolean,
+    )
+
+    suspend fun renameSession(
+        sessionId: String,
+        title: String,
+    )
+
+    suspend fun setSessionArchived(
+        sessionId: String,
+        archived: Boolean,
+    )
+
+    suspend fun deleteSession(sessionId: String)
 }

@@ -1,6 +1,9 @@
 package com.everfold.android.navigation
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddComment
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Inventory2
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,11 +54,14 @@ internal fun EverfoldDrawerSheet(
     sessions: ImmutableList<AgentSessionSummary>,
     isNewSessionSelected: Boolean,
     activeSessionId: String?,
+    isArchivedSelected: Boolean,
     isNodesSelected: Boolean,
     isSettingsSelected: Boolean,
     onOpenSearch: () -> Unit,
     onNewSession: () -> Unit,
     onSelectSession: (String) -> Unit,
+    onSessionLongClick: (AgentSessionSummary) -> Unit,
+    onOpenArchive: () -> Unit,
     onOpenNodes: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +77,10 @@ internal fun EverfoldDrawerSheet(
         DrawerSessionsList(
             sessions = sessions,
             activeSessionId = activeSessionId,
+            isArchivedSelected = isArchivedSelected,
             onSelectSession = onSelectSession,
+            onSessionLongClick = onSessionLongClick,
+            onOpenArchive = onOpenArchive,
             modifier = Modifier.weight(1f).fillMaxWidth(),
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -144,24 +158,40 @@ private fun DrawerTopActionRow(
 private fun DrawerSessionsList(
     sessions: ImmutableList<AgentSessionSummary>,
     activeSessionId: String?,
+    isArchivedSelected: Boolean,
     onSelectSession: (String) -> Unit,
+    onSessionLongClick: (AgentSessionSummary) -> Unit,
+    onOpenArchive: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val activeSessions = sessions.filterNot { it.isArchived }
+    val pinnedSessions = activeSessions.filter { it.isPinned }
+    val recentSessions = activeSessions.filterNot { it.isPinned }
+    val archivedCount = sessions.count { it.isArchived }
+
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.drawer_sessions_header),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            )
+        if (pinnedSessions.isNotEmpty()) {
+            item(key = "pinned-header") {
+                DrawerSectionLabel(stringResource(R.string.drawer_sessions_pinned_header))
+            }
+            items(pinnedSessions, key = { it.id }) { summary ->
+                DrawerSessionItem(
+                    summary = summary,
+                    selected = activeSessionId == summary.id,
+                    onClick = { onSelectSession(summary.id) },
+                    onLongClick = { onSessionLongClick(summary) },
+                )
+            }
         }
-        if (sessions.isEmpty()) {
-            item {
+        item(key = "recent-header") {
+            DrawerSectionLabel(stringResource(R.string.drawer_sessions_header))
+        }
+        if (activeSessions.isEmpty()) {
+            item(key = "sessions-empty") {
                 Text(
                     text = stringResource(R.string.drawer_sessions_empty),
                     style = MaterialTheme.typography.bodySmall,
@@ -170,11 +200,24 @@ private fun DrawerSessionsList(
                 )
             }
         } else {
-            items(sessions, key = { it.id }) { summary ->
+            items(recentSessions, key = { it.id }) { summary ->
                 DrawerSessionItem(
                     summary = summary,
                     selected = activeSessionId == summary.id,
                     onClick = { onSelectSession(summary.id) },
+                    onLongClick = { onSessionLongClick(summary) },
+                )
+            }
+        }
+        if (archivedCount > 0) {
+            item(key = "archived-entry") {
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Rounded.Inventory2, contentDescription = null) },
+                    label = { Text(stringResource(R.string.drawer_archived_sessions)) },
+                    badge = { Text(archivedCount.toString()) },
+                    selected = isArchivedSelected,
+                    onClick = onOpenArchive,
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
                 )
             }
         }
@@ -182,38 +225,79 @@ private fun DrawerSessionsList(
 }
 
 @Composable
+private fun DrawerSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 private fun DrawerSessionItem(
     summary: AgentSessionSummary,
     selected: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
+    val containerColor =
+        if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
+    val contentColor =
+        if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                .height(56.dp)
+                .clip(CircleShape)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    },
+                ),
+        shape = CircleShape,
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        DrawerSessionRowContent(summary = summary)
+    }
+}
+
+@Composable
+private fun DrawerSessionRowContent(summary: AgentSessionSummary) {
     val isRunning =
         summary.loopState == LoopState.PLANNING ||
             summary.loopState == LoopState.EXECUTING_ACTION
-    NavigationDrawerItem(
-        icon = { Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = null) },
-        label = {
+    Row(
+        modifier = Modifier.padding(start = 16.dp, end = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = if (summary.isPinned) Icons.Rounded.PushPin else Icons.Rounded.ChatBubbleOutline,
+            contentDescription = null,
+        )
+        Box(modifier = Modifier.weight(1f)) {
             Text(
                 text = summary.title,
+                style = MaterialTheme.typography.labelLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        },
-        badge =
-            if (isRunning) {
-                {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(14.dp),
-                        strokeWidth = 2.dp,
-                    )
-                }
-            } else {
-                null
-            },
-        selected = selected,
-        onClick = onClick,
-        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-    )
+        }
+        if (isRunning) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(14.dp),
+                strokeWidth = 2.dp,
+            )
+        }
+    }
 }
 
 @Composable

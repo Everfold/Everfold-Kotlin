@@ -13,4 +13,11 @@
     <string name="session_pref_expand_running_traces_subtitle">Automatically expand action steps while the Agent Loop is executing</string>
     <string name="session_pref_expand_completed_traces_title">Expand after completion</string>
     <string name="session_pref_expand_completed_traces_subtitle">Keep action &amp; node traces expanded once execution finishes</string>
+    <string name="session_pref_section_management">Session Management</string>
+    <string name="session_pref_archived_title">Archived sessions</string>
+    <string name="session_pref_archived_empty">No archived sessions</string>
+    <plurals name="session_pref_archived_count">
+        <item quantity="one">%1$d archived session</item>
+        <item quantity="other">%1$d archived sessions</item>
+    </plurals>
 </resources>

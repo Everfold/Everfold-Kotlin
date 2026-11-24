@@ -75,6 +75,7 @@ fun SessionSearchScreen(
                     onSelectWorkspace = viewModel::selectWorkspace,
                     onSelectNode = viewModel::selectNode,
                     onSelectLoopState = viewModel::selectLoopState,
+                    onToggleArchiveFilter = viewModel::toggleIncludeArchived,
                     onClearFilters = viewModel::clearFilters,
                 )
             }

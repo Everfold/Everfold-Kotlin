@@ -69,6 +69,8 @@ data class AgentSessionSummary(
     val lastMessagePreview: String,
     val updatedAtLabel: String,
     val workspaceName: String = "Default",
+    val isPinned: Boolean = false,
+    val isArchived: Boolean = false,
 )
 
 data class AgentSessionDetail(
@@ -80,9 +82,10 @@ data class SessionSearchFilter(
     val workspaceName: String? = null,
     val nodeName: String? = null,
     val loopState: LoopState? = null,
+    val includeArchived: Boolean = false,
 ) {
     val hasActiveFilters: Boolean
-        get() = workspaceName != null || nodeName != null || loopState != null
+        get() = workspaceName != null || nodeName != null || loopState != null || includeArchived
 }
 
 @Serializable
