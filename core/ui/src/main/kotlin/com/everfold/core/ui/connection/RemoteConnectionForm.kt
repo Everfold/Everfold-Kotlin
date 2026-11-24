@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -80,9 +78,10 @@ fun RemoteConnectionForm(
             }
         }
         if (errorText != null) {
-            Card(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.errorContainer,
             ) {
                 Text(
                     text = errorText,
@@ -160,17 +159,14 @@ private fun NatsConfigSection(
             onPortChange = { onChange(config.copy(port = it)) },
         )
         Text(text = stringResource(R.string.conn_protocol_label), style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NatsProtocol.entries.forEach { proto ->
-                val allowed = !(config.authType == NatsAuthType.MTLS && proto == NatsProtocol.TCP)
-                FilterChip(
-                    selected = config.protocol == proto,
-                    enabled = enabled && allowed,
-                    onClick = { onChange(config.copy(protocol = proto)) },
-                    label = { Text(stringResource(proto.labelRes())) },
-                )
-            }
-        }
+        EverfoldConnectedButtonGroup(
+            options = NatsProtocol.entries,
+            selected = config.protocol,
+            onSelect = { onChange(config.copy(protocol = it)) },
+            label = { stringResource(it.labelRes()) },
+            enabled = enabled,
+            isItemEnabled = { proto -> !(config.authType == NatsAuthType.MTLS && proto == NatsProtocol.TCP) },
+        )
         Text(text = stringResource(R.string.conn_auth_label), style = MaterialTheme.typography.titleSmall)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NatsAuthType.entries.forEach { auth ->

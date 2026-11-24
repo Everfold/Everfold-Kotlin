@@ -1,6 +1,5 @@
 package com.everfold.feature.nodes
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -34,8 +32,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.model.ConnectionProfile
 import com.everfold.core.ui.connection.summaryLine
+
+private const val DELETE_CONTAINER_ALPHA = 0.45f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,44 +50,66 @@ internal fun NodeProfileActionSheet(
     modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = profile.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = profile.transport.summaryLine(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            NodeSheetHeader(profile = profile)
+            EverfoldGroupedList {
+                EverfoldGroupedItem(index = 0, count = 2, onClick = onEditConfig) {
+                    NodeSheetRow(
+                        icon = Icons.Rounded.Edit,
+                        label = stringResource(R.string.nodes_action_edit),
+                    )
+                }
+                EverfoldGroupedItem(index = 1, count = 2, onClick = onEditNote) {
+                    NodeSheetRow(
+                        icon = Icons.Rounded.StickyNote2,
+                        label = stringResource(R.string.nodes_action_edit_note),
+                    )
+                }
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            NodeSheetRow(
-                icon = Icons.Rounded.Edit,
-                label = stringResource(R.string.nodes_action_edit),
-                onClick = onEditConfig,
-            )
-            NodeSheetRow(
-                icon = Icons.Rounded.StickyNote2,
-                label = stringResource(R.string.nodes_action_edit_note),
-                onClick = onEditNote,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            NodeSheetRow(
-                icon = Icons.Rounded.DeleteOutline,
-                label = stringResource(R.string.nodes_action_delete),
-                contentColor = MaterialTheme.colorScheme.error,
-                onClick = onDelete,
-            )
+            EverfoldGroupedList {
+                EverfoldGroupedItem(
+                    index = 0,
+                    count = 1,
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = DELETE_CONTAINER_ALPHA),
+                    onClick = onDelete,
+                ) {
+                    NodeSheetRow(
+                        icon = Icons.Rounded.DeleteOutline,
+                        label = stringResource(R.string.nodes_action_delete),
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun NodeSheetHeader(profile: ConnectionProfile) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = profile.name,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = profile.transport.summaryLine(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -93,11 +117,10 @@ internal fun NodeProfileActionSheet(
 private fun NodeSheetRow(
     icon: ImageVector,
     label: String,
-    onClick: () -> Unit,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

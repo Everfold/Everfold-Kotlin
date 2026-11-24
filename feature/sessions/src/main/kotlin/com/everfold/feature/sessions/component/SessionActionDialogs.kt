@@ -1,6 +1,5 @@
 package com.everfold.feature.sessions.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,9 +40,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import com.everfold.feature.sessions.R
+
+private const val DELETE_CONTAINER_ALPHA = 0.45f
+
+private data class SheetActionEntry(
+    val icon: ImageVector,
+    val label: String,
+    val onClick: () -> Unit,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,47 +65,64 @@ fun SessionActionBottomSheet(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        modifier = modifier,
-    ) {
+    val actions = buildSessionSheetActions(summary, onTogglePin, onRename, onToggleArchive)
+    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SheetSessionHeader(summary = summary)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            if (!summary.isArchived) {
-                SheetActionRow(
-                    icon = Icons.Rounded.PushPin,
-                    label = stringResource(if (summary.isPinned) R.string.session_action_unpin else R.string.session_action_pin),
-                    onClick = onTogglePin,
-                )
+            EverfoldGroupedList {
+                actions.forEachIndexed { index, action ->
+                    EverfoldGroupedItem(index = index, count = actions.size, onClick = action.onClick) {
+                        SheetActionRow(icon = action.icon, label = action.label)
+                    }
+                }
             }
-            SheetActionRow(
-                icon = Icons.Rounded.Edit,
-                label = stringResource(R.string.session_action_rename),
-                onClick = onRename,
-            )
-            SheetActionRow(
-                icon = if (summary.isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                label = stringResource(if (summary.isArchived) R.string.session_action_unarchive else R.string.session_action_archive),
-                onClick = onToggleArchive,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            SheetActionRow(
-                icon = Icons.Rounded.DeleteOutline,
-                label = stringResource(R.string.session_action_delete),
-                contentColor = MaterialTheme.colorScheme.error,
-                onClick = onDelete,
-            )
+            EverfoldGroupedList {
+                EverfoldGroupedItem(
+                    index = 0,
+                    count = 1,
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = DELETE_CONTAINER_ALPHA),
+                    onClick = onDelete,
+                ) {
+                    SheetActionRow(
+                        icon = Icons.Rounded.DeleteOutline,
+                        label = stringResource(R.string.session_action_delete),
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
+private fun buildSessionSheetActions(
+    summary: AgentSessionSummary,
+    onTogglePin: () -> Unit,
+    onRename: () -> Unit,
+    onToggleArchive: () -> Unit,
+): List<SheetActionEntry> =
+    buildList {
+        if (!summary.isArchived) {
+            val pinRes = if (summary.isPinned) R.string.session_action_unpin else R.string.session_action_pin
+            add(SheetActionEntry(icon = Icons.Rounded.PushPin, label = stringResource(pinRes), onClick = onTogglePin))
+        }
+        add(SheetActionEntry(icon = Icons.Rounded.Edit, label = stringResource(R.string.session_action_rename), onClick = onRename))
+        val archiveIcon = if (summary.isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive
+        val archiveRes = if (summary.isArchived) R.string.session_action_unarchive else R.string.session_action_archive
+        add(SheetActionEntry(icon = archiveIcon, label = stringResource(archiveRes), onClick = onToggleArchive))
+    }
+
+@Composable
 private fun SheetSessionHeader(summary: AgentSessionSummary) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
@@ -120,11 +145,10 @@ private fun SheetSessionHeader(summary: AgentSessionSummary) {
 private fun SheetActionRow(
     icon: ImageVector,
     label: String,
-    onClick: () -> Unit,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

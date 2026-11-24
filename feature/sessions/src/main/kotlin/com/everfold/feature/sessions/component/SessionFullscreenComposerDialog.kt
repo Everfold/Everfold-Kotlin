@@ -20,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloseFullscreen
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -82,34 +81,36 @@ internal fun SessionFullscreenComposerDialog(
                     .navigationBarsPadding()
                     .imePadding(),
         ) {
-            FullscreenHeaderRow(charCount = draft.length, onDismiss = onDismiss)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                FullscreenHeaderRow(charCount = draft.length, onDismiss = onDismiss)
+            }
             FullscreenEditorBody(
                 draft = draft,
                 placeholder = stringResource(hintRes),
                 onDraftChange = onDraftChange,
                 modifier = Modifier.weight(1f),
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            FullscreenFooter(
-                attachments = attachments,
-                hasInput = draft.isNotBlank() || attachments.isNotEmpty(),
-                loopState = loopState,
-                modelLabel = formatModelEffortLabel(model = activeModel, effort = activeEffort),
-                launchers = launchers,
-                onRemoveAttachment = onRemoveAttachment,
-                onOpenModelSheet = onOpenModelSheet,
-                onSend = {
-                    onSend()
-                    onDismiss()
-                },
-                onPause = onPause,
-                onResume = {
-                    onResume()
-                    onDismiss()
-                },
-                onCancel = onCancel,
-            )
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                FullscreenFooter(
+                    attachments = attachments,
+                    hasInput = draft.isNotBlank() || attachments.isNotEmpty(),
+                    loopState = loopState,
+                    modelLabel = formatModelEffortLabel(model = activeModel, effort = activeEffort),
+                    launchers = launchers,
+                    onRemoveAttachment = onRemoveAttachment,
+                    onOpenModelSheet = onOpenModelSheet,
+                    onSend = {
+                        onSend()
+                        onDismiss()
+                    },
+                    onPause = onPause,
+                    onResume = {
+                        onResume()
+                        onDismiss()
+                    },
+                    onCancel = onCancel,
+                )
+            }
         }
     }
 }

@@ -17,14 +17,13 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,6 +37,7 @@ import com.everfold.core.model.CertificateSource
 import com.everfold.core.ui.R
 
 private const val MAX_PREVIEW_CHARS = 120
+private const val FILLED_CONTAINER_ALPHA = 0.55f
 
 @Composable
 fun CertificateSlotCard(
@@ -55,17 +55,15 @@ fun CertificateSlotCard(
             }
         }
 
-    OutlinedCard(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.outlinedCardColors(
-                containerColor =
-                    if (payload != null) {
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
-            ),
+        shape = MaterialTheme.shapes.large,
+        color =
+            if (payload != null) {
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = FILLED_CONTAINER_ALPHA)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
