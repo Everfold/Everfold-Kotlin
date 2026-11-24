@@ -12,18 +12,14 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,18 +28,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
-import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
@@ -52,12 +45,12 @@ import com.everfold.core.model.ReasoningEffort
 import com.everfold.core.model.SessionAttachment
 import com.everfold.core.model.WorkspaceDescriptor
 import com.everfold.feature.sessions.component.ArchivedSessionBottomBar
-import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
 import com.everfold.feature.sessions.component.SessionContextDetailSheet
 import com.everfold.feature.sessions.component.SessionContextPickerSheet
 import com.everfold.feature.sessions.component.SessionDetailTopBar
 import com.everfold.feature.sessions.component.SessionFullscreenComposerDialog
+import com.everfold.feature.sessions.component.SessionMessageList
 import com.everfold.feature.sessions.component.SessionModelEffortSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -301,38 +294,6 @@ private fun SessionBodyContent(
 
         else -> {
             SessionMessageList(detail = detail, state = state, modifier = modifier)
-        }
-    }
-}
-
-@Composable
-private fun SessionMessageList(
-    detail: AgentSessionDetail,
-    state: SessionDetailUiState,
-    modifier: Modifier = Modifier,
-) {
-    val currentDensity = LocalDensity.current
-    val scaledDensity =
-        Density(
-            density = currentDensity.density,
-            fontScale = currentDensity.fontScale * state.chatTextSize.scale,
-        )
-    val isPaused = detail.summary.loopState == LoopState.PAUSED
-    CompositionLocalProvider(LocalDensity provides scaledDensity) {
-        LazyColumn(
-            modifier = modifier,
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(detail.items, key = { it.id }) { item ->
-                ObservedItemRow(
-                    item = item,
-                    isPaused = isPaused,
-                    autoCollapseLongMessages = state.autoCollapseLongMessages,
-                    expandRunningActionTraces = state.expandRunningActionTraces,
-                    expandCompletedActionTraces = state.expandCompletedActionTraces,
-                )
-            }
         }
     }
 }

@@ -6,4 +6,5 @@
     <string name="session_detail_stop">Stop</string>
     <string name="session_message_collapse">Collapse</string>
     <string name="session_message_expand">Show more</string>
+    <string name="session_detail_scroll_to_latest">Scroll to latest message</string>
 </resources>
