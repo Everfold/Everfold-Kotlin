@@ -23,11 +23,11 @@ import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.android.R
+import com.everfold.core.designsystem.component.EverfoldLogo
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import kotlinx.collections.immutable.ImmutableList
@@ -66,14 +67,17 @@ internal fun EverfoldDrawerSheet(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ModalDrawerSheet(modifier = modifier) {
-        Spacer(modifier = Modifier.height(12.dp))
+    ModalDrawerSheet(
+        modifier = modifier,
+        drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        DrawerBrandHeader()
         DrawerTopActionRow(
             isNewSessionSelected = isNewSessionSelected,
             onOpenSearch = onOpenSearch,
             onNewSession = onNewSession,
         )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         DrawerSessionsList(
             sessions = sessions,
             activeSessionId = activeSessionId,
@@ -83,12 +87,29 @@ internal fun EverfoldDrawerSheet(
             onOpenArchive = onOpenArchive,
             modifier = Modifier.weight(1f).fillMaxWidth(),
         )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         DrawerBottomDestinations(
             isNodesSelected = isNodesSelected,
             isSettingsSelected = isSettingsSelected,
             onOpenNodes = onOpenNodes,
             onOpenSettings = onOpenSettings,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DrawerBrandHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        EverfoldLogo(modifier = Modifier.size(28.dp))
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -269,6 +290,7 @@ private fun DrawerSessionItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DrawerSessionRowContent(summary: AgentSessionSummary) {
     val isRunning =
@@ -292,10 +314,7 @@ private fun DrawerSessionRowContent(summary: AgentSessionSummary) {
             )
         }
         if (isRunning) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
-            )
+            LoadingIndicator(modifier = Modifier.size(18.dp))
         }
     }
 }
