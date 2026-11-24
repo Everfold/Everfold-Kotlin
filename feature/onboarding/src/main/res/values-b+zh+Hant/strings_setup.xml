@@ -1,16 +1,7 @@
 <resources>
     <string name="onboarding_setup_title">基礎設定</string>
     <string name="onboarding_setup_subtitle">在連線節點前快速設定語言與外觀偏好，所有變更將立即生效。</string>
-    <string name="onboarding_setup_language">介面語言</string>
-    <string name="onboarding_setup_theme">淺色 / 深色模式</string>
-    <string name="onboarding_setup_color">主題色</string>
-    <string name="onboarding_setup_color_dynamic">跟隨系統桌布動態取色 (Android 12+)</string>
     <string name="onboarding_setup_later_hint">更多文字大小、動作軌跡展開與動畫速度設定可隨時於「設定」中調整。</string>
-
-    <string name="onboarding_language_system">跟隨系統</string>
-    <string name="onboarding_theme_system">跟隨系統</string>
-    <string name="onboarding_theme_light">淺色</string>
-    <string name="onboarding_theme_dark">深色</string>
 
     <string name="onboarding_perms_title">系統權限申請</string>
     <string name="onboarding_perms_subtitle">建議開啟通知與背景白名單，以確保背景 Agent Loop 進度提醒穩定送達且不易遭系統暫停。</string>
