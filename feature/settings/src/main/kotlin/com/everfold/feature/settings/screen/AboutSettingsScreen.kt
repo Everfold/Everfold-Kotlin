@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.component.EverfoldLogo
-import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AppInfo
 import com.everfold.feature.settings.R
 import com.everfold.feature.settings.SettingsViewModel
@@ -55,7 +54,7 @@ fun AboutSettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item { AboutHeroCard(versionName = appInfo.versionName) }
+            item { AboutHeroCard() }
             item {
                 AboutLinksCard(
                     appInfo = appInfo,
@@ -70,7 +69,7 @@ fun AboutSettingsScreen(
 }
 
 @Composable
-private fun AboutHeroCard(versionName: String) {
+private fun AboutHeroCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors =
@@ -89,7 +88,6 @@ private fun AboutHeroCard(versionName: String) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            EverfoldStatusPill(text = "v$versionName")
         }
     }
 }
