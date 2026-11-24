@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,12 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldEmptyState
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.ConnectionProfile
-import com.everfold.core.model.ConnectionState
 import com.everfold.core.ui.connection.labelRes
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.toImmutableList
 import org.koin.androidx.compose.koinViewModel
 import com.everfold.core.ui.R as CoreUiR
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NodesScreen(
     onOpenDrawer: () -> Unit,
@@ -51,15 +50,13 @@ fun NodesScreen(
     var menuProfile by remember { mutableStateOf<ConnectionProfile?>(null) }
     var noteTarget by remember { mutableStateOf<ConnectionProfile?>(null) }
     var deleteTarget by remember { mutableStateOf<ConnectionProfile?>(null) }
-    val activeProfileId = (state.connectionState as? ConnectionState.Connected)?.endpoint?.profileId
 
     NodesScaffold(
         state = state,
-        activeProfileId = activeProfileId,
         onOpenDrawer = onOpenDrawer,
         onCreateNode = onCreateNode,
-        onRefresh = viewModel::refresh,
-        onDisconnect = viewModel::disconnect,
+        onDisconnectAll = viewModel::disconnectAll,
+        onDisconnectProfile = viewModel::disconnectProfile,
         onConnectLocal = viewModel::connectLocal,
         onConnectProfile = viewModel::connectProfile,
         onOpenMenu = { profile -> menuProfile = profile },
@@ -70,7 +67,7 @@ fun NodesScreen(
         menuProfile = menuProfile,
         noteTarget = noteTarget,
         deleteTarget = deleteTarget,
-        activeProfileId = activeProfileId,
+        connectedProfileIds = state.connectedProfileIds,
         onDismissMenu = { menuProfile = null },
         onEditConfig = { profile ->
             menuProfile = null
@@ -97,14 +94,14 @@ fun NodesScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NodesScaffold(
     state: NodesUiState,
-    activeProfileId: String?,
     onOpenDrawer: () -> Unit,
     onCreateNode: () -> Unit,
-    onRefresh: () -> Unit,
-    onDisconnect: () -> Unit,
+    onDisconnectAll: () -> Unit,
+    onDisconnectProfile: (String) -> Unit,
     onConnectLocal: () -> Unit,
     onConnectProfile: (String) -> Unit,
     onOpenMenu: (ConnectionProfile) -> Unit,
@@ -112,7 +109,19 @@ private fun NodesScaffold(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { NodesTopBar(onOpenDrawer = onOpenDrawer, onRefresh = onRefresh) },
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(
+                            imageVector = Icons.Rounded.Menu,
+                            contentDescription = stringResource(CoreUiR.string.common_open_menu),
+                        )
+                    }
+                },
+                title = { Text(stringResource(R.string.nodes_title)) },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateNode) {
                 Icon(
@@ -124,8 +133,8 @@ private fun NodesScaffold(
     ) { innerPadding ->
         NodesListContent(
             state = state,
-            activeProfileId = activeProfileId,
-            onDisconnect = onDisconnect,
+            onDisconnectAll = onDisconnectAll,
+            onDisconnectProfile = onDisconnectProfile,
             onConnectLocal = onConnectLocal,
             onConnectProfile = onConnectProfile,
             onOpenMenu = onOpenMenu,
@@ -134,43 +143,19 @@ private fun NodesScaffold(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NodesTopBar(
-    onOpenDrawer: () -> Unit,
-    onRefresh: () -> Unit,
-) {
-    TopAppBar(
-        navigationIcon = {
-            IconButton(onClick = onOpenDrawer) {
-                Icon(
-                    imageVector = Icons.Rounded.Menu,
-                    contentDescription = stringResource(CoreUiR.string.common_open_menu),
-                )
-            }
-        },
-        title = { Text(stringResource(R.string.nodes_title)) },
-        actions = {
-            IconButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = stringResource(R.string.nodes_refresh),
-                )
-            }
-        },
-    )
-}
-
 @Composable
 private fun NodesListContent(
     state: NodesUiState,
-    activeProfileId: String?,
-    onDisconnect: () -> Unit,
+    onDisconnectAll: () -> Unit,
+    onDisconnectProfile: (String) -> Unit,
     onConnectLocal: () -> Unit,
     onConnectProfile: (String) -> Unit,
     onOpenMenu: (ConnectionProfile) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val connectedProfiles =
+        state.savedProfiles.filter { it.id in state.connectedProfileIds }.toImmutableList()
+
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
@@ -178,8 +163,9 @@ private fun NodesListContent(
     ) {
         item(key = "summary") {
             ConnectionSummaryCard(
-                connectionState = state.connectionState,
-                onDisconnect = onDisconnect,
+                isLocalConnected = state.isLocalConnected,
+                connectedProfiles = connectedProfiles,
+                onDisconnectAll = onDisconnectAll,
                 onConnectLocal = onConnectLocal,
             )
         }
@@ -212,19 +198,13 @@ private fun NodesListContent(
             items(state.savedProfiles, key = { it.id }) { profile ->
                 SavedProfileCard(
                     profile = profile,
-                    isActive = activeProfileId == profile.id,
-                    isConnecting = state.connectingProfileId == profile.id,
+                    isActive = profile.id in state.connectedProfileIds,
+                    isConnecting = profile.id in state.connectingProfileIds,
                     onConnect = { onConnectProfile(profile.id) },
-                    onDisconnect = onDisconnect,
+                    onDisconnect = { onDisconnectProfile(profile.id) },
                     onOpenMenu = { onOpenMenu(profile) },
                 )
             }
-        }
-        if (state.nodes.isNotEmpty()) {
-            item(key = "topology-header") {
-                EverfoldSectionHeader(title = stringResource(R.string.nodes_topology_header, state.nodes.size))
-            }
-            items(state.nodes, key = { it.id }) { node -> NodeTopologyCard(node = node) }
         }
     }
 }
@@ -234,7 +214,7 @@ private fun NodesDialogsHost(
     menuProfile: ConnectionProfile?,
     noteTarget: ConnectionProfile?,
     deleteTarget: ConnectionProfile?,
-    activeProfileId: String?,
+    connectedProfileIds: ImmutableSet<String>,
     onDismissMenu: () -> Unit,
     onEditConfig: (ConnectionProfile) -> Unit,
     onOpenNote: (ConnectionProfile) -> Unit,
@@ -263,7 +243,7 @@ private fun NodesDialogsHost(
     deleteTarget?.let { profile ->
         DeleteNodeProfileDialog(
             profile = profile,
-            isActive = activeProfileId == profile.id,
+            isActive = profile.id in connectedProfileIds,
             onDismiss = onDismissDelete,
             onConfirm = { onConfirmDelete(profile) },
         )

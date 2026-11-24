@@ -1,20 +1,21 @@
 <resources>
     <string name="nodes_title">節點管理</string>
-    <string name="nodes_refresh">重新整理節點</string>
     <string name="nodes_add_action">新增節點</string>
     <string name="nodes_profiles_header">已儲存節點 (%1$d)</string>
     <string name="nodes_profiles_empty_title">尚無已儲存的遠端節點</string>
     <string name="nodes_profiles_empty_subtitle">點擊右下角 + 新增 NATS 或 Zenoh 節點設定。</string>
-    <string name="nodes_topology_header">可見節點拓撲 (%1$d)</string>
+    <plurals name="nodes_connected_count">
+        <item quantity="other">已連線 %1$d 個節點</item>
+    </plurals>
     <string name="nodes_disconnected">未連線</string>
-    <string name="nodes_disconnected_subtitle">目前未連線節點。可選擇下方節點進行連線，或切換為純本機模式。</string>
-    <string name="nodes_mode_remote">遠端 Authority</string>
+    <string name="nodes_disconnected_subtitle">目前未連線節點。可同時連線下方多個節點，或切換為純本機模式。</string>
     <string name="nodes_mode_local">純本機模式</string>
     <string name="nodes_local_subtitle">本機獨立執行 (Mock)</string>
     <string name="nodes_profile_connected_badge">已連線</string>
 
     <string name="nodes_action_connect">連線</string>
     <string name="nodes_action_disconnect">中斷連線</string>
+    <string name="nodes_action_disconnect_all">全部中斷</string>
     <string name="nodes_action_use_local">本機模式</string>
     <string name="nodes_action_more">更多操作</string>
     <string name="nodes_action_edit">編輯設定</string>
@@ -33,8 +34,4 @@
     <string name="node_editor_edit_title">編輯節點</string>
     <string name="node_editor_save_only">僅儲存</string>
     <string name="node_editor_save_and_connect">儲存並連線</string>
-
-    <string name="node_status_online">線上</string>
-    <string name="node_status_degraded">降級</string>
-    <string name="node_status_offline">離線</string>
 </resources>

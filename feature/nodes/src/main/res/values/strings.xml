@@ -1,20 +1,22 @@
 <resources>
     <string name="nodes_title">Nodes</string>
-    <string name="nodes_refresh">Refresh nodes</string>
     <string name="nodes_add_action">Add node</string>
     <string name="nodes_profiles_header">Saved Node Profiles (%1$d)</string>
     <string name="nodes_profiles_empty_title">No saved remote nodes</string>
     <string name="nodes_profiles_empty_subtitle">Tap + to add a NATS or Zenoh node configuration.</string>
-    <string name="nodes_topology_header">Visible Node Topology (%1$d)</string>
+    <plurals name="nodes_connected_count">
+        <item quantity="one">%1$d node connected</item>
+        <item quantity="other">%1$d nodes connected</item>
+    </plurals>
     <string name="nodes_disconnected">Disconnected</string>
-    <string name="nodes_disconnected_subtitle">Not connected to any node. Select a saved profile or switch to Local Mode.</string>
-    <string name="nodes_mode_remote">Remote Authority</string>
+    <string name="nodes_disconnected_subtitle">Not connected to any node. Connect one or more profiles below, or switch to Local Mode.</string>
     <string name="nodes_mode_local">Local Only Mode</string>
     <string name="nodes_local_subtitle">Running locally standalone (Mock)</string>
     <string name="nodes_profile_connected_badge">Connected</string>
 
     <string name="nodes_action_connect">Connect</string>
     <string name="nodes_action_disconnect">Disconnect</string>
+    <string name="nodes_action_disconnect_all">Disconnect all</string>
     <string name="nodes_action_use_local">Local Mode</string>
     <string name="nodes_action_more">More actions</string>
     <string name="nodes_action_edit">Edit configuration</string>
@@ -33,8 +35,4 @@
     <string name="node_editor_edit_title">Edit Node</string>
     <string name="node_editor_save_only">Save only</string>
     <string name="node_editor_save_and_connect">Save &amp; connect</string>
-
-    <string name="node_status_online">Online</string>
-    <string name="node_status_degraded">Degraded</string>
-    <string name="node_status_offline">Offline</string>
 </resources>
