@@ -1,4 +1,5 @@
 <resources>
     <string name="action_group_running">正在协调执行 %1$d 个动作…</string>
+    <string name="action_group_paused">已暂停 · %1$d 个动作</string>
     <string name="action_group_completed">已完成 %1$d 个动作</string>
 </resources>

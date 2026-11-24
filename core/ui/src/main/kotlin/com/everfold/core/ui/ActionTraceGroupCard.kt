@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ fun ActionTraceGroupCard(
     expandWhenRunning: Boolean,
     expandWhenCompleted: Boolean,
     modifier: Modifier = Modifier,
+    isPaused: Boolean = false,
 ) {
     val isRunning = actions.any { it.status == ActionStatus.RUNNING }
     val defaultExpanded = if (isRunning) expandWhenRunning else expandWhenCompleted
@@ -88,6 +90,7 @@ fun ActionTraceGroupCard(
             ActionGroupHeader(
                 actionCount = actions.size,
                 isRunning = isRunning,
+                isPaused = isPaused,
                 expanded = isExpanded,
                 onToggle = { manualOverride = !isExpanded },
             )
@@ -114,6 +117,7 @@ fun ActionTraceGroupCard(
 private fun ActionGroupHeader(
     actionCount: Int,
     isRunning: Boolean,
+    isPaused: Boolean,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
@@ -130,25 +134,13 @@ private fun ActionGroupHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            if (isRunning) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+            ActionGroupStatusIcon(isRunning = isRunning, isPaused = isPaused)
             Text(
                 text =
-                    if (isRunning) {
-                        stringResource(R.string.action_group_running, actionCount)
-                    } else {
-                        stringResource(R.string.action_group_completed, actionCount)
+                    when {
+                        isRunning && isPaused -> stringResource(R.string.action_group_paused, actionCount)
+                        isRunning -> stringResource(R.string.action_group_running, actionCount)
+                        else -> stringResource(R.string.action_group_completed, actionCount)
                     },
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -158,6 +150,39 @@ private fun ActionGroupHeader(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun ActionGroupStatusIcon(
+    isRunning: Boolean,
+    isPaused: Boolean,
+) {
+    when {
+        isRunning && isPaused -> {
+            Icon(
+                imageVector = Icons.Rounded.PauseCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+
+        isRunning -> {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+            )
+        }
+
+        else -> {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
