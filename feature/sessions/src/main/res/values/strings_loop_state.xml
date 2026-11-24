@@ -1,0 +1,8 @@
+<resources>
+    <string name="loop_state_idle">Idle</string>
+    <string name="loop_state_planning">Planning</string>
+    <string name="loop_state_executing">Executing</string>
+    <string name="loop_state_awaiting_input">Awaiting input</string>
+    <string name="loop_state_completed">Completed</string>
+    <string name="loop_state_failed">Failed</string>
+</resources>

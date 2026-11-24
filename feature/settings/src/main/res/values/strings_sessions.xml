@@ -1,0 +1,16 @@
+<resources>
+    <string name="session_pref_section_reading">Reading &amp; Typography</string>
+    <string name="session_pref_section_traces">Action &amp; Node Traces</string>
+    <string name="session_pref_text_size_label">Message text size</string>
+    <string name="text_size_small">Small</string>
+    <string name="text_size_medium">Standard</string>
+    <string name="text_size_large">Large</string>
+    <string name="text_size_extra_large">Extra Large</string>
+    <string name="session_pref_text_preview">Preview: Sample session message and Markdown reply size.</string>
+    <string name="session_pref_auto_collapse_title">Auto-collapse long messages</string>
+    <string name="session_pref_auto_collapse_subtitle">Collapse long user or agent replies by default with a tap-to-expand toggle</string>
+    <string name="session_pref_expand_running_traces_title">Expand while running</string>
+    <string name="session_pref_expand_running_traces_subtitle">Automatically expand action steps while the Agent Loop is executing</string>
+    <string name="session_pref_expand_completed_traces_title">Expand after completion</string>
+    <string name="session_pref_expand_completed_traces_subtitle">Keep action &amp; node traces expanded once execution finishes</string>
+</resources>

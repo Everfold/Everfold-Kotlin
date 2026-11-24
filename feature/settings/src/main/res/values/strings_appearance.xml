@@ -1,0 +1,26 @@
+<resources>
+    <string name="appearance_theme_mode_label">Theme mode</string>
+    <string name="theme_mode_system">Follow system</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+
+    <string name="appearance_theme_color_label">Color source</string>
+    <string name="theme_color_system_dynamic">Follow system</string>
+    <string name="theme_color_preset">Recommended</string>
+    <string name="theme_color_custom">Custom</string>
+    <string name="appearance_dynamic_color_hint">Uses system wallpaper colors on Android 12+, falling back to recommended palette on older versions.</string>
+    <string name="appearance_custom_hex_label">Custom Hex (#RRGGBB)</string>
+
+    <string name="appearance_animation_speed_label">Animation speed</string>
+    <string name="appearance_animation_speed_hint">Controls screen transition and trace expand/collapse speed.</string>
+    <string name="animation_speed_default">Default</string>
+    <string name="animation_speed_fast">Fast</string>
+    <string name="animation_speed_slow">Slow</string>
+    <string name="animation_speed_off">Off</string>
+
+    <string name="seed_indigo">Indigo</string>
+    <string name="seed_teal">Teal</string>
+    <string name="seed_terracotta">Terracotta</string>
+    <string name="seed_forest">Forest</string>
+    <string name="seed_plum">Plum</string>
+</resources>

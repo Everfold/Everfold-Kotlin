@@ -1,0 +1,5 @@
+<resources>
+    <string name="common_open_menu">開啟導覽列</string>
+    <string name="common_back">返回</string>
+    <string name="common_new_session">新增會話</string>
+</resources>

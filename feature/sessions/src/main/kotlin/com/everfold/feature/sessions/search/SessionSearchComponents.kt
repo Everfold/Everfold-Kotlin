@@ -58,6 +58,7 @@ import com.everfold.core.model.SessionSearchHit
 import com.everfold.feature.sessions.R
 import com.everfold.feature.sessions.labelRes
 import kotlinx.collections.immutable.ImmutableList
+import com.everfold.core.ui.R as CoreUiR
 
 private const val MAX_TITLE_LINES = 2
 private const val MAX_PREVIEW_LINES = 2
@@ -81,7 +82,7 @@ internal fun SessionSearchTopBar(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.session_search_back),
+                        contentDescription = stringResource(CoreUiR.string.common_back),
                     )
                 }
                 TextField(

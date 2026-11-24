@@ -1,7 +1,5 @@
 <resources>
-    <string name="app_name">Everfold</string>
     <string name="drawer_search_sessions">搜尋會話</string>
-    <string name="drawer_new_session">新增會話</string>
     <string name="drawer_sessions_header">最近會話</string>
     <string name="drawer_sessions_empty">暫無會話</string>
     <string name="drawer_nodes">節點管理</string>

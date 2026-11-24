@@ -1,6 +1,5 @@
 <resources>
     <string name="nodes_title">Nodes</string>
-    <string name="nodes_open_menu">Open navigation drawer</string>
     <string name="nodes_refresh">Refresh nodes</string>
     <string name="nodes_topology_header">Visible Node Topology (%1$d)</string>
     <string name="nodes_disconnected">Disconnected</string>

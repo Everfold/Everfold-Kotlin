@@ -1,0 +1,5 @@
+<resources>
+    <string name="common_open_menu">Open navigation drawer</string>
+    <string name="common_back">Back</string>
+    <string name="common_new_session">New session</string>
+</resources>

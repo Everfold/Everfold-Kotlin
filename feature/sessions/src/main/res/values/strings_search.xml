@@ -1,24 +1,4 @@
 <resources>
-    <string name="session_detail_open_menu">Open navigation drawer</string>
-    <string name="session_detail_new_title">New Session</string>
-    <string name="session_detail_new_subtitle">Ready to start a new Loop via Authority</string>
-    <string name="session_detail_new_action">New session</string>
-    <string name="session_detail_empty_quote">A journey of a thousand miles begins with a single step</string>
-    <string name="session_detail_host_label">Loop · %1$s</string>
-    <string name="session_detail_composer_hint">Send an instruction to the agent…</string>
-    <string name="session_detail_send">Send</string>
-    <string name="session_detail_stop">Stop</string>
-    <string name="session_message_collapse">Collapse</string>
-    <string name="session_message_expand">Show more</string>
-
-    <string name="loop_state_idle">Idle</string>
-    <string name="loop_state_planning">Planning</string>
-    <string name="loop_state_executing">Executing</string>
-    <string name="loop_state_awaiting_input">Awaiting input</string>
-    <string name="loop_state_completed">Completed</string>
-    <string name="loop_state_failed">Failed</string>
-
-    <string name="session_search_back">Back</string>
     <string name="session_search_hint">Search session titles or messages…</string>
     <string name="session_search_clear_query">Clear search</string>
     <string name="session_search_filter_workspace">Workspace</string>

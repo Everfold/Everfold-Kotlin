@@ -39,6 +39,7 @@ import com.everfold.android.R
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import kotlinx.collections.immutable.ImmutableList
+import com.everfold.core.ui.R as CoreUiR
 
 @Composable
 internal fun EverfoldDrawerSheet(
@@ -133,7 +134,7 @@ private fun DrawerTopActionRow(
         ) {
             Icon(
                 imageVector = Icons.Rounded.AddComment,
-                contentDescription = stringResource(R.string.drawer_new_session),
+                contentDescription = stringResource(CoreUiR.string.common_new_session),
             )
         }
     }

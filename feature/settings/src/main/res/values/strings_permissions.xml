@@ -1,0 +1,20 @@
+<resources>
+    <string name="perm_notifications_title">Notification permission</string>
+    <string name="perm_notifications_subtitle">Used for background Agent Loop progress and approval prompts</string>
+    <string name="perm_status_granted">Granted</string>
+    <string name="perm_status_denied">Not granted</string>
+    <string name="perm_action_notification_settings">Notification settings</string>
+    <string name="perm_action_request">Request permission</string>
+
+    <string name="perm_background_title">Background execution</string>
+    <string name="perm_background_subtitle">Exclude from battery optimization so long tasks are not suspended</string>
+    <string name="perm_status_allowed">Allowed</string>
+    <string name="perm_status_restricted">Restricted</string>
+    <string name="perm_action_view_settings">View settings</string>
+    <string name="perm_action_allow">Allow</string>
+
+    <string name="perm_battery_title">Battery management (Unrestricted background)</string>
+    <string name="perm_battery_subtitle">Open Everfold\'s App Info page, then go to Battery to allow unrestricted background activity</string>
+    <string name="perm_status_manual">Manual setup</string>
+    <string name="perm_action_open_battery">Open App Info</string>
+</resources>

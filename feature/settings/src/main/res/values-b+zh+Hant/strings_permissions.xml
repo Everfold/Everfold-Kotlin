@@ -1,0 +1,20 @@
+<resources>
+    <string name="perm_notifications_title">通知權限</string>
+    <string name="perm_notifications_subtitle">用於顯示背景 Agent Loop 進度與核准提醒</string>
+    <string name="perm_status_granted">已授權</string>
+    <string name="perm_status_denied">未授權</string>
+    <string name="perm_action_notification_settings">通知設定</string>
+    <string name="perm_action_request">申請權限</string>
+
+    <string name="perm_background_title">允許背景執行</string>
+    <string name="perm_background_subtitle">將應用程式加入電池最佳化白名單，避免長任務被系統暫停</string>
+    <string name="perm_status_allowed">已允許</string>
+    <string name="perm_status_restricted">受限制</string>
+    <string name="perm_action_view_settings">檢視設定</string>
+    <string name="perm_action_allow">申請允許</string>
+
+    <string name="perm_battery_title">耗電管理（允許完全背景行為）</string>
+    <string name="perm_battery_subtitle">前往本應用程式詳情頁，進入「耗電管理 / 電池」開啟「完全允許背景行為 / 無限制」</string>
+    <string name="perm_status_manual">手動設定</string>
+    <string name="perm_action_open_battery">前往應用程式詳情</string>
+</resources>

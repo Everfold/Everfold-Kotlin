@@ -1,0 +1,8 @@
+<resources>
+    <string name="loop_state_idle">待命</string>
+    <string name="loop_state_planning">规划中</string>
+    <string name="loop_state_executing">执行动作</string>
+    <string name="loop_state_awaiting_input">等待输入</string>
+    <string name="loop_state_completed">已完成</string>
+    <string name="loop_state_failed">异常</string>
+</resources>

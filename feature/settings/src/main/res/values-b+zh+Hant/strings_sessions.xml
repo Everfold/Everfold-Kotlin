@@ -1,0 +1,16 @@
+<resources>
+    <string name="session_pref_section_reading">閱讀與排版</string>
+    <string name="session_pref_section_traces">動作與節點軌跡</string>
+    <string name="session_pref_text_size_label">會話文字大小</string>
+    <string name="text_size_small">小</string>
+    <string name="text_size_medium">標準</string>
+    <string name="text_size_large">大</string>
+    <string name="text_size_extra_large">特大</string>
+    <string name="session_pref_text_preview">預覽：Everfold 會話正文與 Markdown 回覆字級範例。</string>
+    <string name="session_pref_auto_collapse_title">自動折疊長訊息</string>
+    <string name="session_pref_auto_collapse_subtitle">較長的使用者或智能體回覆預設折疊，點擊展開全文</string>
+    <string name="session_pref_expand_running_traces_title">執行時預設展開</string>
+    <string name="session_pref_expand_running_traces_subtitle">Agent Loop 正在執行跨節點動作時預設展開步驟卡片</string>
+    <string name="session_pref_expand_completed_traces_title">結束後預設展開</string>
+    <string name="session_pref_expand_completed_traces_subtitle">動作組全部完成後仍保持展開；關閉則自動收合以保持介面清爽</string>
+</resources>

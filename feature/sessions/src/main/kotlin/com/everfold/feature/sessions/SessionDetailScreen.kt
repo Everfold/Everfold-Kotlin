@@ -55,6 +55,7 @@ import com.everfold.core.model.LoopState
 import com.everfold.feature.sessions.component.ObservedItemRow
 import com.everfold.feature.sessions.component.SessionComposerBar
 import org.koin.androidx.compose.koinViewModel
+import com.everfold.core.ui.R as CoreUiR
 
 private const val EMPTY_LOGO_ALPHA = 0.75f
 private const val SESSION_BODY_OUT_MS = 80
@@ -238,7 +239,7 @@ private fun SessionDetailTopBar(
             IconButton(onClick = onOpenDrawer) {
                 Icon(
                     imageVector = Icons.Rounded.Menu,
-                    contentDescription = stringResource(R.string.session_detail_open_menu),
+                    contentDescription = stringResource(CoreUiR.string.common_open_menu),
                 )
             }
         },
@@ -271,7 +272,7 @@ private fun SessionDetailTopBar(
                 IconButton(onClick = onNewSession) {
                     Icon(
                         imageVector = Icons.Rounded.AddComment,
-                        contentDescription = stringResource(R.string.session_detail_new_action),
+                        contentDescription = stringResource(CoreUiR.string.common_new_session),
                     )
                 }
             }

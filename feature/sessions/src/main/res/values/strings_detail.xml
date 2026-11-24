@@ -1,0 +1,11 @@
+<resources>
+    <string name="session_detail_new_title">New Session</string>
+    <string name="session_detail_new_subtitle">Ready to start a new Loop via Authority</string>
+    <string name="session_detail_empty_quote">A journey of a thousand miles begins with a single step</string>
+    <string name="session_detail_host_label">Loop · %1$s</string>
+    <string name="session_detail_composer_hint">Send an instruction to the agent…</string>
+    <string name="session_detail_send">Send</string>
+    <string name="session_detail_stop">Stop</string>
+    <string name="session_message_collapse">Collapse</string>
+    <string name="session_message_expand">Show more</string>
+</resources>

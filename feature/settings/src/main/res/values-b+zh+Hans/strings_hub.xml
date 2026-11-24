@@ -1,0 +1,18 @@
+<resources>
+    <string name="settings_title">设置</string>
+    <string name="settings_group_appearance_interface">外观与界面</string>
+    <string name="settings_entry_appearance_title">外观与主题</string>
+    <string name="settings_entry_language_title">语言</string>
+    <string name="settings_group_sessions">会话与可观测性</string>
+    <string name="settings_entry_sessions_title">会话与轨迹</string>
+    <string name="settings_group_permissions">系统与权限</string>
+    <string name="settings_entry_permissions_title">权限与后台运行</string>
+    <string name="settings_group_connection_about">关于</string>
+    <string name="settings_about_title">关于 Everfold</string>
+    <string name="settings_about_entry_subtitle">版本 v%1$s · GitHub · Apache 2.0</string>
+    <string name="settings_summary_pair">%1$s · %2$s</string>
+    <string name="settings_summary_auto_collapse_on">自动折叠长消息</string>
+    <string name="settings_summary_auto_collapse_off">默认展开长消息</string>
+    <string name="settings_summary_notifications_status">通知：%1$s</string>
+    <string name="settings_summary_background_status">后台：%1$s</string>
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="about_version_label">软件版本</string>
+    <string name="about_version_value">v%1$s (Build %2$d)</string>
+    <string name="about_repo_label">GitHub 仓库</string>
+    <string name="about_license_label">开源许可证</string>
+    <string name="about_license_value">%1$s 许可证</string>
+</resources>

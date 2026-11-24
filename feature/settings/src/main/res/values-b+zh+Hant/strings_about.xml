@@ -1,0 +1,7 @@
+<resources>
+    <string name="about_version_label">軟體版本</string>
+    <string name="about_version_value">v%1$s (Build %2$d)</string>
+    <string name="about_repo_label">GitHub 儲存庫</string>
+    <string name="about_license_label">開源授權條款</string>
+    <string name="about_license_value">%1$s 授權條款</string>
+</resources>

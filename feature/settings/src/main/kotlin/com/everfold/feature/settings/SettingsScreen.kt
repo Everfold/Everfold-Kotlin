@@ -46,6 +46,7 @@ import com.everfold.feature.settings.screen.labelRes
 import com.everfold.feature.settings.system.SystemPermissionStatus
 import com.everfold.feature.settings.system.readSystemPermissionStatus
 import org.koin.androidx.compose.koinViewModel
+import com.everfold.core.ui.R as CoreUiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +72,7 @@ fun SettingsScreen(
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
                             imageVector = Icons.Rounded.Menu,
-                            contentDescription = stringResource(R.string.settings_open_menu),
+                            contentDescription = stringResource(CoreUiR.string.common_open_menu),
                         )
                     }
                 },

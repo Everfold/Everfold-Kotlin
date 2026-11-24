@@ -41,6 +41,7 @@ import com.everfold.core.model.NodeDescriptor
 import com.everfold.core.model.NodeRole
 import com.everfold.core.model.NodeStatus
 import org.koin.androidx.compose.koinViewModel
+import com.everfold.core.ui.R as CoreUiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +60,7 @@ fun NodesScreen(
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
                             imageVector = Icons.Rounded.Menu,
-                            contentDescription = stringResource(R.string.nodes_open_menu),
+                            contentDescription = stringResource(CoreUiR.string.common_open_menu),
                         )
                     }
                 },

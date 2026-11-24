@@ -1,24 +1,4 @@
 <resources>
-    <string name="session_detail_open_menu">打开导航栏</string>
-    <string name="session_detail_new_title">新会话</string>
-    <string name="session_detail_new_subtitle">准备向 Authority 发起新 Loop</string>
-    <string name="session_detail_new_action">新建会话</string>
-    <string name="session_detail_empty_quote">千里之行，始于足下</string>
-    <string name="session_detail_host_label">Loop · %1$s</string>
-    <string name="session_detail_composer_hint">向智能体发送指令…</string>
-    <string name="session_detail_send">发送</string>
-    <string name="session_detail_stop">停止执行</string>
-    <string name="session_message_collapse">收起</string>
-    <string name="session_message_expand">展开全文</string>
-
-    <string name="loop_state_idle">待命</string>
-    <string name="loop_state_planning">规划中</string>
-    <string name="loop_state_executing">执行动作</string>
-    <string name="loop_state_awaiting_input">等待输入</string>
-    <string name="loop_state_completed">已完成</string>
-    <string name="loop_state_failed">异常</string>
-
-    <string name="session_search_back">返回</string>
     <string name="session_search_hint">搜索会话标题或消息内容…</string>
     <string name="session_search_clear_query">清空搜索</string>
     <string name="session_search_filter_workspace">工作空间</string>

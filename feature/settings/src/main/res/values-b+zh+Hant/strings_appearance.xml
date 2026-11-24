@@ -1,0 +1,26 @@
+<resources>
+    <string name="appearance_theme_mode_label">淺色 / 深色模式</string>
+    <string name="theme_mode_system">跟隨系統</string>
+    <string name="theme_mode_light">淺色</string>
+    <string name="theme_mode_dark">深色</string>
+
+    <string name="appearance_theme_color_label">主題色來源</string>
+    <string name="theme_color_system_dynamic">跟隨系統</string>
+    <string name="theme_color_preset">推薦主題色</string>
+    <string name="theme_color_custom">自訂主題色</string>
+    <string name="appearance_dynamic_color_hint">Android 12+ 自動跟隨系統桌布動態取色，舊版本將退回推薦主題色。</string>
+    <string name="appearance_custom_hex_label">自訂 Hex (#RRGGBB)</string>
+
+    <string name="appearance_animation_speed_label">動畫速度</string>
+    <string name="appearance_animation_speed_hint">調整頁面切換與軌跡展開收合的動畫快慢，亦可完全關閉。</string>
+    <string name="animation_speed_default">預設</string>
+    <string name="animation_speed_fast">快</string>
+    <string name="animation_speed_slow">慢</string>
+    <string name="animation_speed_off">關閉</string>
+
+    <string name="seed_indigo">靛藍</string>
+    <string name="seed_teal">青黛</string>
+    <string name="seed_terracotta">陶土</string>
+    <string name="seed_forest">森綠</string>
+    <string name="seed_plum">梅紫</string>
+</resources>

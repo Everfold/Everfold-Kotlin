@@ -1,0 +1,18 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_group_appearance_interface">Appearance &amp; Interface</string>
+    <string name="settings_entry_appearance_title">Appearance &amp; Theme</string>
+    <string name="settings_entry_language_title">Language</string>
+    <string name="settings_group_sessions">Sessions &amp; Observability</string>
+    <string name="settings_entry_sessions_title">Sessions &amp; Traces</string>
+    <string name="settings_group_permissions">System &amp; Permissions</string>
+    <string name="settings_entry_permissions_title">Permissions &amp; Background</string>
+    <string name="settings_group_connection_about">About</string>
+    <string name="settings_about_title">About Everfold</string>
+    <string name="settings_about_entry_subtitle">Version v%1$s · GitHub · Apache 2.0</string>
+    <string name="settings_summary_pair">%1$s · %2$s</string>
+    <string name="settings_summary_auto_collapse_on">Auto-collapse long messages</string>
+    <string name="settings_summary_auto_collapse_off">Full messages shown</string>
+    <string name="settings_summary_notifications_status">Notifications: %1$s</string>
+    <string name="settings_summary_background_status">Background: %1$s</string>
+</resources>
