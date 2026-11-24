@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AddComment
@@ -17,9 +16,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +36,7 @@ import com.everfold.feature.sessions.SessionDetailUiState
 import com.everfold.feature.sessions.labelRes
 import com.everfold.core.ui.R as CoreUiR
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SessionDetailTopBar(
     state: SessionDetailUiState,
@@ -43,11 +44,12 @@ internal fun SessionDetailTopBar(
     onContextClick: () -> Unit,
     onNewSession: () -> Unit,
     onOpenMenu: (AgentSessionSummary) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val detail = state.detail
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = onOpenDrawer) {
+            IconButton(onClick = onOpenDrawer, shapes = IconButtonDefaults.shapes()) {
                 Icon(
                     imageVector = Icons.Rounded.Menu,
                     contentDescription = stringResource(CoreUiR.string.common_open_menu),
@@ -66,6 +68,7 @@ internal fun SessionDetailTopBar(
                 )
             }
         },
+        scrollBehavior = scrollBehavior,
     )
 }
 
@@ -94,7 +97,7 @@ private fun SessionTopBarTitleBlock(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onContextClick),
+                modifier = Modifier.clip(MaterialTheme.shapes.extraSmall).clickable(onClick = onContextClick),
             ) {
                 Text(
                     text = subtitleText,
@@ -126,6 +129,7 @@ private fun SessionTopBarTitleBlock(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RowScope.SessionTopBarActions(
     summary: AgentSessionSummary,
@@ -140,14 +144,14 @@ private fun RowScope.SessionTopBarActions(
         )
     } else {
         SessionLoopStatusPill(loopState = summary.loopState)
-        IconButton(onClick = onNewSession) {
+        IconButton(onClick = onNewSession, shapes = IconButtonDefaults.shapes()) {
             Icon(
                 imageVector = Icons.Rounded.AddComment,
                 contentDescription = stringResource(CoreUiR.string.common_new_session),
             )
         }
     }
-    IconButton(onClick = { onOpenMenu(summary) }) {
+    IconButton(onClick = { onOpenMenu(summary) }, shapes = IconButtonDefaults.shapes()) {
         Icon(
             imageVector = Icons.Rounded.MoreVert,
             contentDescription = stringResource(R.string.session_menu_more_actions),

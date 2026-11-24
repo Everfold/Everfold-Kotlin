@@ -17,15 +17,18 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,7 +54,7 @@ import com.everfold.core.ui.R as CoreUiR
 
 private const val MAX_PREVIEW_LINES = 2
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArchivedSessionsScreen(
     onBack: () -> Unit,
@@ -60,13 +64,14 @@ fun ArchivedSessionsScreen(
 ) {
     val sessions by viewModel.archivedSessions.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<AgentSessionSummary?>(null) }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(CoreUiR.string.common_back),
@@ -74,37 +79,17 @@ fun ArchivedSessionsScreen(
                     }
                 },
                 title = { Text(stringResource(R.string.archived_sessions_title)) },
+                scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
-        if (sessions.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                EverfoldEmptyState(
-                    title = stringResource(R.string.archived_sessions_empty_title),
-                    subtitle = stringResource(R.string.archived_sessions_empty_subtitle),
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                itemsIndexed(sessions, key = { _, summary -> summary.id }) { index, summary ->
-                    ArchivedSessionCard(
-                        index = index,
-                        count = sessions.size,
-                        summary = summary,
-                        onOpen = { onSelectSession(summary.id) },
-                        onRestore = { viewModel.restoreSession(summary.id) },
-                        onRequestDelete = { pendingDelete = summary },
-                    )
-                }
-            }
-        }
+        ArchivedSessionsContent(
+            sessions = sessions,
+            onSelectSession = onSelectSession,
+            onRestoreSession = viewModel::restoreSession,
+            onRequestDelete = { pendingDelete = it },
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        )
     }
 
     pendingDelete?.let { target ->
@@ -116,6 +101,41 @@ fun ArchivedSessionsScreen(
                 viewModel.deleteSession(target.id)
             },
         )
+    }
+}
+
+@Composable
+private fun ArchivedSessionsContent(
+    sessions: List<AgentSessionSummary>,
+    onSelectSession: (String) -> Unit,
+    onRestoreSession: (String) -> Unit,
+    onRequestDelete: (AgentSessionSummary) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (sessions.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            EverfoldEmptyState(
+                title = stringResource(R.string.archived_sessions_empty_title),
+                subtitle = stringResource(R.string.archived_sessions_empty_subtitle),
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            itemsIndexed(sessions, key = { _, summary -> summary.id }) { index, summary ->
+                ArchivedSessionCard(
+                    index = index,
+                    count = sessions.size,
+                    summary = summary,
+                    onOpen = { onSelectSession(summary.id) },
+                    onRestore = { onRestoreSession(summary.id) },
+                    onRequestDelete = { onRequestDelete(summary) },
+                )
+            }
+        }
     }
 }
 
@@ -173,6 +193,7 @@ private fun ArchivedSessionCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ArchivedMetadataAndActions(
     summary: AgentSessionSummary,
@@ -199,11 +220,15 @@ private fun ArchivedMetadataAndActions(
         ) {
             TextButton(
                 onClick = onRequestDelete,
+                shapes = ButtonDefaults.shapes(),
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
                 Text(stringResource(R.string.archived_sessions_delete))
             }
-            FilledTonalButton(onClick = onRestore) {
+            FilledTonalButton(
+                onClick = onRestore,
+                shapes = ButtonDefaults.shapes(),
+            ) {
                 Text(stringResource(R.string.archived_sessions_restore))
             }
         }

@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -107,6 +110,7 @@ fun SessionDetailScreen(
     SessionDetailScreenContent(state = state, actions = actions, modifier = modifier)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SessionDetailScreenContent(
     state: SessionDetailUiState,
@@ -121,6 +125,7 @@ private fun SessionDetailScreenContent(
     var showContextDetail by rememberSaveable { mutableStateOf(false) }
     var showModelSheet by rememberSaveable { mutableStateOf(false) }
     var showFullscreenComposer by rememberSaveable { mutableStateOf(false) }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val handleContextClick: () -> Unit = {
         dismissIme()
         if (detail != null) {
@@ -134,10 +139,11 @@ private fun SessionDetailScreenContent(
 
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
-            modifier = Modifier.fillMaxSize().imePadding(),
+            modifier = Modifier.fillMaxSize().imePadding().nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 SessionDetailTopBar(
                     state = state,
+                    scrollBehavior = scrollBehavior,
                     onOpenDrawer = { dismissIme().also { actions.onOpenDrawer() } },
                     onContextClick = handleContextClick,
                     onNewSession = { dismissIme().also { actions.onNewSession() } },

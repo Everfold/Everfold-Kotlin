@@ -6,25 +6,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,6 +43,8 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toImmutableList
 import org.koin.androidx.compose.koinViewModel
 import com.everfold.core.ui.R as CoreUiR
+
+private const val FAB_COLLAPSE_THRESHOLD_PX = 32
 
 @Composable
 fun NodesScreen(
@@ -94,7 +102,7 @@ fun NodesScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NodesScaffold(
     state: NodesUiState,
@@ -107,12 +115,21 @@ private fun NodesScaffold(
     onOpenMenu: (ConnectionProfile) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val listState = rememberLazyListState()
+    val fabExpanded by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 &&
+                listState.firstVisibleItemScrollOffset < FAB_COLLAPSE_THRESHOLD_PX
+        }
+    }
+
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
+                    IconButton(onClick = onOpenDrawer, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.Rounded.Menu,
                             contentDescription = stringResource(CoreUiR.string.common_open_menu),
@@ -120,19 +137,21 @@ private fun NodesScaffold(
                     }
                 },
                 title = { Text(stringResource(R.string.nodes_title)) },
+                scrollBehavior = scrollBehavior,
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateNode) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = stringResource(R.string.nodes_add_action),
-                )
-            }
+            ExtendedFloatingActionButton(
+                onClick = onCreateNode,
+                expanded = fabExpanded,
+                icon = { Icon(imageVector = Icons.Rounded.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.nodes_add_action)) },
+            )
         },
     ) { innerPadding ->
         NodesListContent(
             state = state,
+            listState = listState,
             onDisconnectAll = onDisconnectAll,
             onDisconnectProfile = onDisconnectProfile,
             onConnectLocal = onConnectLocal,
@@ -146,6 +165,7 @@ private fun NodesScaffold(
 @Composable
 private fun NodesListContent(
     state: NodesUiState,
+    listState: LazyListState,
     onDisconnectAll: () -> Unit,
     onDisconnectProfile: (String) -> Unit,
     onConnectLocal: () -> Unit,
@@ -157,6 +177,7 @@ private fun NodesListContent(
         state.savedProfiles.filter { it.id in state.connectedProfileIds }.toImmutableList()
 
     LazyColumn(
+        state = listState,
         modifier = modifier,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -171,9 +192,10 @@ private fun NodesListContent(
         }
         state.lastErrorCode?.let { errorCode ->
             item(key = "error") {
-                Card(
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.errorContainer,
                 ) {
                     Text(
                         text = stringResource(errorCode.labelRes()),
