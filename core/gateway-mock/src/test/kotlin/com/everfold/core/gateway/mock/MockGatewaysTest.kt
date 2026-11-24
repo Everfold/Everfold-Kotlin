@@ -235,7 +235,7 @@ class MockGatewaysTest {
             assertFalse(settingsStore.preferences.value.onboardingCompleted)
             assertEquals(SeedColorPreset.BASELINE, settingsStore.preferences.value.theme.seedColor)
             assertEquals(ThemePaletteStyle.TONAL_SPOT, settingsStore.preferences.value.theme.paletteStyle)
-            assertEquals(ThemeColorSpec.SPEC_2021, settingsStore.preferences.value.theme.colorSpec)
+            assertEquals(ThemeColorSpec.SPEC_2025, settingsStore.preferences.value.theme.colorSpec)
             assertEquals("#6750A4", settingsStore.preferences.value.theme.customColorHex)
             val updatedTheme =
                 ThemePreferences(
@@ -243,7 +243,7 @@ class MockGatewaysTest {
                     colorMode = ThemeColorMode.PRESET,
                     seedColor = SeedColorPreset.BLUE,
                     paletteStyle = ThemePaletteStyle.EXPRESSIVE,
-                    colorSpec = ThemeColorSpec.SPEC_2025,
+                    colorSpec = ThemeColorSpec.SPEC_2021,
                 )
             settingsStore.updateTheme(updatedTheme)
             assertEquals(updatedTheme, settingsStore.preferences.value.theme)

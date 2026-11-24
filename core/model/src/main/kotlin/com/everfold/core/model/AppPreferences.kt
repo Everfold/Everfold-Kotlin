@@ -85,7 +85,7 @@ data class ThemePreferences(
     val seedColor: SeedColorPreset = SeedColorPreset.BASELINE,
     val customColorHex: String = DEFAULT_SEED_HEX,
     val paletteStyle: ThemePaletteStyle = ThemePaletteStyle.TONAL_SPOT,
-    val colorSpec: ThemeColorSpec = ThemeColorSpec.SPEC_2021,
+    val colorSpec: ThemeColorSpec = ThemeColorSpec.SPEC_2025,
 )
 
 data class NotificationPreferences(

@@ -1,6 +1,11 @@
 package com.everfold.core.designsystem.theme
 
+import androidx.compose.animation.core.SnapSpec
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.ui.graphics.Color
+import com.everfold.core.designsystem.component.groupedItemShape
+import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorSpec
 import com.everfold.core.model.ThemePaletteStyle
@@ -92,5 +97,30 @@ class EverfoldThemeMappingTest {
 
         assertNotEquals(monochrome, vibrant)
         assertNotEquals(expressive2021, expressive2025)
+    }
+
+    @Test
+    fun groupedItemShapeRoundsOuterEdgesAndSoftensInnerEdges() {
+        val single = groupedItemShape(index = 0, count = 1)
+        assertEquals(single.topStart, single.bottomStart)
+
+        val first = groupedItemShape(index = 0, count = 3)
+        val middle = groupedItemShape(index = 1, count = 3)
+        val last = groupedItemShape(index = 2, count = 3)
+
+        assertEquals(first.topStart, last.bottomStart)
+        assertEquals(first.bottomStart, middle.topStart)
+        assertEquals(middle.bottomStart, last.topStart)
+        assertNotEquals(first.topStart, first.bottomStart)
+    }
+
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    @Test
+    fun animationSpeedMapsToExpressiveMotionSpecsAndSnapWhenOff() {
+        assertTrue(AnimationSpeed.OFF.spatialSpecFor<Float>() is SnapSpec)
+        assertTrue(AnimationSpeed.OFF.effectsSpecFor<Float>() is SnapSpec)
+        assertTrue(AnimationSpeed.DEFAULT.spatialSpecFor<Float>() is SpringSpec)
+        assertTrue(AnimationSpeed.FAST.spatialSpecFor<Float>() is SpringSpec)
+        assertTrue(AnimationSpeed.SLOW.effectsSpecFor<Float>() is SpringSpec)
     }
 }
