@@ -10,6 +10,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +39,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,6 +84,12 @@ fun SessionDetailScreen(
     val isRunning =
         detail?.summary?.loopState == LoopState.PLANNING ||
             detail?.summary?.loopState == LoopState.EXECUTING_ACTION
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissIme: () -> Unit = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize().imePadding(),
@@ -85,8 +97,14 @@ fun SessionDetailScreen(
             SessionDetailTopBar(
                 detail = detail,
                 defaultModelName = state.defaultModelName,
-                onOpenDrawer = onOpenDrawer,
-                onNewSession = onNewSession,
+                onOpenDrawer = {
+                    dismissIme()
+                    onOpenDrawer()
+                },
+                onNewSession = {
+                    dismissIme()
+                    onNewSession()
+                },
             )
         },
         bottomBar = {
@@ -94,17 +112,31 @@ fun SessionDetailScreen(
                 draft = state.draft,
                 isRunning = isRunning,
                 onDraftChange = viewModel::updateDraft,
-                onSend = { viewModel.sendDraft(onSessionCreate) },
-                onCancel = viewModel::cancelActiveLoop,
+                onSend = {
+                    dismissIme()
+                    viewModel.sendDraft(onSessionCreate)
+                },
+                onCancel = {
+                    dismissIme()
+                    viewModel.cancelActiveLoop()
+                },
             )
         },
     ) { innerPadding ->
         SessionDetailBody(
             state = state,
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).clearFocusOnTouch(dismissIme),
         )
     }
 }
+
+private fun Modifier.clearFocusOnTouch(onClear: () -> Unit): Modifier =
+    pointerInput(onClear) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            onClear()
+        }
+    }
 
 @Composable
 private fun SessionDetailBody(

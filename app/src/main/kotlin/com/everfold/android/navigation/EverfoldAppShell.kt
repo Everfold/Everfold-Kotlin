@@ -71,15 +71,19 @@ internal fun EverfoldAppShell(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val dismissIme = {
+    val dismissIme: () -> Unit = {
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
     }
     LaunchedEffect(drawerState.targetValue) {
         if (drawerState.targetValue == DrawerValue.Open) dismissIme()
     }
+    LaunchedEffect(currentRoute, activeSessionId) {
+        dismissIme()
+    }
 
     fun openRoot(target: AppDestination) {
+        dismissIme()
         if (currentRoute != target) {
             backStack.clear()
             backStack.add(target)
@@ -99,10 +103,12 @@ internal fun EverfoldAppShell(
                 isNodesSelected = currentRoute is AppDestination.Nodes,
                 isSettingsSelected = currentRoute is AppDestination.Settings,
                 onNewSession = {
+                    dismissIme()
                     activeSessionId = null
                     openRoot(AppDestination.Session)
                 },
                 onSelectSession = { id ->
+                    dismissIme()
                     activeSessionId = id
                     openRoot(AppDestination.Session)
                 },
@@ -116,6 +122,7 @@ internal fun EverfoldAppShell(
             activeSessionId = activeSessionId,
             onSessionCreate = { activeSessionId = it },
             onNewSession = { activeSessionId = null },
+            onDismissIme = dismissIme,
             onOpenDrawer = {
                 dismissIme()
                 scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.open() }
@@ -133,10 +140,12 @@ private fun AppNavDisplay(
     activeSessionId: String?,
     onSessionCreate: (String) -> Unit,
     onNewSession: () -> Unit,
+    onDismissIme: () -> Unit,
     onOpenDrawer: () -> Unit,
 ) {
     val animationSpeed = LocalAnimationSpeed.current
     val popBack: () -> Unit = {
+        onDismissIme()
         if (backStack.size > 1) {
             backStack.removeAt(backStack.lastIndex)
         }
@@ -173,7 +182,10 @@ private fun AppNavDisplay(
                 entry<AppDestination.Settings> {
                     SettingsScreen(
                         onOpenDrawer = onOpenDrawer,
-                        onOpenSection = { section -> backStack.add(section.toDestination()) },
+                        onOpenSection = { section ->
+                            onDismissIme()
+                            backStack.add(section.toDestination())
+                        },
                     )
                 }
                 entry<AppDestination.SettingsAppearance> { AppearanceSettingsScreen(onBack = popBack) }

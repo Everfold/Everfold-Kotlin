@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,6 +46,12 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissIme = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
 
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -59,7 +67,10 @@ fun OnboardingScreen(
             OnboardingBrandHeader()
             OnboardingModeOptions(
                 selectedMode = state.selectedMode,
-                onSelectMode = viewModel::selectMode,
+                onSelectMode = { mode ->
+                    dismissIme()
+                    viewModel.selectMode(mode)
+                },
             )
             if (state.selectedMode != ConnectionMode.LOCAL_ONLY) {
                 OutlinedTextField(
@@ -81,7 +92,10 @@ fun OnboardingScreen(
             OnboardingConnectButton(
                 mode = state.selectedMode,
                 isConnecting = state.isConnecting,
-                onClick = viewModel::connect,
+                onClick = {
+                    dismissIme()
+                    viewModel.connect()
+                },
             )
         }
     }
