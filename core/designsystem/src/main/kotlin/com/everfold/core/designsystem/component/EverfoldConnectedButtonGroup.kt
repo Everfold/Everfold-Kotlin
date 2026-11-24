@@ -30,6 +30,7 @@ fun <T> EverfoldConnectedButtonGroup(
     label: @Composable (T) -> String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isItemEnabled: (T) -> Boolean = { enabled },
     icon: (@Composable (T) -> Unit)? = null,
 ) {
     Row(
@@ -62,7 +63,7 @@ fun <T> EverfoldConnectedButtonGroup(
             FilledTonalToggleButton(
                 checked = option == selected,
                 onCheckedChange = { checked -> if (checked || option != selected) onSelect(option) },
-                enabled = enabled,
+                enabled = enabled && isItemEnabled(option),
                 shapes = shapes,
                 contentPadding = PaddingValues(horizontal = HORIZONTAL_PADDING_DP.dp, vertical = VERTICAL_PADDING_DP.dp),
                 modifier = Modifier.weight(1f),

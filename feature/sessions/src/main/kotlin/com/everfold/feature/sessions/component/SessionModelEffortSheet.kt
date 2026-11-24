@@ -1,6 +1,5 @@
 package com.everfold.feature.sessions.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,34 +11,35 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldConnectedButtonGroup
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.model.ModelCapability
 import com.everfold.core.model.ModelDescriptor
 import com.everfold.core.model.ReasoningEffort
 import com.everfold.feature.sessions.R
 import kotlinx.collections.immutable.ImmutableList
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val SELECTED_CONTAINER_ALPHA = 0.45f
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SessionModelEffortSheet(
     models: ImmutableList<ModelDescriptor>,
@@ -55,7 +55,7 @@ internal fun SessionModelEffortSheet(
         ) {
             Text(
                 text = stringResource(R.string.session_model_sheet_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLargeEmphasized,
             )
             EffortTierSection(
                 activeModel = activeModel,
@@ -67,10 +67,12 @@ internal fun SessionModelEffortSheet(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp),
                 contentPadding = PaddingValues(vertical = 2.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                items(models, key = { it.id }) { model ->
+                itemsIndexed(models, key = { _, item -> item.id }) { index, model ->
                     ModelOptionCard(
+                        index = index,
+                        count = models.size,
                         model = model,
                         selected = model.id == activeModel?.id,
                         onClick = { onSelectModelAndEffort(model.id, activeEffort) },
@@ -86,7 +88,6 @@ internal fun SessionModelEffortSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EffortTierSection(
     activeModel: ModelDescriptor?,
@@ -100,24 +101,13 @@ private fun EffortTierSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (activeModel != null && activeModel.supportsEffort) {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                ReasoningEffort.entries.forEachIndexed { index, effort ->
-                    val enabled = effort in activeModel.supportedEfforts
-                    SegmentedButton(
-                        selected = activeEffort == effort,
-                        onClick = { if (enabled) onSelectEffort(effort) },
-                        enabled = enabled,
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = ReasoningEffort.entries.size),
-                        label = {
-                            Text(
-                                text = stringResource(effort.labelRes()),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                    )
-                }
-            }
+            EverfoldConnectedButtonGroup(
+                options = ReasoningEffort.entries,
+                selected = activeEffort ?: ReasoningEffort.MEDIUM,
+                onSelect = { effort -> if (effort in activeModel.supportedEfforts) onSelectEffort(effort) },
+                isItemEnabled = { effort -> effort in activeModel.supportedEfforts },
+                label = { effort -> stringResource(effort.labelRes()) },
+            )
         } else {
             Text(
                 text = stringResource(R.string.session_model_effort_unsupported),
@@ -128,25 +118,27 @@ private fun EffortTierSection(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ModelOptionCard(
+    index: Int,
+    count: Int,
     model: ModelDescriptor,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color =
+    EverfoldGroupedItem(
+        index = index,
+        count = count,
+        containerColor =
             if (selected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = SELECTED_CONTAINER_ALPHA)
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        onClick = onClick,
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {

@@ -44,6 +44,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.model.NodeDescriptor
 import com.everfold.core.model.NodeStatus
 import com.everfold.core.model.SessionRuntimeContext
@@ -270,45 +272,70 @@ private fun NodeWorkspacesSection(
             Text(text = metaSuffix, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (visibleWorkspaces.isEmpty()) {
-            val selected = selectedContext?.nodeId == node.id && selectedContext.workspaceId == null
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onSelect(node, null) },
-            ) {
-                Text(
-                    text = stringResource(R.string.session_context_no_workspace),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(14.dp),
-                )
-            }
+            EmptyWorkspaceOption(
+                selected = selectedContext?.nodeId == node.id && selectedContext.workspaceId == null,
+                onClick = { onSelect(node, null) },
+            )
         } else {
-            visibleWorkspaces.forEach { workspace ->
-                WorkspaceOptionCard(
-                    workspace = workspace,
-                    selected = selectedContext?.nodeId == node.id && selectedContext.workspaceId == workspace.id,
-                    onClick = { onSelect(node, workspace) },
-                )
+            EverfoldGroupedList {
+                visibleWorkspaces.forEachIndexed { index, workspace ->
+                    WorkspaceOptionCard(
+                        index = index,
+                        count = visibleWorkspaces.size,
+                        workspace = workspace,
+                        selected = selectedContext?.nodeId == node.id && selectedContext.workspaceId == workspace.id,
+                        onClick = { onSelect(node, workspace) },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
+private fun EmptyWorkspaceOption(
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    EverfoldGroupedList {
+        EverfoldGroupedItem(
+            index = 0,
+            count = 1,
+            containerColor =
+                if (selected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
+            onClick = onClick,
+        ) {
+            Text(
+                text = stringResource(R.string.session_context_no_workspace),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(14.dp),
+            )
+        }
+    }
+}
+
+@Composable
 private fun WorkspaceOptionCard(
+    index: Int,
+    count: Int,
     workspace: WorkspaceDescriptor,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color =
+    EverfoldGroupedItem(
+        index = index,
+        count = count,
+        containerColor =
             if (selected) {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        onClick = onClick,
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(

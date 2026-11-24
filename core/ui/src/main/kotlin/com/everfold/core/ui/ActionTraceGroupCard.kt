@@ -3,7 +3,6 @@ package com.everfold.core.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Build
@@ -26,9 +24,10 @@ import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.PauseCircle
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,18 +40,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
+import com.everfold.core.designsystem.component.EverfoldGroupedList
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
-import com.everfold.core.designsystem.theme.scaleDuration
+import com.everfold.core.designsystem.theme.effectsSpec
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.core.model.ActionKind
 import com.everfold.core.model.ActionStatus
 import com.everfold.core.model.ActionTrace
 import com.everfold.core.model.AnimationSpeed
 import kotlinx.collections.immutable.ImmutableList
 
-private const val TRACE_ANIM_DURATION_MS = 180
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ActionTraceGroupCard(
     actions: ImmutableList<ActionTrace>,
@@ -66,25 +68,25 @@ fun ActionTraceGroupCard(
     var manualOverride by rememberSaveable(isRunning) { mutableStateOf<Boolean?>(null) }
     val isExpanded = manualOverride ?: defaultExpanded
     val animationSpeed = LocalAnimationSpeed.current
-    val animMs = animationSpeed.scaleDuration(TRACE_ANIM_DURATION_MS)
+    val spatialIntSizeSpec = animationSpeed.spatialSpec<IntSize>()
+    val effectsFloatSpec = animationSpeed.effectsSpec<Float>()
     val enterTransition =
         if (animationSpeed == AnimationSpeed.OFF) {
             EnterTransition.None
         } else {
-            expandVertically(tween(animMs)) + fadeIn(tween(animMs))
+            expandVertically(spatialIntSizeSpec) + fadeIn(effectsFloatSpec)
         }
     val exitTransition =
         if (animationSpeed == AnimationSpeed.OFF) {
             ExitTransition.None
         } else {
-            shrinkVertically(tween(animMs)) + fadeOut(tween(animMs))
+            shrinkVertically(spatialIntSizeSpec) + fadeOut(effectsFloatSpec)
         }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 1.dp,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             ActionGroupHeader(
@@ -94,18 +96,27 @@ fun ActionTraceGroupCard(
                 expanded = isExpanded,
                 onToggle = { manualOverride = !isExpanded },
             )
+            if (isRunning && !isPaused) {
+                LinearWavyProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
+                )
+            }
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = enterTransition,
                 exit = exitTransition,
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                EverfoldGroupedList(
+                    modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 10.dp),
                 ) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    actions.forEach { trace ->
-                        ActionTraceRow(trace = trace)
+                    actions.forEachIndexed { index, trace ->
+                        EverfoldGroupedItem(
+                            index = index,
+                            count = actions.size,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ) {
+                            ActionTraceRow(trace = trace)
+                        }
                     }
                 }
             }
@@ -153,6 +164,7 @@ private fun ActionGroupHeader(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionGroupStatusIcon(
     isRunning: Boolean,
@@ -169,10 +181,7 @@ private fun ActionGroupStatusIcon(
         }
 
         isRunning -> {
-            CircularProgressIndicator(
-                modifier = Modifier.size(16.dp),
-                strokeWidth = 2.dp,
-            )
+            LoadingIndicator(modifier = Modifier.size(20.dp))
         }
 
         else -> {
@@ -189,7 +198,7 @@ private fun ActionGroupStatusIcon(
 @Composable
 private fun ActionTraceRow(trace: ActionTrace) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {

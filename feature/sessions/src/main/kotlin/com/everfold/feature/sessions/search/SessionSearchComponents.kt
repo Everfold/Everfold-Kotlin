@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.SessionSearchFilter
@@ -290,6 +291,8 @@ private fun FilterOptionMenuItem(
 
 @Composable
 internal fun SessionSearchHitCard(
+    index: Int,
+    count: Int,
     hit: SessionSearchHit,
     query: String,
     onClick: () -> Unit,
@@ -306,11 +309,11 @@ internal fun SessionSearchHitCard(
             MaterialTheme.colorScheme.onSurfaceVariant
         }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    EverfoldGroupedItem(
+        index = index,
+        count = count,
         onClick = onClick,
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

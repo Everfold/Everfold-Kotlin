@@ -3,7 +3,6 @@ package com.everfold.feature.sessions.component
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -47,7 +46,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
-import com.everfold.core.designsystem.theme.scaleDuration
+import com.everfold.core.designsystem.theme.effectsSpec
+import com.everfold.core.designsystem.theme.spatialSpec
 import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
@@ -56,7 +56,6 @@ import com.everfold.feature.sessions.R
 import com.everfold.feature.sessions.SessionDetailUiState
 
 private const val BOTTOM_ANCHOR_KEY = "__session_bottom_anchor__"
-private const val FAB_ANIM_DURATION_MS = 160
 private const val FAB_INITIAL_SCALE = 0.85f
 private const val TELEPORT_ITEM_THRESHOLD = 8
 private const val MAX_SCROLL_CONVERGE_PASSES = 8
@@ -179,18 +178,19 @@ private fun ScrollToLatestButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val animMs = animationSpeed.scaleDuration(FAB_ANIM_DURATION_MS)
+    val spatialSpec = animationSpeed.spatialSpec<Float>()
+    val effectsSpec = animationSpeed.effectsSpec<Float>()
     val enter =
         if (animationSpeed == AnimationSpeed.OFF) {
             EnterTransition.None
         } else {
-            fadeIn(tween(animMs)) + scaleIn(tween(animMs), initialScale = FAB_INITIAL_SCALE)
+            fadeIn(effectsSpec) + scaleIn(spatialSpec, initialScale = FAB_INITIAL_SCALE)
         }
     val exit =
         if (animationSpeed == AnimationSpeed.OFF) {
             ExitTransition.None
         } else {
-            fadeOut(tween(animMs)) + scaleOut(tween(animMs), targetScale = FAB_INITIAL_SCALE)
+            fadeOut(effectsSpec) + scaleOut(spatialSpec, targetScale = FAB_INITIAL_SCALE)
         }
     AnimatedVisibility(visible = visible, enter = enter, exit = exit, modifier = modifier) {
         SmallFloatingActionButton(

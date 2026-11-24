@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.FolderOpen
@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldEmptyState
+import com.everfold.core.designsystem.component.EverfoldGroupedItem
 import com.everfold.core.designsystem.component.EverfoldStatusPill
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.feature.sessions.R
@@ -90,10 +91,12 @@ fun ArchivedSessionsScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                items(sessions, key = { it.id }) { summary ->
+                itemsIndexed(sessions, key = { _, summary -> summary.id }) { index, summary ->
                     ArchivedSessionCard(
+                        index = index,
+                        count = sessions.size,
                         summary = summary,
                         onOpen = { onSelectSession(summary.id) },
                         onRestore = { viewModel.restoreSession(summary.id) },
@@ -118,15 +121,16 @@ fun ArchivedSessionsScreen(
 
 @Composable
 private fun ArchivedSessionCard(
+    index: Int,
+    count: Int,
     summary: AgentSessionSummary,
     onOpen: () -> Unit,
     onRestore: () -> Unit,
     onRequestDelete: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    EverfoldGroupedItem(
+        index = index,
+        count = count,
         onClick = onOpen,
     ) {
         Column(
