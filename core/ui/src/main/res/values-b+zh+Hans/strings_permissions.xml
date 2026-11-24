@@ -7,7 +7,7 @@
     <string name="perm_action_request">申请权限</string>
 
     <string name="perm_live_updates_title">实时活动 / 流体云通知</string>
-    <string name="perm_live_updates_subtitle">切入后台时在状态栏胶囊与锁屏卡片实时显示 Agent 运行进度</string>
+    <string name="perm_live_updates_subtitle">后台任务出错、中断或需要人工介入时通过状态栏胶囊醒目提醒</string>
     <string name="perm_action_live_updates_settings">实时活动设置</string>
     <string name="perm_action_enable_live_updates">开启实时活动</string>
 

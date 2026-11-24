@@ -1,27 +1,14 @@
 <resources>
-    <string name="live_channel_progress_name">Agent Live Progress</string>
-    <string name="live_channel_progress_desc">Ongoing status bar capsule and lock screen progress for background Agent Loops</string>
     <string name="live_channel_alert_name">Agent Attention &amp; Completion Alerts</string>
-    <string name="live_channel_alert_desc">Alerts when a background Agent Loop errors, needs human input, or finishes</string>
+    <string name="live_channel_alert_desc">Alerts when a background Agent Loop errors, needs human input, or completes</string>
 
-    <string name="live_chip_planning">Plan</string>
-    <string name="live_chip_step">%1$d/%2$d</string>
-    <string name="live_chip_running">Live</string>
-    <string name="live_chip_paused">Paused</string>
     <string name="live_chip_attention">Input</string>
     <string name="live_chip_failed">Error</string>
-    <string name="live_chip_completed">Done</string>
 
-    <string name="live_status_planning">Planning next actions…</string>
-    <string name="live_status_paused">Paused</string>
-    <string name="live_status_completed">Completed</string>
-    <string name="live_status_failed">Execution failed</string>
     <string name="live_status_attention">Human input required</string>
-    <string name="live_extra_running">%1$s (+%2$d more running)</string>
+    <string name="live_status_failed">Execution interrupted</string>
+    <string name="live_status_completed">Task completed</string>
 
-    <string name="live_action_pause">Pause</string>
-    <string name="live_action_resume">Resume</string>
-    <string name="live_action_stop">Stop</string>
     <string name="live_action_open">Open</string>
 
     <string name="live_alert_title_attention">Needs input · %1$s</string>

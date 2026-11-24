@@ -2,47 +2,35 @@ package com.everfold.core.liveactivity
 
 import android.content.Intent
 
-enum class LiveActivityPhase {
-    PLANNING,
-    EXECUTING,
-    PAUSED,
+enum class LiveActivityEventKind {
     AWAITING_INPUT,
-    COMPLETED,
     FAILED,
+    COMPLETED,
     ;
 
-    val isActive: Boolean
-        get() = this == PLANNING || this == EXECUTING || this == PAUSED
-
-    val isTerminal: Boolean
-        get() = this == AWAITING_INPUT || this == COMPLETED || this == FAILED
+    val requiresAttention: Boolean
+        get() = this == AWAITING_INPUT || this == FAILED
 }
 
-data class LiveActivitySnapshot(
+data class LiveActivityEvent(
     val sessionId: String,
     val sessionTitle: String,
-    val phase: LiveActivityPhase,
+    val kind: LiveActivityEventKind,
     val hostNodeName: String,
     val workspaceName: String,
-    val statusDetail: String,
-    val completedSteps: Int,
-    val totalSteps: Int,
-    val otherActiveCount: Int,
+    val detailText: String,
+    val promoteAsCapsule: Boolean,
 )
 
-data class LiveActivityRenderPlan(
-    val capsule: LiveActivitySnapshot?,
-    val alerts: List<LiveActivitySnapshot>,
+data class LiveActivityDispatchPlan(
+    val eventsToPost: List<LiveActivityEvent>,
+    val sessionIdsToDismiss: Set<String>,
 )
 
 interface LiveActivityPublisher {
-    fun publishCapsule(snapshot: LiveActivitySnapshot)
+    fun publishEvent(event: LiveActivityEvent)
 
-    fun dismissCapsule()
-
-    fun publishAlert(snapshot: LiveActivitySnapshot)
-
-    fun dismissAlert(sessionId: String)
+    fun dismissSession(sessionId: String)
 }
 
 fun interface LiveActivityLaunchIntentFactory {

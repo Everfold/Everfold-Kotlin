@@ -7,7 +7,7 @@
     <string name="perm_action_request">Request permission</string>
 
     <string name="perm_live_updates_title">Live updates / Fluid Cloud</string>
-    <string name="perm_live_updates_subtitle">Show Agent Loop progress in status bar capsule and lock screen when in background</string>
+    <string name="perm_live_updates_subtitle">Highlight errors, permission requests, and human-intervention alerts in status bar capsule while in background</string>
     <string name="perm_action_live_updates_settings">Live update settings</string>
     <string name="perm_action_enable_live_updates">Enable live updates</string>
 

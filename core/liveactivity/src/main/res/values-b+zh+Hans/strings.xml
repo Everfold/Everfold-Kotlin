@@ -1,30 +1,17 @@
 <resources>
-    <string name="live_channel_progress_name">Agent 实时进度胶囊</string>
-    <string name="live_channel_progress_desc">在后台运行期间通过状态栏流体云/实时活动与锁屏卡片展示进度</string>
     <string name="live_channel_alert_name">Agent 异常与重要提醒</string>
-    <string name="live_channel_alert_desc">后台任务出错、需要人工介入或完成时发送强提醒</string>
+    <string name="live_channel_alert_desc">后台任务运行中断、需要人工介入或完成时发送通知与胶囊提醒</string>
 
-    <string name="live_chip_planning">规划中</string>
-    <string name="live_chip_step">执行 %1$d/%2$d</string>
-    <string name="live_chip_running">运行中</string>
-    <string name="live_chip_paused">已暂停</string>
     <string name="live_chip_attention">需介入</string>
-    <string name="live_chip_failed">出错</string>
-    <string name="live_chip_completed">已完成</string>
+    <string name="live_chip_failed">已中断</string>
 
-    <string name="live_status_planning">正在规划下一步动作…</string>
-    <string name="live_status_paused">运行已暂停</string>
+    <string name="live_status_attention">等待人工确认或介入</string>
+    <string name="live_status_failed">运行出现异常或中断</string>
     <string name="live_status_completed">任务已完成</string>
-    <string name="live_status_failed">执行出现异常</string>
-    <string name="live_status_attention">等待人工确认或输入</string>
-    <string name="live_extra_running">%1$s（另有 %2$d 个运行中）</string>
 
-    <string name="live_action_pause">暂停</string>
-    <string name="live_action_resume">恢复</string>
-    <string name="live_action_stop">停止</string>
-    <string name="live_action_open">立即查看</string>
+    <string name="live_action_open">立即处理</string>
 
     <string name="live_alert_title_attention">需人工介入 · %1$s</string>
-    <string name="live_alert_title_failed">执行出错 · %1$s</string>
+    <string name="live_alert_title_failed">运行中断 · %1$s</string>
     <string name="live_alert_title_completed">已完成 · %1$s</string>
 </resources>

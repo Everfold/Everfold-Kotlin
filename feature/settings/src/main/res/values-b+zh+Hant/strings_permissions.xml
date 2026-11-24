@@ -1,9 +1,9 @@
 <resources>
     <string name="perm_pref_section_live_activity">即時活動與提醒</string>
-    <string name="perm_pref_live_capsule_title">背景即時活動膠囊</string>
-    <string name="perm_pref_live_capsule_subtitle">切入背景時自動在狀態列膠囊與鎖定螢幕卡片顯示執行進度，回到前景後收合</string>
+    <string name="perm_pref_live_capsule_title">將需介入/中斷提醒提升為膠囊</string>
+    <string name="perm_pref_live_capsule_subtitle">僅在背景出錯、中斷或需要人工介入時顯示狀態列膠囊；正常執行時保持靜默，完成後傳送單則可滑除通知</string>
     <string name="perm_pref_alert_attention_title">出錯與人工介入提醒</string>
-    <string name="perm_pref_alert_attention_subtitle">背景任務異常或需要人工確認時彈出高優先權通知並支援直達會話</string>
+    <string name="perm_pref_alert_attention_subtitle">背景任務異常中斷或需要人工確認時傳送高優先權提醒並支援直達會話</string>
     <string name="perm_pref_alert_completed_title">任務完成提醒</string>
-    <string name="perm_pref_alert_completed_subtitle">背景執行中的 Agent Loop 完成時傳送結果提醒</string>
+    <string name="perm_pref_alert_completed_subtitle">背景任務正常完成時傳送單則可滑動清除的結果通知</string>
 </resources>

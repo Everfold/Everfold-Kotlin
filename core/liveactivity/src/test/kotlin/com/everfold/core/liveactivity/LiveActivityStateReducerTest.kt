@@ -1,112 +1,117 @@
 package com.everfold.core.liveactivity
 
-import com.everfold.core.model.ActionKind
-import com.everfold.core.model.ActionStatus
-import com.everfold.core.model.ActionTrace
-import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.NotificationPreferences
-import com.everfold.core.model.ObservedItem
-import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LiveActivityStateReducerTest {
     @Test
-    fun capsuleShowsOnlyWhenBackgroundedAndDismissesOnForeground() {
+    fun activeStatesInBackgroundStaySilent() {
         val reducer = LiveActivityStateReducer()
-        val running = sampleSummary(id = "s-1", state = LoopState.EXECUTING_ACTION)
-
-        val foregroundPlan =
-            reducer.reduce(
-                sessions = listOf(running),
-                primaryDetail = sampleDetail(running),
-                isForeground = true,
-                prefs = NotificationPreferences(),
+        val sessions =
+            listOf(
+                sampleSummary("s-1", LoopState.PLANNING),
+                sampleSummary("s-2", LoopState.EXECUTING_ACTION),
+                sampleSummary("s-3", LoopState.PAUSED),
             )
-        assertNull(foregroundPlan.capsule)
-        assertTrue(foregroundPlan.alerts.isEmpty())
 
-        val backgroundPlan =
+        val fgPlan = reducer.reduce(sessions, isForeground = true, prefs = NotificationPreferences())
+        val bgPlan = reducer.reduce(sessions, isForeground = false, prefs = NotificationPreferences())
+
+        assertTrue(fgPlan.eventsToPost.isEmpty())
+        assertTrue(bgPlan.eventsToPost.isEmpty())
+        assertTrue(bgPlan.sessionIdsToDismiss.isEmpty())
+    }
+
+    @Test
+    fun completionEmitsSingleNonCapsuleEventWithoutDuplicates() {
+        val reducer = LiveActivityStateReducer()
+        val running = sampleSummary("s-1", LoopState.EXECUTING_ACTION)
+        val completed = running.copy(loopState = LoopState.COMPLETED, lastMessagePreview = "已完成检查")
+
+        reducer.reduce(listOf(running), isForeground = false, prefs = NotificationPreferences())
+        val transitionPlan = reducer.reduce(listOf(completed), isForeground = false, prefs = NotificationPreferences())
+
+        assertEquals(1, transitionPlan.eventsToPost.size)
+        val event = transitionPlan.eventsToPost.single()
+        assertEquals(LiveActivityEventKind.COMPLETED, event.kind)
+        assertFalse(event.promoteAsCapsule)
+        assertEquals("已完成检查", event.detailText)
+
+        val repeatPlan = reducer.reduce(listOf(completed), isForeground = false, prefs = NotificationPreferences())
+        assertTrue(repeatPlan.eventsToPost.isEmpty())
+        assertTrue(repeatPlan.sessionIdsToDismiss.isEmpty())
+    }
+
+    @Test
+    fun attentionTransitionsRespectCapsuleToggleAndDismissOnForeground() {
+        val reducer = LiveActivityStateReducer()
+        val running = sampleSummary("s-err", LoopState.EXECUTING_ACTION)
+        reducer.reduce(listOf(running), isForeground = false, prefs = NotificationPreferences())
+
+        val failed = running.copy(loopState = LoopState.FAILED, lastMessagePreview = "沙箱写入受阻")
+        val plan = reducer.reduce(listOf(failed), isForeground = false, prefs = NotificationPreferences())
+        assertEquals(1, plan.eventsToPost.size)
+        assertEquals(LiveActivityEventKind.FAILED, plan.eventsToPost.single().kind)
+        assertTrue(plan.eventsToPost.single().promoteAsCapsule)
+
+        val fgDismissPlan = reducer.reduce(listOf(failed), isForeground = true, prefs = NotificationPreferences())
+        assertTrue(fgDismissPlan.eventsToPost.isEmpty())
+        assertEquals(setOf("s-err"), fgDismissPlan.sessionIdsToDismiss)
+
+        val noCapsulePrefs = NotificationPreferences(liveActivityEnabled = false)
+        val s2Running = sampleSummary("s-input", LoopState.EXECUTING_ACTION)
+        reducer.reduce(listOf(s2Running), isForeground = false, prefs = noCapsulePrefs)
+        val s2Awaiting = s2Running.copy(loopState = LoopState.AWAITING_INPUT)
+        val nonCapsulePlan = reducer.reduce(listOf(s2Awaiting), isForeground = false, prefs = noCapsulePrefs)
+        assertEquals(1, nonCapsulePlan.eventsToPost.size)
+        assertFalse(nonCapsulePlan.eventsToPost.single().promoteAsCapsule)
+    }
+
+    @Test
+    fun concurrentSessionsEmitIndependentEventsAndDismissWhenResumedOrArchived() {
+        val reducer = LiveActivityStateReducer()
+        val s1Running = sampleSummary("s-1", LoopState.EXECUTING_ACTION)
+        val s2Running = sampleSummary("s-2", LoopState.PLANNING)
+        reducer.reduce(listOf(s1Running, s2Running), isForeground = false, prefs = NotificationPreferences())
+
+        val s1Done = s1Running.copy(loopState = LoopState.COMPLETED)
+        val s2Input = s2Running.copy(loopState = LoopState.AWAITING_INPUT)
+        val batchPlan = reducer.reduce(listOf(s1Done, s2Input), isForeground = false, prefs = NotificationPreferences())
+
+        assertEquals(setOf("s-1", "s-2"), batchPlan.eventsToPost.map { it.sessionId }.toSet())
+        assertFalse(batchPlan.eventsToPost.first { it.sessionId == "s-1" }.promoteAsCapsule)
+        assertTrue(batchPlan.eventsToPost.first { it.sessionId == "s-2" }.promoteAsCapsule)
+
+        val s1Archived = s1Done.copy(isArchived = true)
+        val s2Resumed = s2Input.copy(loopState = LoopState.EXECUTING_ACTION)
+        val dismissPlan = reducer.reduce(listOf(s1Archived, s2Resumed), isForeground = false, prefs = NotificationPreferences())
+
+        assertEquals(setOf("s-1", "s-2"), dismissPlan.sessionIdsToDismiss)
+    }
+
+    @Test
+    fun alertPreferenceTogglesSuppressDisallowedNotifications() {
+        val reducer = LiveActivityStateReducer()
+        val s1 = sampleSummary("s-1", LoopState.EXECUTING_ACTION)
+        val s2 = sampleSummary("s-2", LoopState.EXECUTING_ACTION)
+        val prefs = NotificationPreferences(alertOnNeedsAttention = false, alertOnCompleted = false)
+
+        reducer.reduce(listOf(s1, s2), isForeground = false, prefs = prefs)
+        val plan =
             reducer.reduce(
-                sessions = listOf(running),
-                primaryDetail = sampleDetail(running),
+                listOf(
+                    s1.copy(loopState = LoopState.FAILED),
+                    s2.copy(loopState = LoopState.COMPLETED),
+                ),
                 isForeground = false,
-                prefs = NotificationPreferences(),
+                prefs = prefs,
             )
-        assertNotNull(backgroundPlan.capsule)
-        assertEquals("s-1", backgroundPlan.capsule!!.sessionId)
-        assertEquals(LiveActivityPhase.EXECUTING, backgroundPlan.capsule.phase)
-        assertEquals(1, backgroundPlan.capsule.completedSteps)
-        assertEquals(2, backgroundPlan.capsule.totalSteps)
-
-        val returnedPlan =
-            reducer.reduce(
-                sessions = listOf(running),
-                primaryDetail = sampleDetail(running),
-                isForeground = true,
-                prefs = NotificationPreferences(),
-            )
-        assertNull(returnedPlan.capsule)
-    }
-
-    @Test
-    fun terminalTransitionRetainsCapsuleAndEmitsSingleAlertInBackground() {
-        val reducer = LiveActivityStateReducer()
-        val running = sampleSummary(id = "s-1", state = LoopState.EXECUTING_ACTION)
-        val completed = running.copy(loopState = LoopState.COMPLETED, lastMessagePreview = "已完成")
-
-        reducer.reduce(listOf(running), null, isForeground = false, NotificationPreferences())
-        val transitionPlan = reducer.reduce(listOf(completed), null, isForeground = false, NotificationPreferences())
-
-        assertEquals(1, transitionPlan.alerts.size)
-        assertEquals(LiveActivityPhase.COMPLETED, transitionPlan.alerts.first().phase)
-        assertEquals(LiveActivityPhase.COMPLETED, transitionPlan.capsule?.phase)
-
-        val subsequentPlan = reducer.reduce(listOf(completed), null, isForeground = false, NotificationPreferences())
-        assertTrue(subsequentPlan.alerts.isEmpty())
-        assertEquals(LiveActivityPhase.COMPLETED, subsequentPlan.capsule?.phase)
-
-        reducer.markSessionOpened("s-1")
-        val afterOpenPlan = reducer.reduce(listOf(completed), null, isForeground = false, NotificationPreferences())
-        assertNull(afterOpenPlan.capsule)
-    }
-
-    @Test
-    fun errorAndInterventionRespectPreferencesAndPrioritySelectsExecutingFirst() {
-        val reducer = LiveActivityStateReducer()
-        val paused = sampleSummary(id = "s-paused", state = LoopState.PAUSED)
-        val planning = sampleSummary(id = "s-plan", state = LoopState.PLANNING)
-        val executing = sampleSummary(id = "s-exec", state = LoopState.EXECUTING_ACTION)
-
-        assertEquals("s-exec", reducer.selectPrimarySessionId(listOf(paused, planning, executing)))
-
-        val initialPlan = reducer.reduce(listOf(paused, planning, executing), null, false, NotificationPreferences())
-        assertEquals("s-exec", initialPlan.capsule?.sessionId)
-        assertEquals(2, initialPlan.capsule?.otherActiveCount)
-
-        val suppressedPrefs = NotificationPreferences(liveActivityEnabled = false, alertOnNeedsAttention = false)
-        val failed = executing.copy(loopState = LoopState.FAILED)
-        val suppressedPlan = reducer.reduce(listOf(failed), null, false, suppressedPrefs)
-        assertNull(suppressedPlan.capsule)
-        assertTrue(suppressedPlan.alerts.isEmpty())
-    }
-
-    @Test
-    fun awaitingInputEmitsAttentionAlertWhenEnabled() {
-        val reducer = LiveActivityStateReducer()
-        val running = sampleSummary(id = "s-gw", state = LoopState.EXECUTING_ACTION)
-        reducer.reduce(listOf(running), null, isForeground = true, NotificationPreferences())
-
-        val awaiting = running.copy(loopState = LoopState.AWAITING_INPUT)
-        val plan = reducer.reduce(listOf(awaiting), null, isForeground = false, NotificationPreferences())
-        assertEquals(1, plan.alerts.size)
-        assertEquals(LiveActivityPhase.AWAITING_INPUT, plan.alerts.first().phase)
-        assertEquals(LiveActivityPhase.AWAITING_INPUT, plan.capsule?.phase)
+        assertTrue(plan.eventsToPost.isEmpty())
     }
 
     private fun sampleSummary(
@@ -115,28 +120,12 @@ class LiveActivityStateReducerTest {
     ): AgentSessionSummary =
         AgentSessionSummary(
             id = id,
-            title = "测试会话",
+            title = "会话 $id",
             modelId = "model-claude-sonnet",
             loopState = state,
             loopHostNodeName = "Workstation",
             lastMessagePreview = "处理中",
             updatedAtLabel = "刚刚",
             workspaceName = "Everfold-Kotlin",
-        )
-
-    private fun sampleDetail(summary: AgentSessionSummary): AgentSessionDetail =
-        AgentSessionDetail(
-            summary = summary,
-            items =
-                persistentListOf(
-                    ObservedItem.ActionGroup(
-                        id = "ag-1",
-                        actions =
-                            persistentListOf(
-                                ActionTrace("a1", ActionKind.MCP_CALL, "MCP · git.status", "done", ActionStatus.SUCCEEDED),
-                                ActionTrace("a2", ActionKind.LLM_REQUEST, "LLM · synthesize", "running", ActionStatus.RUNNING),
-                            ),
-                    ),
-                ),
         )
 }

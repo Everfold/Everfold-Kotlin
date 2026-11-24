@@ -7,7 +7,7 @@
     <string name="perm_action_request">申請權限</string>
 
     <string name="perm_live_updates_title">即時活動 / 流體雲通知</string>
-    <string name="perm_live_updates_subtitle">切入背景時在狀態列膠囊與鎖定螢幕卡片即時顯示 Agent 執行進度</string>
+    <string name="perm_live_updates_subtitle">背景任務出錯、中斷或需要人工介入時透過狀態列膠囊醒目提醒</string>
     <string name="perm_action_live_updates_settings">即時活動設定</string>
     <string name="perm_action_enable_live_updates">開啟即時活動</string>
 

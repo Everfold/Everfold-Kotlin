@@ -1,9 +1,9 @@
 <resources>
     <string name="perm_pref_section_live_activity">实时活动与提醒</string>
-    <string name="perm_pref_live_capsule_title">后台实时活动胶囊</string>
-    <string name="perm_pref_live_capsule_subtitle">切入后台时自动在状态栏胶囊与锁屏卡片显示运行进度，回到前台后收起</string>
+    <string name="perm_pref_live_capsule_title">将需介入/中断提醒提升为胶囊</string>
+    <string name="perm_pref_live_capsule_subtitle">仅在后台出错、中断或需要人工介入时展示状态栏胶囊；正常运行时保持静默，完成后发单条可划掉通知</string>
     <string name="perm_pref_alert_attention_title">出错与人工介入提醒</string>
-    <string name="perm_pref_alert_attention_subtitle">后台任务异常或需要人工确认时弹出高优先级通知并支持直达会话</string>
+    <string name="perm_pref_alert_attention_subtitle">后台任务异常中断或需要人工确认时发送高优先级提醒并支持直达会话</string>
     <string name="perm_pref_alert_completed_title">任务完成提醒</string>
-    <string name="perm_pref_alert_completed_subtitle">后台运行中的 Agent Loop 完成时发送结果提醒</string>
+    <string name="perm_pref_alert_completed_subtitle">后台任务正常完成时发送单条可滑动清除的结果通知</string>
 </resources>
