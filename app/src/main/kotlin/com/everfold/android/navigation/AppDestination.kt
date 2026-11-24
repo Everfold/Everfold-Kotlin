@@ -19,6 +19,11 @@ internal sealed interface AppDestination : NavKey {
     data object Nodes : AppDestination
 
     @Serializable
+    data class NodeEditor(
+        val profileId: String? = null,
+    ) : AppDestination
+
+    @Serializable
     data object Settings : AppDestination
 
     @Serializable

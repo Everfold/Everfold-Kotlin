@@ -6,4 +6,5 @@ import org.koin.dsl.module
 val nodesModule =
     module {
         viewModelOf(::NodesViewModel)
+        viewModelOf(::NodeEditorViewModel)
     }

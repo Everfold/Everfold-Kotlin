@@ -22,6 +22,7 @@ import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.AnimationSpeed
+import com.everfold.feature.nodes.NodeEditorScreen
 import com.everfold.feature.nodes.NodesScreen
 import com.everfold.feature.sessions.SessionDetailScreen
 import com.everfold.feature.sessions.archived.ArchivedSessionsScreen
@@ -88,7 +89,25 @@ internal fun AppNavDisplay(
                 entry<AppDestination.ArchivedSessions> {
                     ArchivedSessionsScreen(onBack = popBack, onSelectSession = onSelectSessionFromSubPage)
                 }
-                entry<AppDestination.Nodes> { NodesScreen(onOpenDrawer = onOpenDrawer) }
+                entry<AppDestination.Nodes> {
+                    NodesScreen(
+                        onOpenDrawer = onOpenDrawer,
+                        onCreateNode = {
+                            onDismissIme()
+                            backStack.add(AppDestination.NodeEditor(profileId = null))
+                        },
+                        onEditNode = { profileId ->
+                            onDismissIme()
+                            backStack.add(AppDestination.NodeEditor(profileId = profileId))
+                        },
+                    )
+                }
+                entry<AppDestination.NodeEditor> { key ->
+                    NodeEditorScreen(
+                        profileId = key.profileId,
+                        onBack = popBack,
+                    )
+                }
                 settingsEntries(backStack = backStack, onOpenDrawer = onOpenDrawer, onDismissIme = onDismissIme, onBack = popBack)
             },
     )

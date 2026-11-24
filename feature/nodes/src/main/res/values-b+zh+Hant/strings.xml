@@ -1,14 +1,39 @@
 <resources>
     <string name="nodes_title">節點管理</string>
     <string name="nodes_refresh">重新整理節點</string>
+    <string name="nodes_add_action">新增節點</string>
+    <string name="nodes_profiles_header">已儲存節點 (%1$d)</string>
+    <string name="nodes_profiles_empty_title">尚無已儲存的遠端節點</string>
+    <string name="nodes_profiles_empty_subtitle">點擊右下角 + 新增 NATS 或 Zenoh 節點設定。</string>
     <string name="nodes_topology_header">可見節點拓撲 (%1$d)</string>
     <string name="nodes_disconnected">未連線</string>
+    <string name="nodes_disconnected_subtitle">目前未連線節點。可選擇下方節點進行連線，或切換為純本機模式。</string>
     <string name="nodes_mode_remote">遠端 Authority</string>
-    <string name="nodes_mode_relay">中轉節點</string>
     <string name="nodes_mode_local">純本機模式</string>
     <string name="nodes_local_subtitle">本機獨立執行 (Mock)</string>
-    <string name="nodes_select_authority">請選擇 Authority 節點</string>
-    <string name="nodes_switch">切換</string>
+    <string name="nodes_profile_connected_badge">已連線</string>
+
+    <string name="nodes_action_connect">連線</string>
+    <string name="nodes_action_disconnect">中斷連線</string>
+    <string name="nodes_action_use_local">本機模式</string>
+    <string name="nodes_action_more">更多操作</string>
+    <string name="nodes_action_edit">編輯設定</string>
+    <string name="nodes_action_edit_note">修改備註</string>
+    <string name="nodes_action_delete">刪除節點</string>
+
+    <string name="nodes_note_dialog_title">備註 · %1$s</string>
+    <string name="nodes_note_dialog_hint">節點備註資訊</string>
+    <string name="nodes_delete_title">刪除節點設定？</string>
+    <string name="nodes_delete_body">確定要刪除已儲存節點「%1$s」嗎？</string>
+    <string name="nodes_delete_active_body">確定要中斷目前連線的「%1$s」並刪除該節點設定嗎？</string>
+    <string name="nodes_dialog_save">儲存</string>
+    <string name="nodes_dialog_cancel">取消</string>
+
+    <string name="node_editor_create_title">新增節點</string>
+    <string name="node_editor_edit_title">編輯節點</string>
+    <string name="node_editor_save_only">僅儲存</string>
+    <string name="node_editor_save_and_connect">儲存並連線</string>
+
     <string name="node_status_online">線上</string>
     <string name="node_status_degraded">降級</string>
     <string name="node_status_offline">離線</string>
