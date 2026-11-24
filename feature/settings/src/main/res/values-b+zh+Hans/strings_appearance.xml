@@ -1,28 +1,29 @@
 <resources>
-    <string name="appearance_preview_title">实时预览</string>
-    <string name="appearance_preview_sample_title">Agent 工作区</string>
-    <string name="appearance_preview_sample_body">实时展示表面层级与强调色在当前风格下的搭配效果。</string>
-    <string name="appearance_preview_primary">主色</string>
-    <string name="appearance_preview_secondary">辅色</string>
-    <string name="appearance_preview_tertiary">点缀色</string>
-    <string name="appearance_preview_container">容器</string>
+    <string name="appearance_preview_app_name">Everfold</string>
+    <string name="appearance_preview_status_ready">就绪</string>
+    <string name="appearance_preview_user_prompt">总结今天的发布变更</string>
+    <string name="appearance_preview_agent_reply">已合并 3 个提交，检查全部通过。</string>
+    <string name="appearance_preview_tool_badge">git log</string>
+    <string name="appearance_preview_input_placeholder">发送消息…</string>
 
-    <string name="appearance_theme_mode_label">浅色 / 暗色模式</string>
-    <string name="theme_mode_system">跟随系统</string>
+    <string name="appearance_theme_mode_label">外观模式</string>
+    <string name="theme_mode_system">自动</string>
     <string name="theme_mode_light">浅色</string>
-    <string name="theme_mode_dark">暗色</string>
+    <string name="theme_mode_dark">深色</string>
 
     <string name="appearance_monet_dynamic_title">壁纸动态取色</string>
-    <string name="appearance_monet_dynamic_subtitle">启用后跟随 Android 12+ 系统壁纸配色，强调色、调色风格与配色规格由系统决定。</string>
-    <string name="appearance_monet_dynamic_unsupported">需要 Android 12 及以上系统，当前将使用下方自定义配色。</string>
+    <string name="appearance_monet_dynamic_subtitle">自动跟随 Android 12+ 系统壁纸配色</string>
+    <string name="appearance_monet_dynamic_unsupported">需要 Android 12+，当前使用下方自定义配色</string>
 
     <string name="appearance_accent_source_label">强调色</string>
     <string name="theme_color_system_dynamic">壁纸动态取色</string>
     <string name="theme_color_preset">预设强调色</string>
     <string name="theme_color_custom">自定义</string>
+    <string name="appearance_custom_color_sheet_title">自定义强调色</string>
+    <string name="appearance_custom_color_done">完成</string>
     <string name="appearance_custom_hex_label">自定义 Hex (#RRGGBB)</string>
 
-    <string name="seed_baseline">官方基准紫</string>
+    <string name="seed_baseline">紫藤</string>
     <string name="seed_blue">晴蓝</string>
     <string name="seed_teal">青碧</string>
     <string name="seed_green">森绿</string>
@@ -32,23 +33,23 @@
     <string name="seed_violet">梅紫</string>
 
     <string name="appearance_palette_style_label">调色风格</string>
-    <string name="palette_style_tonal_spot">标准色调 (Tonal Spot)</string>
+    <string name="palette_style_tonal_spot">标准</string>
     <string name="palette_style_tonal_spot_desc">Material You 默认均衡色调，柔和克制、耐看百搭。</string>
-    <string name="palette_style_neutral">中性柔和 (Neutral)</string>
+    <string name="palette_style_neutral">柔和</string>
     <string name="palette_style_neutral_desc">大幅降低饱和度，界面趋近中性灰度。</string>
-    <string name="palette_style_vibrant">鲜明活力 (Vibrant)</string>
+    <string name="palette_style_vibrant">鲜明</string>
     <string name="palette_style_vibrant_desc">提升主色与辅色彩度，视觉表现更鲜亮。</string>
-    <string name="palette_style_expressive">表现力 (Expressive)</string>
+    <string name="palette_style_expressive">表现力</string>
     <string name="palette_style_expressive_desc">引入与种子色相跳跃搭配的辅色与点缀色，更有活力。</string>
-    <string name="palette_style_rainbow">彩虹 (Rainbow)</string>
+    <string name="palette_style_rainbow">彩虹</string>
     <string name="palette_style_rainbow_desc">保留彩色强调色，同时背景表面采用纯中性灰度。</string>
-    <string name="palette_style_fruit_salad">水果拼盘 (Fruit Salad)</string>
+    <string name="palette_style_fruit_salad">果盘</string>
     <string name="palette_style_fruit_salad_desc">通过旋转色相生成明快跳脱的多彩组合。</string>
-    <string name="palette_style_monochrome">单色极简 (Monochrome)</string>
+    <string name="palette_style_monochrome">单色</string>
     <string name="palette_style_monochrome_desc">完全去除色彩倾向的纯粹黑白灰单色阶。</string>
-    <string name="palette_style_fidelity">高保真 (Fidelity)</string>
+    <string name="palette_style_fidelity">保真</string>
     <string name="palette_style_fidelity_desc">尽可能保留所选种子色的原始观感并配互补点缀。</string>
-    <string name="palette_style_content">内容匹配 (Content)</string>
+    <string name="palette_style_content">融合</string>
     <string name="palette_style_content_desc">忠实还原种子色，并搭配邻近色系保持视觉统一。</string>
 
     <string name="appearance_color_spec_label">配色规格</string>
@@ -56,7 +57,7 @@
     <string name="color_spec_2025">2025 表现力</string>
     <string name="appearance_color_spec_2021_hint">经典 Material 3 色调配色规范。</string>
     <string name="appearance_color_spec_2025_hint">Material 3 Expressive 规范，色阶层次更鲜明。</string>
-    <string name="appearance_color_spec_2025_fallback_hint">2025 规范仅作用于标准色调、中性柔和、鲜明活力与表现力，当前风格自动回退至 2021。</string>
+    <string name="appearance_color_spec_2025_fallback_hint">2025 规范仅作用于标准、柔和、鲜明与表现力，当前风格自动回退至 2021。</string>
 
     <string name="appearance_animation_speed_label">动画速度</string>
     <string name="appearance_animation_speed_hint">调整页面切换与轨迹展开收起的动画快慢，也可完全关闭。</string>

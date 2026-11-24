@@ -8,6 +8,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -55,5 +56,41 @@ class EverfoldThemeMappingTest {
         assertEquals(Color(M3_BASELINE_ARGB), parseHexColorOrNull(" 6750a4 "))
         assertNull(parseHexColorOrNull("#12345"))
         assertNull(parseHexColorOrNull("ZZZZZZ"))
+    }
+
+    @Test
+    fun monetSwatchPaletteReflectsStyleAndColorSpec() {
+        val seed = SeedColorPreset.BLUE.toColor()
+        val monochrome =
+            computeMonetSwatchPalette(
+                seedColor = seed,
+                isDark = false,
+                paletteStyle = ThemePaletteStyle.MONOCHROME,
+                colorSpec = ThemeColorSpec.SPEC_2021,
+            )
+        val vibrant =
+            computeMonetSwatchPalette(
+                seedColor = seed,
+                isDark = false,
+                paletteStyle = ThemePaletteStyle.VIBRANT,
+                colorSpec = ThemeColorSpec.SPEC_2021,
+            )
+        val expressive2021 =
+            computeMonetSwatchPalette(
+                seedColor = seed,
+                isDark = false,
+                paletteStyle = ThemePaletteStyle.EXPRESSIVE,
+                colorSpec = ThemeColorSpec.SPEC_2021,
+            )
+        val expressive2025 =
+            computeMonetSwatchPalette(
+                seedColor = seed,
+                isDark = false,
+                paletteStyle = ThemePaletteStyle.EXPRESSIVE,
+                colorSpec = ThemeColorSpec.SPEC_2025,
+            )
+
+        assertNotEquals(monochrome, vibrant)
+        assertNotEquals(expressive2021, expressive2025)
     }
 }
