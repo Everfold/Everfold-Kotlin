@@ -1,0 +1,11 @@
+<resources>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_cta_next">Next</string>
+    <string name="onboarding_cta_start">Get started</string>
+    <string name="onboarding_showcase_1_title">Multi-Node Orchestration</string>
+    <string name="onboarding_showcase_1_body">Coordinate Agent Loops from an Authority while dispatching tool, MCP, and code actions seamlessly across desktop, cloud, and mobile workers.</string>
+    <string name="onboarding_showcase_2_title">Full Trace Observability</string>
+    <string name="onboarding_showcase_2_body">Inspect streaming agent responses alongside live step-by-step action traces, durations, and host attribution in real time.</string>
+    <string name="onboarding_showcase_3_title">NATS &amp; Zenoh Native</string>
+    <string name="onboarding_showcase_3_body">Connect over TCP, TLS, QUIC, or WebSocket with Token or mTLS auth, or launch standalone in Local Mode right away.</string>
+</resources>

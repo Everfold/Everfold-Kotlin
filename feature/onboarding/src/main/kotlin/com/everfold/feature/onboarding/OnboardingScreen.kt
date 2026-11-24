@@ -1,44 +1,86 @@
 package com.everfold.feature.onboarding
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.Hub
-import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.everfold.core.designsystem.component.EverfoldLogo
+import com.everfold.core.designsystem.theme.LocalAnimationSpeed
+import com.everfold.core.designsystem.theme.scaleDuration
+import com.everfold.core.designsystem.theme.toMotionDurationScale
+import com.everfold.core.model.AnimationSpeed
+import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.ConnectionMode
+import com.everfold.core.model.RemoteTransportConfig
+import com.everfold.core.model.SeedColorPreset
+import com.everfold.core.model.ThemeColorMode
+import com.everfold.core.model.ThemeMode
+import com.everfold.feature.onboarding.step.OnboardingModeStep
+import com.everfold.feature.onboarding.step.OnboardingPermissionsStep
+import com.everfold.feature.onboarding.step.OnboardingQuickSettingsStep
+import com.everfold.feature.onboarding.step.OnboardingRemoteStep
+import com.everfold.feature.onboarding.step.OnboardingShowcaseStep
+import com.everfold.feature.onboarding.step.SHOWCASE_PAGE_COUNT
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import com.everfold.core.ui.R as CoreUiR
+
+private const val STEP_TRANSITION_MS = 220
+private const val STEP_SLIDE_DIVISOR = 10
+
+private data class OnboardingActions(
+    val onBack: () -> Unit,
+    val onSkip: () -> Unit,
+    val onPrimaryClick: () -> Unit,
+    val onLanguageChange: (AppLanguage) -> Unit,
+    val onThemeModeChange: (ThemeMode) -> Unit,
+    val onColorChange: (ThemeColorMode, SeedColorPreset?) -> Unit,
+    val onSelectMode: (ConnectionMode) -> Unit,
+    val onProfileNameChange: (String) -> Unit,
+    val onProfileNoteChange: (String) -> Unit,
+    val onTransportChange: (RemoteTransportConfig) -> Unit,
+)
 
 @Composable
 fun OnboardingScreen(
@@ -46,194 +88,270 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(pageCount = { SHOWCASE_PAGE_COUNT })
+    val scope = rememberCoroutineScope()
+    val animationSpeed = LocalAnimationSpeed.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val dismissIme = {
+    val dismissIme: () -> Unit = {
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
     }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 24.dp, vertical = 20.dp)
-                    .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            OnboardingBrandHeader()
-            OnboardingModeOptions(
-                selectedMode = state.selectedMode,
-                onSelectMode = { mode ->
-                    dismissIme()
-                    viewModel.selectMode(mode)
-                },
-            )
-            if (state.selectedMode != ConnectionMode.LOCAL_ONLY) {
-                OutlinedTextField(
-                    value = state.address,
-                    onValueChange = viewModel::updateAddress,
-                    label = { Text(stringResource(R.string.onboarding_address_label)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            state.errorMessage?.let { error ->
-                Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            OnboardingConnectButton(
-                mode = state.selectedMode,
+    BackHandler(enabled = state.step != OnboardingStep.SHOWCASE && !state.isConnecting) {
+        dismissIme()
+        viewModel.previousStep()
+    }
+
+    val actions =
+        OnboardingActions(
+            onBack = {
+                dismissIme()
+                viewModel.previousStep()
+            },
+            onSkip = {
+                dismissIme()
+                if (state.step == OnboardingStep.SHOWCASE) viewModel.skipShowcase() else viewModel.nextStep()
+            },
+            onPrimaryClick = {
+                dismissIme()
+                if (state.step == OnboardingStep.SHOWCASE && pagerState.currentPage < SHOWCASE_PAGE_COUNT - 1) {
+                    scope.launch(animationSpeed.toMotionDurationScale()) {
+                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                    }
+                } else {
+                    viewModel.nextStep()
+                }
+            },
+            onLanguageChange = viewModel::updateLanguage,
+            onThemeModeChange = viewModel::updateThemeMode,
+            onColorChange = viewModel::selectColor,
+            onSelectMode = { mode ->
+                dismissIme()
+                viewModel.selectMode(mode)
+            },
+            onProfileNameChange = viewModel::updateProfileName,
+            onProfileNoteChange = viewModel::updateProfileNote,
+            onTransportChange = viewModel::updateTransport,
+        )
+
+    OnboardingScaffold(
+        state = state,
+        pagerState = pagerState,
+        animationSpeed = animationSpeed,
+        actions = actions,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun OnboardingScaffold(
+    state: OnboardingUiState,
+    pagerState: PagerState,
+    animationSpeed: AnimationSpeed,
+    actions: OnboardingActions,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize().imePadding(),
+        topBar = {
+            OnboardingTopBar(
+                step = state.step,
                 isConnecting = state.isConnecting,
-                onClick = {
-                    dismissIme()
-                    viewModel.connect()
-                },
+                onBack = actions.onBack,
+                onSkip = actions.onSkip,
             )
-        }
-    }
-}
-
-@Composable
-private fun OnboardingBrandHeader() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            EverfoldLogo(modifier = Modifier.size(44.dp))
-            Text(
-                text = "Everfold",
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.primary,
+        },
+        bottomBar = {
+            OnboardingBottomBar(
+                state = state,
+                showcasePage = pagerState.currentPage,
+                onPrimaryClick = actions.onPrimaryClick,
             )
-        }
-        Text(
-            text = stringResource(R.string.onboarding_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        },
+    ) { innerPadding ->
+        OnboardingStepContent(
+            state = state,
+            pagerState = pagerState,
+            animationSpeed = animationSpeed,
+            onLanguageChange = actions.onLanguageChange,
+            onThemeModeChange = actions.onThemeModeChange,
+            onColorChange = actions.onColorChange,
+            onSelectMode = actions.onSelectMode,
+            onProfileNameChange = actions.onProfileNameChange,
+            onProfileNoteChange = actions.onProfileNoteChange,
+            onTransportChange = actions.onTransportChange,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
 }
 
 @Composable
-private fun OnboardingModeOptions(
-    selectedMode: ConnectionMode,
-    onSelectMode: (ConnectionMode) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ConnectionModeOption(
-            title = stringResource(R.string.onboarding_mode_remote_title),
-            subtitle = stringResource(R.string.onboarding_mode_remote_subtitle),
-            icon = Icons.Rounded.Cloud,
-            selected = selectedMode == ConnectionMode.REMOTE_AUTHORITY,
-            onClick = { onSelectMode(ConnectionMode.REMOTE_AUTHORITY) },
-        )
-        ConnectionModeOption(
-            title = stringResource(R.string.onboarding_mode_relay_title),
-            subtitle = stringResource(R.string.onboarding_mode_relay_subtitle),
-            icon = Icons.Rounded.Hub,
-            selected = selectedMode == ConnectionMode.RELAY,
-            onClick = { onSelectMode(ConnectionMode.RELAY) },
-        )
-        ConnectionModeOption(
-            title = stringResource(R.string.onboarding_mode_local_title),
-            subtitle = stringResource(R.string.onboarding_mode_local_subtitle),
-            icon = Icons.Rounded.Smartphone,
-            selected = selectedMode == ConnectionMode.LOCAL_ONLY,
-            onClick = { onSelectMode(ConnectionMode.LOCAL_ONLY) },
-        )
-    }
-}
-
-@Composable
-private fun OnboardingConnectButton(
-    mode: ConnectionMode,
+private fun OnboardingTopBar(
+    step: OnboardingStep,
     isConnecting: Boolean,
-    onClick: () -> Unit,
+    onBack: () -> Unit,
+    onSkip: () -> Unit,
 ) {
-    Button(
-        onClick = onClick,
-        enabled = !isConnecting,
-        modifier = Modifier.fillMaxWidth().height(52.dp),
+    val progress = (step.ordinal + 1).toFloat() / OnboardingStep.entries.size.toFloat()
+    val canSkip = step == OnboardingStep.SHOWCASE || step == OnboardingStep.PERMISSIONS
+    Row(
+        modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (isConnecting) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
+        if (step != OnboardingStep.SHOWCASE) {
+            IconButton(onClick = onBack, enabled = !isConnecting) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(CoreUiR.string.common_back),
+                )
+            }
         } else {
-            Text(
-                text =
-                    stringResource(
-                        if (mode == ConnectionMode.LOCAL_ONLY) {
-                            R.string.onboarding_cta_local
-                        } else {
-                            R.string.onboarding_cta_connect
-                        },
-                    ),
-            )
+            Box(modifier = Modifier.size(48.dp))
+        }
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.weight(1f),
+        )
+        if (canSkip) {
+            TextButton(onClick = onSkip, enabled = !isConnecting) {
+                Text(stringResource(R.string.onboarding_skip))
+            }
+        } else {
+            Box(modifier = Modifier.size(48.dp))
         }
     }
 }
 
 @Composable
-private fun ConnectionModeOption(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun OnboardingStepContent(
+    state: OnboardingUiState,
+    pagerState: PagerState,
+    animationSpeed: AnimationSpeed,
+    onLanguageChange: (AppLanguage) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onColorChange: (ThemeColorMode, SeedColorPreset?) -> Unit,
+    onSelectMode: (ConnectionMode) -> Unit,
+    onProfileNameChange: (String) -> Unit,
+    onProfileNoteChange: (String) -> Unit,
+    onTransportChange: (RemoteTransportConfig) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val border =
-        if (selected) {
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        } else {
-            CardDefaults.outlinedCardBorder()
-        }
-    val containerColor =
-        if (selected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-        } else {
-            MaterialTheme.colorScheme.surface
-        }
-
-    OutlinedCard(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        border = border,
-        colors = CardDefaults.outlinedCardColors(containerColor = containerColor),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint =
-                    if (selected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+    AnimatedContent(
+        targetState = state.step,
+        transitionSpec = {
+            stepSlideTransition(
+                forward = targetState.ordinal >= initialState.ordinal,
+                speed = animationSpeed,
             )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        },
+        modifier = modifier,
+        label = "OnboardingStep",
+    ) { step ->
+        when (step) {
+            OnboardingStep.SHOWCASE -> {
+                OnboardingShowcaseStep(pagerState = pagerState)
+            }
+
+            OnboardingStep.BASIC_SETTINGS -> {
+                OnboardingQuickSettingsStep(
+                    preferences = state.preferences,
+                    onLanguageChange = onLanguageChange,
+                    onThemeModeChange = onThemeModeChange,
+                    onColorChange = onColorChange,
+                )
+            }
+
+            OnboardingStep.PERMISSIONS -> {
+                OnboardingPermissionsStep()
+            }
+
+            OnboardingStep.CONNECTION_MODE -> {
+                OnboardingModeStep(
+                    selectedMode = state.selectedMode,
+                    onSelectMode = onSelectMode,
+                )
+            }
+
+            OnboardingStep.REMOTE_CONFIG -> {
+                OnboardingRemoteStep(
+                    profileName = state.profileName,
+                    profileNote = state.profileNote,
+                    transport = state.transport,
+                    enabled = !state.isConnecting,
+                    errorCode = state.errorCode,
+                    onProfileNameChange = onProfileNameChange,
+                    onProfileNoteChange = onProfileNoteChange,
+                    onTransportChange = onTransportChange,
                 )
             }
         }
     }
 }
+
+@Composable
+private fun OnboardingBottomBar(
+    state: OnboardingUiState,
+    showcasePage: Int,
+    onPrimaryClick: () -> Unit,
+) {
+    val labelRes =
+        when (state.step) {
+            OnboardingStep.SHOWCASE -> {
+                if (showcasePage < SHOWCASE_PAGE_COUNT - 1) {
+                    R.string.onboarding_cta_next
+                } else {
+                    R.string.onboarding_cta_start
+                }
+            }
+
+            OnboardingStep.BASIC_SETTINGS, OnboardingStep.PERMISSIONS -> {
+                R.string.onboarding_cta_continue
+            }
+
+            OnboardingStep.CONNECTION_MODE -> {
+                if (state.selectedMode == ConnectionMode.LOCAL_ONLY) {
+                    R.string.onboarding_cta_local
+                } else {
+                    R.string.onboarding_cta_configure_remote
+                }
+            }
+
+            OnboardingStep.REMOTE_CONFIG -> {
+                R.string.onboarding_cta_connect
+            }
+        }
+    Surface(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 14.dp)) {
+            Button(
+                onClick = onPrimaryClick,
+                enabled = !state.isConnecting,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                if (state.isConnecting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                } else {
+                    Text(stringResource(labelRes))
+                }
+            }
+        }
+    }
+}
+
+private fun stepSlideTransition(
+    forward: Boolean,
+    speed: AnimationSpeed,
+): ContentTransform =
+    if (speed == AnimationSpeed.OFF) {
+        EnterTransition.None togetherWith ExitTransition.None
+    } else {
+        val ms = speed.scaleDuration(STEP_TRANSITION_MS)
+        val sign = if (forward) 1 else -1
+        (fadeIn(tween(ms)) + slideInHorizontally(tween(ms)) { sign * it / STEP_SLIDE_DIVISOR }) togetherWith
+            (fadeOut(tween(ms)) + slideOutHorizontally(tween(ms)) { -sign * it / STEP_SLIDE_DIVISOR })
+    }

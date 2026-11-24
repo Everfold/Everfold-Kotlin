@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.everfold.feature.onboarding"
 }
+
+dependencies {
+    implementation(libs.androidx.activity.compose)
+}

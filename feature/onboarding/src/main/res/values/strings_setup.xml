@@ -1,0 +1,35 @@
+<resources>
+    <string name="onboarding_setup_title">Quick setup</string>
+    <string name="onboarding_setup_subtitle">Customize language and appearance before connecting. Changes apply immediately.</string>
+    <string name="onboarding_setup_language">Language</string>
+    <string name="onboarding_setup_theme">Theme mode</string>
+    <string name="onboarding_setup_color">Accent color</string>
+    <string name="onboarding_setup_color_dynamic">Follow system wallpaper (Android 12+)</string>
+    <string name="onboarding_setup_later_hint">Typography, trace collapse, and animation speed can be fine-tuned anytime in Settings.</string>
+
+    <string name="onboarding_language_system">Follow system</string>
+    <string name="onboarding_language_zh_hans" translatable="false">简体中文</string>
+    <string name="onboarding_language_zh_hant" translatable="false">繁體中文</string>
+    <string name="onboarding_language_en" translatable="false">English</string>
+    <string name="onboarding_theme_system">Follow system</string>
+    <string name="onboarding_theme_light">Light</string>
+    <string name="onboarding_theme_dark">Dark</string>
+
+    <string name="onboarding_perms_title">System permissions</string>
+    <string name="onboarding_perms_subtitle">Grant permissions for timely background task alerts and reliable long-running loops.</string>
+
+    <string name="onboarding_mode_step_title">Choose workspace mode</string>
+    <string name="onboarding_mode_step_subtitle">Start immediately on this device, or link up to a remote Authority cluster via NATS or Zenoh.</string>
+    <string name="onboarding_mode_local_title">Local Mode</string>
+    <string name="onboarding_mode_local_subtitle">Run standalone in an in-memory local simulation without remote configuration.</string>
+    <string name="onboarding_mode_remote_title">Remote Mode</string>
+    <string name="onboarding_mode_remote_subtitle">Connect via NATS or Zenoh to a remote Authority and Worker topology.</string>
+
+    <string name="onboarding_remote_title">Remote connection</string>
+    <string name="onboarding_remote_subtitle">Configure NATS or Zenoh transport and authentication parameters, then test the connection.</string>
+
+    <string name="onboarding_cta_continue">Continue</string>
+    <string name="onboarding_cta_local">Enter Everfold</string>
+    <string name="onboarding_cta_configure_remote">Configure remote connection</string>
+    <string name="onboarding_cta_connect">Test &amp; connect</string>
+</resources>

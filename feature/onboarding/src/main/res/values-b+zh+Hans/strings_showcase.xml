@@ -1,0 +1,11 @@
+<resources>
+    <string name="onboarding_skip">跳过</string>
+    <string name="onboarding_cta_next">下一页</string>
+    <string name="onboarding_cta_start">开始配置</string>
+    <string name="onboarding_showcase_1_title">多节点智能体编排</string>
+    <string name="onboarding_showcase_1_body">以 Authority 统筹控制循环，并将工具调用、MCP 与 CodeMode 动作透明调度至云端、桌面工作站或手机端执行。</string>
+    <string name="onboarding_showcase_2_title">全链路实时可观测</string>
+    <string name="onboarding_showcase_2_body">流式对话与每一步动作执行轨迹、耗时及节点归属清晰呈现，随时掌握智能体运行状态。</string>
+    <string name="onboarding_showcase_3_title">多协议自由接入</string>
+    <string name="onboarding_showcase_3_body">面向 NATS 与 Zenoh 分布式传输，支持多种加密与证书认证方案，也可零配置本地快速体验。</string>
+</resources>
