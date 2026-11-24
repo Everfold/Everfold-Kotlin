@@ -125,6 +125,7 @@ private fun ProfileMetaFields(
             placeholder = { Text(stringResource(R.string.conn_profile_name_hint)) },
             enabled = enabled,
             singleLine = true,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -133,6 +134,7 @@ private fun ProfileMetaFields(
             label = { Text(stringResource(R.string.conn_profile_note_label)) },
             enabled = enabled,
             maxLines = 2,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -302,6 +304,7 @@ private fun HostPortRow(
             placeholder = { Text(stringResource(R.string.conn_host_hint)) },
             enabled = enabled,
             singleLine = true,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.weight(HOST_WEIGHT),
         )
         OutlinedTextField(
@@ -311,6 +314,7 @@ private fun HostPortRow(
             placeholder = { Text(portPlaceholder) },
             enabled = enabled,
             singleLine = true,
+            shape = MaterialTheme.shapes.medium,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.weight(PORT_WEIGHT),
         )

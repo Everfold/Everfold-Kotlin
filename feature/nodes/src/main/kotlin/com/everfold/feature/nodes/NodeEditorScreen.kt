@@ -166,7 +166,7 @@ private fun NodeEditorBottomBar(
     onSaveOnly: () -> Unit,
     onSaveAndConnect: () -> Unit,
 ) {
-    Surface(tonalElevation = 2.dp) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
         Row(
             modifier =
                 Modifier

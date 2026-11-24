@@ -80,6 +80,7 @@ internal fun CustomColorBottomSheet(
                     onValueChange = onHexChange,
                     label = { Text(stringResource(R.string.appearance_custom_hex_label)) },
                     singleLine = true,
+                    shape = MaterialTheme.shapes.medium,
                     isError = parseHexColorOrNull(hex) == null,
                     modifier = Modifier.weight(1f),
                 )

@@ -11,6 +11,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -133,6 +134,7 @@ private fun UserPasswordFields(
             label = { Text(stringResource(R.string.conn_username_label)) },
             enabled = enabled,
             singleLine = true,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
         SecretTextField(
@@ -159,6 +161,7 @@ private fun SecretTextField(
         label = { Text(label) },
         enabled = enabled,
         singleLine = true,
+        shape = MaterialTheme.shapes.medium,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {

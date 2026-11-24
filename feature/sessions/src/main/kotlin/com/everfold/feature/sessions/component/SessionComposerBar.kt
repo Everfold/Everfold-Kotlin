@@ -90,7 +90,7 @@ internal fun SessionComposerBar(
     val launchers = rememberAttachmentLaunchers(onAddAttachments = onAddAttachments)
     val modelLabel = formatModelEffortLabel(model = activeModel, effort = activeEffort)
 
-    Surface(modifier = modifier.fillMaxWidth(), tonalElevation = 1.dp) {
+    Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(
             modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

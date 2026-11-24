@@ -183,6 +183,7 @@ fun RenameSessionDialog(
                 onValueChange = { title = it },
                 label = { Text(stringResource(R.string.session_rename_dialog_hint)) },
                 singleLine = true,
+                shape = MaterialTheme.shapes.medium,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (canConfirm) onConfirm(title.trim()) }),
                 modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),

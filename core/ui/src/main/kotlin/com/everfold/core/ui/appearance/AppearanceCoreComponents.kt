@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,6 +41,7 @@ import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
 import com.everfold.core.model.ThemePreferences
 import com.everfold.core.ui.R
+import com.everfold.core.ui.component.EverfoldSwitch
 
 private const val TILE_WIDTH_DP = 76
 private const val UNSELECTED_BORDER_ALPHA = 0.45f
@@ -125,7 +125,7 @@ fun MonetDynamicCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Switch(
+            EverfoldSwitch(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = onCheckedChange,

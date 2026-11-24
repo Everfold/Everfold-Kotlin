@@ -146,6 +146,7 @@ internal fun EditNodeNoteDialog(
                 onValueChange = { note = it },
                 label = { Text(stringResource(R.string.nodes_note_dialog_hint)) },
                 maxLines = 3,
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
             )
         },

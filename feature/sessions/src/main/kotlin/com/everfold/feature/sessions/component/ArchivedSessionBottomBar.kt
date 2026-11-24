@@ -29,7 +29,7 @@ internal fun ArchivedSessionBottomBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        tonalElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
             modifier =
