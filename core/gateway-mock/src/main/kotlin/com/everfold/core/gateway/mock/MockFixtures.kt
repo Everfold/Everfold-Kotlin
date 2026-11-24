@@ -50,7 +50,7 @@ internal object MockFixtures {
     fun nodesFor(mode: ConnectionMode): ImmutableList<NodeDescriptor> =
         when (mode) {
             ConnectionMode.LOCAL_ONLY -> persistentListOf(localAuthorityNode())
-            ConnectionMode.REMOTE_AUTHORITY, ConnectionMode.RELAY -> remoteClusterNodes()
+            ConnectionMode.REMOTE -> remoteClusterNodes()
         }
 
     fun initialModels(): ImmutableList<ModelDescriptor> =

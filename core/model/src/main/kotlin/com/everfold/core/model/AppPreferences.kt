@@ -57,6 +57,7 @@ private const val SLOW_ANIMATION_SCALE = 1.75f
 private const val OFF_ANIMATION_SCALE = 0f
 
 data class AppPreferences(
+    val onboardingCompleted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val themeColorMode: ThemeColorMode = ThemeColorMode.SYSTEM_DYNAMIC,
     val seedColor: SeedColorPreset = SeedColorPreset.INDIGO,

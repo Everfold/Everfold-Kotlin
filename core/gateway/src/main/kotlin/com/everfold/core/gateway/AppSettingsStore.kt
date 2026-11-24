@@ -31,4 +31,6 @@ interface AppSettingsStore {
     fun updateExpandRunningActionTraces(enabled: Boolean)
 
     fun updateExpandCompletedActionTraces(enabled: Boolean)
+
+    fun markOnboardingCompleted()
 }

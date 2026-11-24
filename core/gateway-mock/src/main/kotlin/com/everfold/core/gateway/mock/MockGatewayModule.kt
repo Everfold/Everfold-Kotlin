@@ -17,13 +17,15 @@ val mockGatewayModule =
             val authority =
                 MockAuthorityGateway(
                     onConnected = { mode -> sessions.seedIfEmpty(mode) },
-                    onDisconnected = { sessions.clearAll() },
                 )
-            val models = MockModelGateway(hostNameProvider = authority::currentLoopHostName)
+            val models =
+                MockModelGateway(
+                    hostNameProvider = { authority.connectionState.value.currentLoopHostName() },
+                )
             sessions =
                 MockSessionGateway(
-                    modeProvider = authority::currentMode,
-                    loopHostProvider = authority::currentLoopHostName,
+                    modeProvider = { authority.connectionState.value.currentMode() },
+                    loopHostProvider = { authority.connectionState.value.currentLoopHostName() },
                     defaultModelIdProvider = {
                         models.models.value
                             .firstOrNull { it.isDefault }

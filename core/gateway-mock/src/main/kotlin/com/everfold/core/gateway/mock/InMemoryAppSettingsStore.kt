@@ -56,4 +56,8 @@ class InMemoryAppSettingsStore : AppSettingsStore {
     override fun updateExpandCompletedActionTraces(enabled: Boolean) {
         _preferences.update { it.copy(expandCompletedActionTraces = enabled) }
     }
+
+    override fun markOnboardingCompleted() {
+        _preferences.update { it.copy(onboardingCompleted = true) }
+    }
 }

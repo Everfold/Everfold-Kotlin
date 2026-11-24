@@ -1,12 +1,21 @@
 package com.everfold.core.gateway.mock
 
 import com.everfold.core.model.AuthorityEndpoint
+import com.everfold.core.model.CertificatePayload
+import com.everfold.core.model.ConnectionErrorCode
 import com.everfold.core.model.ConnectionMode
+import com.everfold.core.model.ConnectionProfile
 import com.everfold.core.model.ConnectionState
 import com.everfold.core.model.LoopState
+import com.everfold.core.model.NatsAuthType
+import com.everfold.core.model.NatsProtocol
 import com.everfold.core.model.ObservedItem
+import com.everfold.core.model.RemoteTransportConfig
 import com.everfold.core.model.SessionMatchSource
 import com.everfold.core.model.SessionSearchFilter
+import com.everfold.core.model.ZenohAccessMode
+import com.everfold.core.model.ZenohAuthType
+import com.everfold.core.model.ZenohProtocol
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -29,11 +38,14 @@ class MockGatewaysTest {
                     onConnected = { mode -> sessions.seedIfEmpty(mode) },
                     onDisconnected = { sessions.clearAll() },
                 )
-            val models = MockModelGateway(hostNameProvider = authority::currentLoopHostName)
+            val models =
+                MockModelGateway(
+                    hostNameProvider = { authority.connectionState.value.currentLoopHostName() },
+                )
             sessions =
                 MockSessionGateway(
-                    modeProvider = authority::currentMode,
-                    loopHostProvider = authority::currentLoopHostName,
+                    modeProvider = { authority.connectionState.value.currentMode() },
+                    loopHostProvider = { authority.connectionState.value.currentLoopHostName() },
                     defaultModelIdProvider = {
                         models.models.value
                             .first()
@@ -45,7 +57,7 @@ class MockGatewaysTest {
 
             authority.connect(
                 AuthorityEndpoint(
-                    mode = ConnectionMode.REMOTE_AUTHORITY,
+                    mode = ConnectionMode.REMOTE,
                     address = "wss://authority.example.com",
                 ),
             )
@@ -61,8 +73,8 @@ class MockGatewaysTest {
             val authority = MockAuthorityGateway(stepDelayMs = 0L)
             val sessions =
                 MockSessionGateway(
-                    modeProvider = authority::currentMode,
-                    loopHostProvider = authority::currentLoopHostName,
+                    modeProvider = { authority.connectionState.value.currentMode() },
+                    loopHostProvider = { authority.connectionState.value.currentLoopHostName() },
                     defaultModelIdProvider = { "model-claude-sonnet" },
                     scope = this,
                     stepDelayMs = 0L,
@@ -209,6 +221,122 @@ class MockGatewaysTest {
             assertFalse(sessions.sessions.value.any { it.id == "session-compose-perf" })
         }
 
+    @Test
+    fun zenohValidationCoversP2pExplicitAndOneWayTls() =
+        runTest {
+            val authority = MockAuthorityGateway(stepDelayMs = 0L)
+            val settingsStore = InMemoryAppSettingsStore()
+            assertFalse(settingsStore.preferences.value.onboardingCompleted)
+            settingsStore.markOnboardingCompleted()
+            assertTrue(settingsStore.preferences.value.onboardingCompleted)
+
+            assertTrue(
+                authority.connectRemote(
+                    transport =
+                        RemoteTransportConfig.Zenoh(
+                            accessMode = ZenohAccessMode.P2P,
+                            protocol = ZenohProtocol.QUIC,
+                        ),
+                ),
+            )
+            assertTrue(authority.connectionState.value is ConnectionState.Connected)
+
+            assertFalse(
+                authority.connectRemote(
+                    transport = RemoteTransportConfig.Zenoh(accessMode = ZenohAccessMode.EXPLICIT, host = ""),
+                ),
+            )
+            assertEquals(
+                ConnectionErrorCode.HOST_REQUIRED,
+                (authority.connectionState.value as ConnectionState.Error).errorCode,
+            )
+
+            assertFalse(
+                authority.connectRemote(
+                    transport =
+                        RemoteTransportConfig.Zenoh(
+                            accessMode = ZenohAccessMode.P2P,
+                            authType = ZenohAuthType.TLS_ONE_WAY,
+                        ),
+                ),
+            )
+            assertEquals(
+                ConnectionErrorCode.CA_CERT_REQUIRED,
+                (authority.connectionState.value as ConnectionState.Error).errorCode,
+            )
+        }
+
+    @Test
+    fun natsValidationCoversMtlsAndSimulatedHandshakeFailure() =
+        runTest {
+            val authority = MockAuthorityGateway(stepDelayMs = 0L)
+            assertFalse(
+                authority.connectRemote(
+                    transport =
+                        RemoteTransportConfig.Nats(
+                            host = "nats.example.com",
+                            protocol = NatsProtocol.TLS,
+                            authType = NatsAuthType.MTLS,
+                            caCert = CertificatePayload("ca.pem"),
+                        ),
+                ),
+            )
+            assertEquals(
+                ConnectionErrorCode.MTLS_CERTS_REQUIRED,
+                (authority.connectionState.value as ConnectionState.Error).errorCode,
+            )
+
+            assertFalse(
+                authority.connectRemote(
+                    transport = RemoteTransportConfig.Nats(host = "fail.example.com"),
+                ),
+            )
+            assertEquals(
+                ConnectionErrorCode.HANDSHAKE_FAILED,
+                (authority.connectionState.value as ConnectionState.Error).errorCode,
+            )
+        }
+
+    @Test
+    fun savedProfileCrudConnectAndDeleteWorkAsExpected() =
+        runTest {
+            val authority = MockAuthorityGateway(stepDelayMs = 0L)
+            val saved =
+                authority.saveProfile(
+                    ConnectionProfile(
+                        id = "",
+                        name = "Lab Cluster",
+                        note = "initial",
+                        transport =
+                            RemoteTransportConfig.Nats(
+                                host = "10.0.0.12",
+                                port = "4222",
+                                protocol = NatsProtocol.TLS,
+                                authType = NatsAuthType.TOKEN,
+                                token = "secret-token",
+                            ),
+                    ),
+                )
+            assertTrue(authority.savedProfiles.value.any { it.id == saved.id })
+            assertTrue(authority.connectionState.value is ConnectionState.Disconnected)
+
+            authority.updateProfileNote(saved.id, "updated note")
+            assertEquals(
+                "updated note",
+                authority.savedProfiles.value
+                    .first { it.id == saved.id }
+                    .note,
+            )
+
+            assertTrue(authority.connectProfile(saved.id))
+            val connected = authority.connectionState.value as ConnectionState.Connected
+            assertEquals(saved.id, connected.endpoint.profileId)
+
+            authority.deleteProfile(saved.id)
+            assertFalse(authority.savedProfiles.value.any { it.id == saved.id })
+            assertEquals(ConnectionState.Disconnected, authority.connectionState.value)
+        }
+
     private suspend fun TestScope.createSeededSessionsGateway(): MockSessionGateway {
         lateinit var sessions: MockSessionGateway
         val authority =
@@ -219,15 +347,15 @@ class MockGatewaysTest {
             )
         sessions =
             MockSessionGateway(
-                modeProvider = authority::currentMode,
-                loopHostProvider = authority::currentLoopHostName,
+                modeProvider = { authority.connectionState.value.currentMode() },
+                loopHostProvider = { authority.connectionState.value.currentLoopHostName() },
                 defaultModelIdProvider = { "model-claude-sonnet" },
                 scope = this,
                 stepDelayMs = 0L,
             )
         authority.connect(
             AuthorityEndpoint(
-                mode = ConnectionMode.REMOTE_AUTHORITY,
+                mode = ConnectionMode.REMOTE,
                 address = "wss://authority.example.com",
             ),
         )
