@@ -134,6 +134,7 @@ private fun ModelOptionCard(
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
+        selected = selected,
         onClick = onClick,
     ) {
         Row(

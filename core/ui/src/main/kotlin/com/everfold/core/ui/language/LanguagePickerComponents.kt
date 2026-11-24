@@ -168,6 +168,7 @@ private fun PinnedSystemLanguageGroup(
                 } else {
                     MaterialTheme.colorScheme.surfaceContainerLow
                 },
+            selected = selected,
             onClick = onSelect,
         ) {
             LanguageOptionRow(
@@ -197,6 +198,7 @@ private fun ConcreteLanguageGroup(
                     } else {
                         MaterialTheme.colorScheme.surfaceContainerLow
                     },
+                selected = isSelected,
                 onClick = { onSelect(language) },
             ) {
                 LanguageOptionRow(

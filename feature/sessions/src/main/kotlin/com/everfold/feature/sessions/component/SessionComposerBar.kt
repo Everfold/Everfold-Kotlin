@@ -30,14 +30,16 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Surface
@@ -257,23 +259,27 @@ private fun ComposerAttachMenuButton(
                 modifier = Modifier.size(20.dp),
             )
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.session_composer_pick_file)) },
-                leadingIcon = { Icon(imageVector = Icons.Rounded.Description, contentDescription = null) },
-                onClick = {
-                    expanded = false
-                    onPickFile()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.session_composer_pick_image)) },
-                leadingIcon = { Icon(imageVector = Icons.Rounded.Image, contentDescription = null) },
-                onClick = {
-                    expanded = false
-                    onPickImage()
-                },
-            )
+        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 1)) {
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        onPickFile()
+                    },
+                    text = { Text(stringResource(R.string.session_composer_pick_file)) },
+                    shape = MenuDefaults.itemShape(index = 0, count = 2).shape,
+                    leadingIcon = { Icon(imageVector = Icons.Rounded.Description, contentDescription = null) },
+                )
+                DropdownMenuItem(
+                    onClick = {
+                        expanded = false
+                        onPickImage()
+                    },
+                    text = { Text(stringResource(R.string.session_composer_pick_image)) },
+                    shape = MenuDefaults.itemShape(index = 1, count = 2).shape,
+                    leadingIcon = { Icon(imageVector = Icons.Rounded.Image, contentDescription = null) },
+                )
+            }
         }
     }
 }

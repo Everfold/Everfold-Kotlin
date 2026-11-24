@@ -21,14 +21,16 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -211,6 +213,7 @@ private fun SessionStateFilterChip(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun <T> OptionFilterChip(
     defaultLabel: String,
@@ -223,6 +226,7 @@ private fun <T> OptionFilterChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val chipLabel = selectedOption?.let(optionLabel) ?: defaultLabel
+    val totalCount = options.size + 1
     Box {
         FilterChip(
             selected = selectedOption != null,
@@ -230,68 +234,53 @@ private fun <T> OptionFilterChip(
                 onOpenMenu()
                 expanded = true
             },
-            label = {
-                Text(
-                    text = chipLabel,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Rounded.ExpandMore,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-            },
+            label = { Text(text = chipLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            trailingIcon = { Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null, modifier = Modifier.size(18.dp)) },
         )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            FilterOptionMenuItem(
-                text = allLabel,
-                isSelected = selectedOption == null,
-                onClick = {
-                    expanded = false
-                    onSelect(null)
-                },
-            )
-            options.forEach { option ->
+        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 1)) {
                 FilterOptionMenuItem(
-                    text = optionLabel(option),
-                    isSelected = selectedOption == option,
-                    onClick = {
-                        expanded = false
-                        onSelect(option)
-                    },
+                    text = allLabel,
+                    isSelected = selectedOption == null,
+                    index = 0,
+                    count = totalCount,
+                    onClick = { expanded = false.also { onSelect(null) } },
                 )
+                options.forEachIndexed { idx, option ->
+                    FilterOptionMenuItem(
+                        text = optionLabel(option),
+                        isSelected = selectedOption == option,
+                        index = idx + 1,
+                        count = totalCount,
+                        onClick = { expanded = false.also { onSelect(option) } },
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FilterOptionMenuItem(
     text: String,
     isSelected: Boolean,
+    index: Int,
+    count: Int,
     onClick: () -> Unit,
 ) {
-    DropdownMenuItem(
-        text = { Text(text) },
-        trailingIcon =
-            if (isSelected) {
-                {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            } else {
-                null
-            },
+    SelectableDropdownMenuItem(
+        selected = isSelected,
         onClick = onClick,
+        text = { Text(text) },
+        shapes = MenuDefaults.itemShape(index = index, count = count),
+        selectedLeadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+        },
     )
 }
 

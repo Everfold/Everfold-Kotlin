@@ -3,10 +3,13 @@ package com.everfold.core.designsystem.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,7 +17,6 @@ import androidx.compose.ui.unit.dp
 
 private const val GROUP_OUTER_RADIUS_DP = 20
 private const val GROUP_INNER_RADIUS_DP = 4
-private const val GROUP_ITEM_GAP_DP = 2
 
 fun groupedItemShape(
     index: Int,
@@ -30,6 +32,7 @@ fun groupedItemShape(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EverfoldGroupedList(
     modifier: Modifier = Modifier,
@@ -37,35 +40,61 @@ fun EverfoldGroupedList(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GROUP_ITEM_GAP_DP.dp),
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
         content = content,
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EverfoldGroupedItem(
     index: Int,
     count: Int,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    selected: Boolean? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    val shape = groupedItemShape(index = index, count = count)
-    if (onClick != null) {
-        Surface(
-            onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
-            shape = shape,
-            color = containerColor,
-            content = content,
+    val shapes = ListItemDefaults.segmentedShapes(index = index, count = count)
+    val colors =
+        ListItemDefaults.segmentedColors(
+            containerColor = containerColor,
+            selectedContainerColor = containerColor,
         )
-    } else {
-        Surface(
-            modifier = modifier.fillMaxWidth(),
-            shape = shape,
-            color = containerColor,
-            content = content,
-        )
+    val zeroPadding = PaddingValues(0.dp)
+    when {
+        onClick != null && selected != null -> {
+            SegmentedListItem(
+                selected = selected,
+                onClick = onClick,
+                shapes = shapes,
+                modifier = modifier.fillMaxWidth(),
+                colors = colors,
+                contentPadding = zeroPadding,
+                content = content,
+            )
+        }
+
+        onClick != null -> {
+            SegmentedListItem(
+                onClick = onClick,
+                shapes = shapes,
+                modifier = modifier.fillMaxWidth(),
+                colors = colors,
+                contentPadding = zeroPadding,
+                content = content,
+            )
+        }
+
+        else -> {
+            SegmentedListItem(
+                shapes = shapes,
+                modifier = modifier.fillMaxWidth(),
+                colors = colors,
+                contentPadding = zeroPadding,
+                content = content,
+            )
+        }
     }
 }

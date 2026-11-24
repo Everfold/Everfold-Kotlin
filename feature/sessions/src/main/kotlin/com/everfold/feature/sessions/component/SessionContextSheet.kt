@@ -310,6 +310,7 @@ private fun EmptyWorkspaceOption(
                 } else {
                     MaterialTheme.colorScheme.surfaceContainerLow
                 },
+            selected = selected,
             onClick = onClick,
         ) {
             Text(
@@ -338,6 +339,7 @@ private fun WorkspaceOptionCard(
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
+        selected = selected,
         onClick = onClick,
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
