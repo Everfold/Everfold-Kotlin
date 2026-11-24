@@ -100,7 +100,7 @@ internal object MockFixtures {
             } else {
                 cloudAttribution.nodeName
             }
-        return listOf(
+        val welcomeSession =
             AgentSessionDetail(
                 summary =
                     AgentSessionSummary(
@@ -111,10 +111,11 @@ internal object MockFixtures {
                         loopHostNodeName = loopHost,
                         lastMessagePreview = "已完成跨节点动作检查，当前拓扑健康。",
                         updatedAtLabel = "刚刚",
+                        workspaceName = "Everfold-Kotlin",
                     ),
                 items = welcomeItems(mode = mode, loopHost = loopHost),
-            ),
-        )
+            )
+        return listOf(welcomeSession) + MockSessionFixtures.additionalSessions(mode = mode, loopHost = loopHost)
     }
 
     private fun localAuthorityNode(): NodeDescriptor =

@@ -9,6 +9,8 @@ import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.ConnectionMode
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.ObservedItem
+import com.everfold.core.model.SessionSearchFilter
+import com.everfold.core.model.SessionSearchHit
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -61,6 +63,18 @@ class MockSessionGateway(
 
     override fun observeSession(sessionId: String): Flow<AgentSessionDetail?> = sessionMap.map { it[sessionId] }
 
+    override fun searchSessions(
+        query: String,
+        filter: SessionSearchFilter,
+    ): Flow<ImmutableList<SessionSearchHit>> =
+        sessionMap.map { current ->
+            filterAndSearchSessions(
+                sessions = current.values,
+                query = query,
+                filter = filter,
+            )
+        }
+
     override suspend fun createSession(
         title: String,
         modelId: String?,
@@ -77,6 +91,7 @@ class MockSessionGateway(
                         loopHostNodeName = loopHostProvider(),
                         lastMessagePreview = "等待输入指令…",
                         updatedAtLabel = "刚刚",
+                        workspaceName = DEFAULT_WORKSPACE_NAME,
                     ),
                 items = persistentListOf(),
             )
@@ -233,6 +248,7 @@ class MockSessionGateway(
         const val SNIPPET_LEN = 16
         const val MCP_MS = 310L
         const val LLM_MS = 540L
+        const val DEFAULT_WORKSPACE_NAME = "Everfold-Kotlin"
     }
 }
 

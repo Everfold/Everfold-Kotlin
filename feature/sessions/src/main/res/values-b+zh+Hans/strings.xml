@@ -17,4 +17,22 @@
     <string name="loop_state_awaiting_input">等待输入</string>
     <string name="loop_state_completed">已完成</string>
     <string name="loop_state_failed">异常</string>
+
+    <string name="session_search_back">返回</string>
+    <string name="session_search_hint">搜索会话标题或消息内容…</string>
+    <string name="session_search_clear_query">清空搜索</string>
+    <string name="session_search_filter_workspace">工作空间</string>
+    <string name="session_search_filter_node">节点</string>
+    <string name="session_search_filter_state">运行状态</string>
+    <string name="session_search_filter_all_workspaces">全部工作空间</string>
+    <string name="session_search_filter_all_nodes">全部节点</string>
+    <string name="session_search_filter_all_states">全部状态</string>
+    <string name="session_search_clear_filters">清除筛选</string>
+    <string name="session_search_recent_header">全部会话</string>
+    <plurals name="session_search_result_count">
+        <item quantity="other">找到 %1$d 条匹配会话</item>
+    </plurals>
+    <string name="session_search_empty_title">未找到匹配的会话</string>
+    <string name="session_search_empty_subtitle">尝试更换关键词，或调整工作空间、节点与运行状态筛选条件。</string>
+    <string name="session_search_reset">重置搜索与筛选</string>
 </resources>

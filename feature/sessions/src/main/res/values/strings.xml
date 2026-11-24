@@ -17,4 +17,23 @@
     <string name="loop_state_awaiting_input">Awaiting input</string>
     <string name="loop_state_completed">Completed</string>
     <string name="loop_state_failed">Failed</string>
+
+    <string name="session_search_back">Back</string>
+    <string name="session_search_hint">Search session titles or messages…</string>
+    <string name="session_search_clear_query">Clear search</string>
+    <string name="session_search_filter_workspace">Workspace</string>
+    <string name="session_search_filter_node">Node</string>
+    <string name="session_search_filter_state">Status</string>
+    <string name="session_search_filter_all_workspaces">All workspaces</string>
+    <string name="session_search_filter_all_nodes">All nodes</string>
+    <string name="session_search_filter_all_states">All statuses</string>
+    <string name="session_search_clear_filters">Clear filters</string>
+    <string name="session_search_recent_header">All sessions</string>
+    <plurals name="session_search_result_count">
+        <item quantity="one">%1$d matching session</item>
+        <item quantity="other">%1$d matching sessions</item>
+    </plurals>
+    <string name="session_search_empty_title">No matching sessions</string>
+    <string name="session_search_empty_subtitle">Try a different keyword or adjust your workspace, node, and status filters.</string>
+    <string name="session_search_reset">Clear query &amp; filters</string>
 </resources>

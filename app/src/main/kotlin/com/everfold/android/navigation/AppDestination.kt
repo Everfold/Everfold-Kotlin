@@ -10,6 +10,9 @@ internal sealed interface AppDestination : NavKey {
     data object Session : AppDestination
 
     @Serializable
+    data object SessionSearch : AppDestination
+
+    @Serializable
     data object Nodes : AppDestination
 
     @Serializable

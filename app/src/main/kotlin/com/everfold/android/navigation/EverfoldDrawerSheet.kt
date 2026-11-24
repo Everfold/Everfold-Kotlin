@@ -3,6 +3,7 @@ package com.everfold.android.navigation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,20 +11,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddComment
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,6 +47,7 @@ internal fun EverfoldDrawerSheet(
     activeSessionId: String?,
     isNodesSelected: Boolean,
     isSettingsSelected: Boolean,
+    onOpenSearch: () -> Unit,
     onNewSession: () -> Unit,
     onSelectSession: (String) -> Unit,
     onOpenNodes: () -> Unit,
@@ -48,12 +56,10 @@ internal fun EverfoldDrawerSheet(
 ) {
     ModalDrawerSheet(modifier = modifier) {
         Spacer(modifier = Modifier.height(12.dp))
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.AddComment, contentDescription = null) },
-            label = { Text(stringResource(R.string.drawer_new_session)) },
-            selected = isNewSessionSelected,
-            onClick = onNewSession,
-            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+        DrawerTopActionRow(
+            isNewSessionSelected = isNewSessionSelected,
+            onOpenSearch = onOpenSearch,
+            onNewSession = onNewSession,
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         DrawerSessionsList(
@@ -69,6 +75,67 @@ internal fun EverfoldDrawerSheet(
             onOpenNodes = onOpenNodes,
             onOpenSettings = onOpenSettings,
         )
+    }
+}
+
+@Composable
+private fun DrawerTopActionRow(
+    isNewSessionSelected: Boolean,
+    onOpenSearch: () -> Unit,
+    onNewSession: () -> Unit,
+) {
+    val newSessionColors =
+        if (isNewSessionSelected) {
+            IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        } else {
+            IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            modifier = Modifier.weight(1f).height(48.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            onClick = onOpenSearch,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.drawer_search_sessions),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        FilledTonalIconButton(
+            onClick = onNewSession,
+            modifier = Modifier.size(48.dp),
+            colors = newSessionColors,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddComment,
+                contentDescription = stringResource(R.string.drawer_new_session),
+            )
+        }
     }
 }
 

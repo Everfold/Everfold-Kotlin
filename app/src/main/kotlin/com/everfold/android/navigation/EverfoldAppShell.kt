@@ -36,15 +36,18 @@ import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
 import com.everfold.core.designsystem.theme.toMotionDurationScale
 import com.everfold.core.gateway.SessionGateway
+import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.feature.nodes.NodesScreen
 import com.everfold.feature.sessions.SessionDetailScreen
+import com.everfold.feature.sessions.search.SessionSearchScreen
 import com.everfold.feature.settings.SettingsScreen
 import com.everfold.feature.settings.screen.AboutSettingsScreen
 import com.everfold.feature.settings.screen.AppearanceSettingsScreen
 import com.everfold.feature.settings.screen.LanguageSettingsScreen
 import com.everfold.feature.settings.screen.PermissionsSettingsScreen
 import com.everfold.feature.settings.screen.SessionSettingsScreen
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -79,15 +82,12 @@ internal fun EverfoldAppShell(
         if (drawerState.targetValue == DrawerValue.Open) dismissIme()
     }
     LaunchedEffect(currentRoute, activeSessionId) {
-        dismissIme()
+        if (currentRoute !is AppDestination.SessionSearch) dismissIme()
     }
 
     fun openRoot(target: AppDestination) {
         dismissIme()
-        if (currentRoute != target) {
-            backStack.clear()
-            backStack.add(target)
-        }
+        backStack.replaceRoot(target)
         scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.close() }
     }
 
@@ -96,24 +96,20 @@ internal fun EverfoldAppShell(
         drawerState = drawerState,
         gesturesEnabled = currentRoute.isRootDestination(),
         drawerContent = {
-            EverfoldDrawerSheet(
+            EverfoldDrawerContent(
                 sessions = sessions,
-                isNewSessionSelected = currentRoute is AppDestination.Session && activeSessionId == null,
-                activeSessionId = if (currentRoute is AppDestination.Session) activeSessionId else null,
-                isNodesSelected = currentRoute is AppDestination.Nodes,
-                isSettingsSelected = currentRoute is AppDestination.Settings,
-                onNewSession = {
+                currentRoute = currentRoute,
+                activeSessionId = activeSessionId,
+                onOpenSearch = {
                     dismissIme()
-                    activeSessionId = null
+                    if (currentRoute !is AppDestination.SessionSearch) backStack.add(AppDestination.SessionSearch)
+                    scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.close() }
+                },
+                onSelectSession = { sessionId ->
+                    activeSessionId = sessionId
                     openRoot(AppDestination.Session)
                 },
-                onSelectSession = { id ->
-                    dismissIme()
-                    activeSessionId = id
-                    openRoot(AppDestination.Session)
-                },
-                onOpenNodes = { openRoot(AppDestination.Nodes) },
-                onOpenSettings = { openRoot(AppDestination.Settings) },
+                onOpenRoot = ::openRoot,
             )
         },
     ) {
@@ -122,12 +118,47 @@ internal fun EverfoldAppShell(
             activeSessionId = activeSessionId,
             onSessionCreate = { activeSessionId = it },
             onNewSession = { activeSessionId = null },
+            onSelectSessionFromSearch = { sessionId ->
+                dismissIme()
+                activeSessionId = sessionId
+                backStack.replaceRoot(AppDestination.Session)
+            },
             onDismissIme = dismissIme,
             onOpenDrawer = {
                 dismissIme()
                 scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.open() }
             },
         )
+    }
+}
+
+@Composable
+private fun EverfoldDrawerContent(
+    sessions: ImmutableList<AgentSessionSummary>,
+    currentRoute: AppDestination,
+    activeSessionId: String?,
+    onOpenSearch: () -> Unit,
+    onSelectSession: (String?) -> Unit,
+    onOpenRoot: (AppDestination) -> Unit,
+) {
+    EverfoldDrawerSheet(
+        sessions = sessions,
+        isNewSessionSelected = currentRoute is AppDestination.Session && activeSessionId == null,
+        activeSessionId = if (currentRoute is AppDestination.Session) activeSessionId else null,
+        isNodesSelected = currentRoute is AppDestination.Nodes,
+        isSettingsSelected = currentRoute is AppDestination.Settings,
+        onOpenSearch = onOpenSearch,
+        onNewSession = { onSelectSession(null) },
+        onSelectSession = { id -> onSelectSession(id) },
+        onOpenNodes = { onOpenRoot(AppDestination.Nodes) },
+        onOpenSettings = { onOpenRoot(AppDestination.Settings) },
+    )
+}
+
+private fun NavBackStack<NavKey>.replaceRoot(target: AppDestination) {
+    if (lastOrNull() != target) {
+        clear()
+        add(target)
     }
 }
 
@@ -140,6 +171,7 @@ private fun AppNavDisplay(
     activeSessionId: String?,
     onSessionCreate: (String) -> Unit,
     onNewSession: () -> Unit,
+    onSelectSessionFromSearch: (String) -> Unit,
     onDismissIme: () -> Unit,
     onOpenDrawer: () -> Unit,
 ) {
@@ -176,6 +208,12 @@ private fun AppNavDisplay(
                         onOpenDrawer = onOpenDrawer,
                         onSessionCreate = onSessionCreate,
                         onNewSession = onNewSession,
+                    )
+                }
+                entry<AppDestination.SessionSearch> {
+                    SessionSearchScreen(
+                        onBack = popBack,
+                        onSelectSession = onSelectSessionFromSearch,
                     )
                 }
                 entry<AppDestination.Nodes> { NodesScreen(onOpenDrawer = onOpenDrawer) }

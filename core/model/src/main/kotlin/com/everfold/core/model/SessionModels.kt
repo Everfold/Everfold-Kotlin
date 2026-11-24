@@ -68,9 +68,32 @@ data class AgentSessionSummary(
     val loopHostNodeName: String,
     val lastMessagePreview: String,
     val updatedAtLabel: String,
+    val workspaceName: String = "Default",
 )
 
 data class AgentSessionDetail(
     val summary: AgentSessionSummary,
     val items: ImmutableList<ObservedItem>,
+)
+
+data class SessionSearchFilter(
+    val workspaceName: String? = null,
+    val nodeName: String? = null,
+    val loopState: LoopState? = null,
+) {
+    val hasActiveFilters: Boolean
+        get() = workspaceName != null || nodeName != null || loopState != null
+}
+
+@Serializable
+enum class SessionMatchSource {
+    TITLE,
+    MESSAGE,
+}
+
+data class SessionSearchHit(
+    val summary: AgentSessionSummary,
+    val matchedSnippet: String? = null,
+    val matchedItemId: String? = null,
+    val matchSource: SessionMatchSource? = null,
 )
