@@ -150,8 +150,8 @@ private fun AppearanceInterfaceHubCard(
                 subtitle =
                     stringResource(
                         R.string.settings_summary_pair,
-                        stringResource(prefs.themeMode.labelRes()),
-                        stringResource(prefs.themeColorMode.labelRes()),
+                        stringResource(prefs.theme.themeMode.labelRes()),
+                        stringResource(prefs.theme.colorMode.labelRes()),
                     ),
                 onClick = { onOpenSection(SettingsSection.APPEARANCE) },
             )

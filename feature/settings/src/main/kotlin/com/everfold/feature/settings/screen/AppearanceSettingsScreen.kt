@@ -34,10 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.theme.parseHexColorOrNull
 import com.everfold.core.designsystem.theme.toColor
-import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
+import com.everfold.core.model.ThemePreferences
 import com.everfold.feature.settings.R
 import com.everfold.feature.settings.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -66,11 +66,8 @@ fun AppearanceSettingsScreen(
         ) {
             item {
                 AppearanceCard(
-                    prefs = prefs,
-                    onThemeModeChange = viewModel::setThemeMode,
-                    onThemeColorModeChange = viewModel::setThemeColorMode,
-                    onSeedColorChange = viewModel::setSeedColor,
-                    onCustomColorHexChange = viewModel::setCustomColorHex,
+                    theme = prefs.theme,
+                    onThemeChange = viewModel::updateTheme,
                 )
             }
             item {
@@ -86,11 +83,8 @@ fun AppearanceSettingsScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AppearanceCard(
-    prefs: AppPreferences,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    onThemeColorModeChange: (ThemeColorMode) -> Unit,
-    onSeedColorChange: (SeedColorPreset) -> Unit,
-    onCustomColorHexChange: (String) -> Unit,
+    theme: ThemePreferences,
+    onThemeChange: (ThemePreferences) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -104,8 +98,8 @@ private fun AppearanceCard(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { mode ->
                     FilterChip(
-                        selected = prefs.themeMode == mode,
-                        onClick = { onThemeModeChange(mode) },
+                        selected = theme.themeMode == mode,
+                        onClick = { onThemeChange(theme.copy(themeMode = mode)) },
                         label = { Text(stringResource(mode.labelRes())) },
                     )
                 }
@@ -117,16 +111,16 @@ private fun AppearanceCard(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeColorMode.entries.forEach { mode ->
                     FilterChip(
-                        selected = prefs.themeColorMode == mode,
-                        onClick = { onThemeColorModeChange(mode) },
+                        selected = theme.colorMode == mode,
+                        onClick = { onThemeChange(theme.copy(colorMode = mode)) },
                         label = { Text(stringResource(mode.labelRes())) },
                     )
                 }
             }
             ThemeColorDetails(
-                prefs = prefs,
-                onSeedColorChange = onSeedColorChange,
-                onCustomColorHexChange = onCustomColorHexChange,
+                theme = theme,
+                onSeedColorChange = { preset -> onThemeChange(theme.copy(seedColor = preset)) },
+                onCustomColorHexChange = { hex -> onThemeChange(theme.copy(customColorHex = hex)) },
             )
         }
     }
@@ -134,11 +128,11 @@ private fun AppearanceCard(
 
 @Composable
 private fun ThemeColorDetails(
-    prefs: AppPreferences,
+    theme: ThemePreferences,
     onSeedColorChange: (SeedColorPreset) -> Unit,
     onCustomColorHexChange: (String) -> Unit,
 ) {
-    when (prefs.themeColorMode) {
+    when (theme.colorMode) {
         ThemeColorMode.SYSTEM_DYNAMIC -> {
             Text(
                 text = stringResource(R.string.appearance_dynamic_color_hint),
@@ -149,15 +143,15 @@ private fun ThemeColorDetails(
 
         ThemeColorMode.PRESET -> {
             PresetColorSwatches(
-                selected = prefs.seedColor,
+                selected = theme.seedColor,
                 onSelect = onSeedColorChange,
             )
         }
 
         ThemeColorMode.CUSTOM -> {
             CustomColorPicker(
-                hex = prefs.customColorHex,
-                fallbackColor = prefs.seedColor.toColor(),
+                hex = theme.customColorHex,
+                fallbackColor = theme.seedColor.toColor(),
                 onHexChange = onCustomColorHexChange,
             )
         }
@@ -298,9 +292,12 @@ internal fun ThemeColorMode.labelRes(): Int =
 @StringRes
 private fun SeedColorPreset.labelRes(): Int =
     when (this) {
-        SeedColorPreset.INDIGO -> R.string.seed_indigo
+        SeedColorPreset.BASELINE -> R.string.seed_baseline
+        SeedColorPreset.BLUE -> R.string.seed_blue
         SeedColorPreset.TEAL -> R.string.seed_teal
-        SeedColorPreset.TERRACOTTA -> R.string.seed_terracotta
-        SeedColorPreset.FOREST -> R.string.seed_forest
-        SeedColorPreset.PLUM -> R.string.seed_plum
+        SeedColorPreset.GREEN -> R.string.seed_green
+        SeedColorPreset.AMBER -> R.string.seed_amber
+        SeedColorPreset.ORANGE -> R.string.seed_orange
+        SeedColorPreset.ROSE -> R.string.seed_rose
+        SeedColorPreset.VIOLET -> R.string.seed_violet
     }

@@ -18,9 +18,12 @@
     <string name="animation_speed_slow">慢</string>
     <string name="animation_speed_off">关闭</string>
 
-    <string name="seed_indigo">靛蓝</string>
-    <string name="seed_teal">青黛</string>
-    <string name="seed_terracotta">陶土</string>
-    <string name="seed_forest">森绿</string>
-    <string name="seed_plum">梅紫</string>
+    <string name="seed_baseline">官方基准紫</string>
+    <string name="seed_blue">晴蓝</string>
+    <string name="seed_teal">青碧</string>
+    <string name="seed_green">森绿</string>
+    <string name="seed_amber">琥珀</string>
+    <string name="seed_orange">陶橙</string>
+    <string name="seed_rose">绯樱</string>
+    <string name="seed_violet">梅紫</string>
 </resources>

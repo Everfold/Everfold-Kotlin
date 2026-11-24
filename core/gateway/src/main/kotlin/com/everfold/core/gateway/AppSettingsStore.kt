@@ -5,21 +5,13 @@ import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.NotificationPreferences
-import com.everfold.core.model.SeedColorPreset
-import com.everfold.core.model.ThemeColorMode
-import com.everfold.core.model.ThemeMode
+import com.everfold.core.model.ThemePreferences
 import kotlinx.coroutines.flow.StateFlow
 
 interface AppSettingsStore {
     val preferences: StateFlow<AppPreferences>
 
-    fun updateThemeMode(mode: ThemeMode)
-
-    fun updateThemeColorMode(mode: ThemeColorMode)
-
-    fun updateSeedColor(preset: SeedColorPreset)
-
-    fun updateCustomColorHex(hex: String)
+    fun updateTheme(theme: ThemePreferences)
 
     fun updateLanguage(language: AppLanguage)
 

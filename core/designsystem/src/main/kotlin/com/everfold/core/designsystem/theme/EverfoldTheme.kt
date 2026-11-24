@@ -13,25 +13,54 @@ import androidx.compose.ui.platform.LocalContext
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
+import com.everfold.core.model.ThemeColorSpec
 import com.everfold.core.model.ThemeMode
+import com.everfold.core.model.ThemePaletteStyle
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
 
-private const val COLOR_INDIGO = 0xFF3F51B5
+private const val COLOR_BASELINE = 0xFF6750A4
+private const val COLOR_BLUE = 0xFF1A73E8
 private const val COLOR_TEAL = 0xFF00796B
-private const val COLOR_TERRACOTTA = 0xFFBF5B3B
-private const val COLOR_FOREST = 0xFF2E7D32
-private const val COLOR_PLUM = 0xFF7B3FA0
+private const val COLOR_GREEN = 0xFF2E7D32
+private const val COLOR_AMBER = 0xFFD97706
+private const val COLOR_ORANGE = 0xFFBF5B3B
+private const val COLOR_ROSE = 0xFFC2185B
+private const val COLOR_VIOLET = 0xFF7B3FA0
 private const val HEX_RGB_LENGTH = 6
 private const val HEX_RADIX = 16
 private const val OPAQUE_ALPHA_MASK = 0xFF000000
 
 fun SeedColorPreset.toColor(): Color =
     when (this) {
-        SeedColorPreset.INDIGO -> Color(COLOR_INDIGO)
+        SeedColorPreset.BASELINE -> Color(COLOR_BASELINE)
+        SeedColorPreset.BLUE -> Color(COLOR_BLUE)
         SeedColorPreset.TEAL -> Color(COLOR_TEAL)
-        SeedColorPreset.TERRACOTTA -> Color(COLOR_TERRACOTTA)
-        SeedColorPreset.FOREST -> Color(COLOR_FOREST)
-        SeedColorPreset.PLUM -> Color(COLOR_PLUM)
+        SeedColorPreset.GREEN -> Color(COLOR_GREEN)
+        SeedColorPreset.AMBER -> Color(COLOR_AMBER)
+        SeedColorPreset.ORANGE -> Color(COLOR_ORANGE)
+        SeedColorPreset.ROSE -> Color(COLOR_ROSE)
+        SeedColorPreset.VIOLET -> Color(COLOR_VIOLET)
+    }
+
+fun ThemePaletteStyle.toMaterialKolorStyle(): PaletteStyle =
+    when (this) {
+        ThemePaletteStyle.TONAL_SPOT -> PaletteStyle.TonalSpot
+        ThemePaletteStyle.NEUTRAL -> PaletteStyle.Neutral
+        ThemePaletteStyle.VIBRANT -> PaletteStyle.Vibrant
+        ThemePaletteStyle.EXPRESSIVE -> PaletteStyle.Expressive
+        ThemePaletteStyle.RAINBOW -> PaletteStyle.Rainbow
+        ThemePaletteStyle.FRUIT_SALAD -> PaletteStyle.FruitSalad
+        ThemePaletteStyle.MONOCHROME -> PaletteStyle.Monochrome
+        ThemePaletteStyle.FIDELITY -> PaletteStyle.Fidelity
+        ThemePaletteStyle.CONTENT -> PaletteStyle.Content
+    }
+
+fun ThemeColorSpec.toColorSpecVersion(): ColorSpec.SpecVersion =
+    when (this) {
+        ThemeColorSpec.SPEC_2021 -> ColorSpec.SpecVersion.SPEC_2021
+        ThemeColorSpec.SPEC_2025 -> ColorSpec.SpecVersion.SPEC_2025
     }
 
 fun parseHexColorOrNull(hex: String): Color? =
@@ -47,34 +76,31 @@ fun EverfoldTheme(
     preferences: AppPreferences = AppPreferences(),
     content: @Composable () -> Unit,
 ) {
+    val theme = preferences.theme
     val isDark =
-        when (preferences.themeMode) {
+        when (theme.themeMode) {
             ThemeMode.SYSTEM -> isSystemInDarkTheme()
             ThemeMode.LIGHT -> false
             ThemeMode.DARK -> true
         }
 
     val colorScheme =
-        when {
-            preferences.themeColorMode == ThemeColorMode.SYSTEM_DYNAMIC &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                val context = LocalContext.current
-                if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            }
-
-            preferences.themeColorMode == ThemeColorMode.CUSTOM -> {
-                val seed =
-                    parseHexColorOrNull(preferences.customColorHex)
-                        ?: preferences.seedColor.toColor()
-                rememberDynamicColorScheme(seedColor = seed, isDark = isDark)
-            }
-
-            else -> {
-                rememberDynamicColorScheme(
-                    seedColor = preferences.seedColor.toColor(),
-                    isDark = isDark,
-                )
-            }
+        if (theme.colorMode == ThemeColorMode.SYSTEM_DYNAMIC && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val context = LocalContext.current
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        } else {
+            val seed =
+                if (theme.colorMode == ThemeColorMode.CUSTOM) {
+                    parseHexColorOrNull(theme.customColorHex) ?: theme.seedColor.toColor()
+                } else {
+                    theme.seedColor.toColor()
+                }
+            rememberDynamicColorScheme(
+                seedColor = seed,
+                isDark = isDark,
+                style = theme.paletteStyle.toMaterialKolorStyle(),
+                specVersion = theme.colorSpec.toColorSpecVersion(),
+            )
         }
 
     ProvideAppLocale(language = preferences.language) {

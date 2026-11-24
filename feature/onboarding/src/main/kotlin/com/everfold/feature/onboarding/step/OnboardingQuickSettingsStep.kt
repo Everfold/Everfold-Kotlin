@@ -31,6 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.everfold.core.designsystem.theme.toColor
@@ -40,6 +42,8 @@ import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
 import com.everfold.feature.onboarding.R
+
+private const val LUMINANCE_THRESHOLD = 0.5f
 
 @Composable
 internal fun OnboardingQuickSettingsStep(
@@ -67,7 +71,7 @@ internal fun OnboardingQuickSettingsStep(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         LanguageSelectionCard(selected = preferences.language, onSelect = onLanguageChange)
-        ThemeModeCard(selected = preferences.themeMode, onSelect = onThemeModeChange)
+        ThemeModeCard(selected = preferences.theme.themeMode, onSelect = onThemeModeChange)
         ColorSelectionCard(preferences = preferences, onColorChange = onColorChange)
         Text(
             text = stringResource(R.string.onboarding_setup_later_hint),
@@ -127,6 +131,7 @@ private fun ThemeModeCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColorSelectionCard(
     preferences: AppPreferences,
@@ -139,27 +144,30 @@ private fun ColorSelectionCard(
         ) {
             Text(text = stringResource(R.string.onboarding_setup_color), style = MaterialTheme.typography.titleSmall)
             FilterChip(
-                selected = preferences.themeColorMode == ThemeColorMode.SYSTEM_DYNAMIC,
+                selected = preferences.theme.colorMode == ThemeColorMode.SYSTEM_DYNAMIC,
                 onClick = { onColorChange(ThemeColorMode.SYSTEM_DYNAMIC, null) },
                 label = { Text(stringResource(R.string.onboarding_setup_color_dynamic)) },
             )
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SeedColorPreset.entries.forEach { preset ->
                     val isSelected =
-                        preferences.themeColorMode == ThemeColorMode.PRESET &&
-                            preferences.seedColor == preset
+                        preferences.theme.colorMode == ThemeColorMode.PRESET &&
+                            preferences.theme.seedColor == preset
+                    val swatchColor = preset.toColor()
                     val borderColor =
                         if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                    val checkTint =
+                        if (swatchColor.luminance() > LUMINANCE_THRESHOLD) Color.Black else Color.White
                     Box(
                         modifier =
                             Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(preset.toColor())
+                                .background(swatchColor)
                                 .border(width = if (isSelected) 3.dp else 1.dp, color = borderColor, shape = CircleShape)
                                 .clickable { onColorChange(ThemeColorMode.PRESET, preset) },
                         contentAlignment = Alignment.Center,
@@ -168,7 +176,7 @@ private fun ColorSelectionCard(
                             Icon(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                                tint = checkTint,
                                 modifier = Modifier.size(18.dp),
                             )
                         }

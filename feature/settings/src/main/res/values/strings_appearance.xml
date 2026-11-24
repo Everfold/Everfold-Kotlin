@@ -18,9 +18,12 @@
     <string name="animation_speed_slow">Slow</string>
     <string name="animation_speed_off">Off</string>
 
-    <string name="seed_indigo">Indigo</string>
+    <string name="seed_baseline">Baseline</string>
+    <string name="seed_blue">Blue</string>
     <string name="seed_teal">Teal</string>
-    <string name="seed_terracotta">Terracotta</string>
-    <string name="seed_forest">Forest</string>
-    <string name="seed_plum">Plum</string>
+    <string name="seed_green">Green</string>
+    <string name="seed_amber">Amber</string>
+    <string name="seed_orange">Orange</string>
+    <string name="seed_rose">Rose</string>
+    <string name="seed_violet">Violet</string>
 </resources>

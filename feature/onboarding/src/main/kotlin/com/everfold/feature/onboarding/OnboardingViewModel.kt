@@ -135,14 +135,22 @@ class OnboardingViewModel(
 
     fun updateLanguage(language: AppLanguage) = settingsStore.updateLanguage(language)
 
-    fun updateThemeMode(mode: ThemeMode) = settingsStore.updateThemeMode(mode)
+    fun updateThemeMode(mode: ThemeMode) {
+        val current = settingsStore.preferences.value.theme
+        settingsStore.updateTheme(current.copy(themeMode = mode))
+    }
 
     fun selectColor(
         mode: ThemeColorMode,
         preset: SeedColorPreset? = null,
     ) {
-        settingsStore.updateThemeColorMode(mode)
-        if (preset != null) settingsStore.updateSeedColor(preset)
+        val current = settingsStore.preferences.value.theme
+        settingsStore.updateTheme(
+            current.copy(
+                colorMode = mode,
+                seedColor = preset ?: current.seedColor,
+            ),
+        )
     }
 
     fun selectMode(mode: ConnectionMode) {

@@ -6,9 +6,7 @@ import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
 import com.everfold.core.model.NotificationPreferences
-import com.everfold.core.model.SeedColorPreset
-import com.everfold.core.model.ThemeColorMode
-import com.everfold.core.model.ThemeMode
+import com.everfold.core.model.ThemePreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,20 +16,8 @@ class InMemoryAppSettingsStore : AppSettingsStore {
     private val _preferences = MutableStateFlow(AppPreferences())
     override val preferences: StateFlow<AppPreferences> = _preferences.asStateFlow()
 
-    override fun updateThemeMode(mode: ThemeMode) {
-        _preferences.update { it.copy(themeMode = mode) }
-    }
-
-    override fun updateThemeColorMode(mode: ThemeColorMode) {
-        _preferences.update { it.copy(themeColorMode = mode) }
-    }
-
-    override fun updateSeedColor(preset: SeedColorPreset) {
-        _preferences.update { it.copy(seedColor = preset) }
-    }
-
-    override fun updateCustomColorHex(hex: String) {
-        _preferences.update { it.copy(customColorHex = hex) }
+    override fun updateTheme(theme: ThemePreferences) {
+        _preferences.update { it.copy(theme = theme) }
     }
 
     override fun updateLanguage(language: AppLanguage) {

@@ -13,11 +13,33 @@ enum class ThemeColorMode {
 }
 
 enum class SeedColorPreset {
-    INDIGO,
+    BASELINE,
+    BLUE,
     TEAL,
-    TERRACOTTA,
-    FOREST,
-    PLUM,
+    GREEN,
+    AMBER,
+    ORANGE,
+    ROSE,
+    VIOLET,
+}
+
+enum class ThemePaletteStyle(
+    val supportsSpec2025: Boolean,
+) {
+    TONAL_SPOT(supportsSpec2025 = true),
+    NEUTRAL(supportsSpec2025 = true),
+    VIBRANT(supportsSpec2025 = true),
+    EXPRESSIVE(supportsSpec2025 = true),
+    RAINBOW(supportsSpec2025 = false),
+    FRUIT_SALAD(supportsSpec2025 = false),
+    MONOCHROME(supportsSpec2025 = false),
+    FIDELITY(supportsSpec2025 = false),
+    CONTENT(supportsSpec2025 = false),
+}
+
+enum class ThemeColorSpec {
+    SPEC_2021,
+    SPEC_2025,
 }
 
 enum class AppLanguage(
@@ -55,6 +77,16 @@ private const val DEFAULT_ANIMATION_SCALE = 1.0f
 private const val FAST_ANIMATION_SCALE = 0.55f
 private const val SLOW_ANIMATION_SCALE = 1.75f
 private const val OFF_ANIMATION_SCALE = 0f
+private const val DEFAULT_SEED_HEX = "#6750A4"
+
+data class ThemePreferences(
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val colorMode: ThemeColorMode = ThemeColorMode.SYSTEM_DYNAMIC,
+    val seedColor: SeedColorPreset = SeedColorPreset.BASELINE,
+    val customColorHex: String = DEFAULT_SEED_HEX,
+    val paletteStyle: ThemePaletteStyle = ThemePaletteStyle.TONAL_SPOT,
+    val colorSpec: ThemeColorSpec = ThemeColorSpec.SPEC_2021,
+)
 
 data class NotificationPreferences(
     val liveActivityEnabled: Boolean = true,
@@ -64,10 +96,7 @@ data class NotificationPreferences(
 
 data class AppPreferences(
     val onboardingCompleted: Boolean = false,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val themeColorMode: ThemeColorMode = ThemeColorMode.SYSTEM_DYNAMIC,
-    val seedColor: SeedColorPreset = SeedColorPreset.INDIGO,
-    val customColorHex: String = "#3F51B5",
+    val theme: ThemePreferences = ThemePreferences(),
     val language: AppLanguage = AppLanguage.SYSTEM,
     val animationSpeed: AnimationSpeed = AnimationSpeed.DEFAULT,
     val chatTextSize: ChatTextSize = ChatTextSize.MEDIUM,

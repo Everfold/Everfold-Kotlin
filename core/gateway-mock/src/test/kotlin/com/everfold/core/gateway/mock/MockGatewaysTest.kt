@@ -11,8 +11,14 @@ import com.everfold.core.model.NatsAuthType
 import com.everfold.core.model.NatsProtocol
 import com.everfold.core.model.ObservedItem
 import com.everfold.core.model.RemoteTransportConfig
+import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.SessionMatchSource
 import com.everfold.core.model.SessionSearchFilter
+import com.everfold.core.model.ThemeColorMode
+import com.everfold.core.model.ThemeColorSpec
+import com.everfold.core.model.ThemeMode
+import com.everfold.core.model.ThemePaletteStyle
+import com.everfold.core.model.ThemePreferences
 import com.everfold.core.model.ZenohAccessMode
 import com.everfold.core.model.ZenohAuthType
 import com.everfold.core.model.ZenohProtocol
@@ -227,6 +233,20 @@ class MockGatewaysTest {
             val authority = MockAuthorityGateway(stepDelayMs = 0L)
             val settingsStore = InMemoryAppSettingsStore()
             assertFalse(settingsStore.preferences.value.onboardingCompleted)
+            assertEquals(SeedColorPreset.BASELINE, settingsStore.preferences.value.theme.seedColor)
+            assertEquals(ThemePaletteStyle.TONAL_SPOT, settingsStore.preferences.value.theme.paletteStyle)
+            assertEquals(ThemeColorSpec.SPEC_2021, settingsStore.preferences.value.theme.colorSpec)
+            assertEquals("#6750A4", settingsStore.preferences.value.theme.customColorHex)
+            val updatedTheme =
+                ThemePreferences(
+                    themeMode = ThemeMode.DARK,
+                    colorMode = ThemeColorMode.PRESET,
+                    seedColor = SeedColorPreset.BLUE,
+                    paletteStyle = ThemePaletteStyle.EXPRESSIVE,
+                    colorSpec = ThemeColorSpec.SPEC_2025,
+                )
+            settingsStore.updateTheme(updatedTheme)
+            assertEquals(updatedTheme, settingsStore.preferences.value.theme)
             settingsStore.markOnboardingCompleted()
             assertTrue(settingsStore.preferences.value.onboardingCompleted)
 

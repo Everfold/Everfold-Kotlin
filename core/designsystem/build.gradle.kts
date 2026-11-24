@@ -13,4 +13,5 @@ dependencies {
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.ui.graphics)
     implementation(libs.material.kolor)
+    testImplementation(libs.junit)
 }
