@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.everfold.core.designsystem.component.EverfoldSectionHeader
 import com.everfold.core.model.AppPreferences
+import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.ui.system.SystemPermissionStatus
 import com.everfold.core.ui.system.readSystemPermissionStatus
 import com.everfold.feature.settings.screen.labelRes
@@ -142,6 +143,13 @@ private fun AppearanceInterfaceHubCard(
     prefs: AppPreferences,
     onOpenSection: (SettingsSection) -> Unit,
 ) {
+    val colorSummaryRes =
+        if (prefs.theme.colorMode == ThemeColorMode.SYSTEM_DYNAMIC) {
+            prefs.theme.colorMode.labelRes()
+        } else {
+            prefs.theme.paletteStyle.labelRes()
+        }
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             SettingsEntryRow(
@@ -151,7 +159,7 @@ private fun AppearanceInterfaceHubCard(
                     stringResource(
                         R.string.settings_summary_pair,
                         stringResource(prefs.theme.themeMode.labelRes()),
-                        stringResource(prefs.theme.colorMode.labelRes()),
+                        stringResource(colorSummaryRes),
                     ),
                 onClick = { onOpenSection(SettingsSection.APPEARANCE) },
             )

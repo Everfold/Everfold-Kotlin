@@ -1,22 +1,26 @@
 <resources>
+    <string name="appearance_preview_title">即時預覽</string>
+    <string name="appearance_preview_sample_title">Agent 工作區</string>
+    <string name="appearance_preview_sample_body">即時展示表面層級與強調色在目前風格下的搭配效果。</string>
+    <string name="appearance_preview_primary">主色</string>
+    <string name="appearance_preview_secondary">輔色</string>
+    <string name="appearance_preview_tertiary">點綴色</string>
+    <string name="appearance_preview_container">容器</string>
+
     <string name="appearance_theme_mode_label">淺色 / 深色模式</string>
     <string name="theme_mode_system">跟隨系統</string>
     <string name="theme_mode_light">淺色</string>
     <string name="theme_mode_dark">深色</string>
 
-    <string name="appearance_theme_color_label">主題色來源</string>
-    <string name="theme_color_system_dynamic">跟隨系統</string>
-    <string name="theme_color_preset">推薦主題色</string>
-    <string name="theme_color_custom">自訂主題色</string>
-    <string name="appearance_dynamic_color_hint">Android 12+ 自動跟隨系統桌布動態取色，舊版本將退回推薦主題色。</string>
-    <string name="appearance_custom_hex_label">自訂 Hex (#RRGGBB)</string>
+    <string name="appearance_monet_dynamic_title">桌布動態取色</string>
+    <string name="appearance_monet_dynamic_subtitle">啟用後跟隨 Android 12+ 系統桌布配色，強調色、調色風格與配色規格由系統決定。</string>
+    <string name="appearance_monet_dynamic_unsupported">需要 Android 12 及以上系統，目前將使用下方自訂配色。</string>
 
-    <string name="appearance_animation_speed_label">動畫速度</string>
-    <string name="appearance_animation_speed_hint">調整頁面切換與軌跡展開收合的動畫快慢，亦可完全關閉。</string>
-    <string name="animation_speed_default">預設</string>
-    <string name="animation_speed_fast">快</string>
-    <string name="animation_speed_slow">慢</string>
-    <string name="animation_speed_off">關閉</string>
+    <string name="appearance_accent_source_label">強調色</string>
+    <string name="theme_color_system_dynamic">桌布動態取色</string>
+    <string name="theme_color_preset">預設強調色</string>
+    <string name="theme_color_custom">自訂</string>
+    <string name="appearance_custom_hex_label">自訂 Hex (#RRGGBB)</string>
 
     <string name="seed_baseline">官方基準紫</string>
     <string name="seed_blue">晴藍</string>
@@ -26,4 +30,38 @@
     <string name="seed_orange">陶橙</string>
     <string name="seed_rose">緋櫻</string>
     <string name="seed_violet">梅紫</string>
+
+    <string name="appearance_palette_style_label">調色風格</string>
+    <string name="palette_style_tonal_spot">標準色調 (Tonal Spot)</string>
+    <string name="palette_style_tonal_spot_desc">Material You 預設均衡色調，柔和克制、耐看百搭。</string>
+    <string name="palette_style_neutral">中性柔和 (Neutral)</string>
+    <string name="palette_style_neutral_desc">大幅降低飽和度，介面趨近中性灰度。</string>
+    <string name="palette_style_vibrant">鮮明活力 (Vibrant)</string>
+    <string name="palette_style_vibrant_desc">提升主色與輔色彩度，視覺表現更鮮亮。</string>
+    <string name="palette_style_expressive">表現力 (Expressive)</string>
+    <string name="palette_style_expressive_desc">引入與種子色相跳躍搭配的輔色與點綴色，更有活力。</string>
+    <string name="palette_style_rainbow">彩虹 (Rainbow)</string>
+    <string name="palette_style_rainbow_desc">保留彩色強調色，同時背景表面採用純中性灰度。</string>
+    <string name="palette_style_fruit_salad">水果拼盤 (Fruit Salad)</string>
+    <string name="palette_style_fruit_salad_desc">透過旋轉色相產生明快跳脫的多彩組合。</string>
+    <string name="palette_style_monochrome">單色極簡 (Monochrome)</string>
+    <string name="palette_style_monochrome_desc">完全去除色彩傾向的純粹黑白灰單色階。</string>
+    <string name="palette_style_fidelity">高保真 (Fidelity)</string>
+    <string name="palette_style_fidelity_desc">盡可能保留所選種子色的原始觀感並配互補點綴。</string>
+    <string name="palette_style_content">內容匹配 (Content)</string>
+    <string name="palette_style_content_desc">忠實還原種子色，並搭配鄰近色系保持視覺統一。</string>
+
+    <string name="appearance_color_spec_label">配色規格</string>
+    <string name="color_spec_2021">2021 標準</string>
+    <string name="color_spec_2025">2025 表現力</string>
+    <string name="appearance_color_spec_2021_hint">經典 Material 3 色調配色規範。</string>
+    <string name="appearance_color_spec_2025_hint">Material 3 Expressive 規範，色階層次更鮮明。</string>
+    <string name="appearance_color_spec_2025_fallback_hint">2025 規範僅作用於標準色調、中性柔和、鮮明活力與表現力，目前風格將自動退回 2021。</string>
+
+    <string name="appearance_animation_speed_label">動畫速度</string>
+    <string name="appearance_animation_speed_hint">調整頁面切換與軌跡展開收合的動畫快慢，亦可完全關閉。</string>
+    <string name="animation_speed_default">預設</string>
+    <string name="animation_speed_fast">快</string>
+    <string name="animation_speed_slow">慢</string>
+    <string name="animation_speed_off">關閉</string>
 </resources>

@@ -1,22 +1,26 @@
 <resources>
+    <string name="appearance_preview_title">Live preview</string>
+    <string name="appearance_preview_sample_title">Agent workspace</string>
+    <string name="appearance_preview_sample_body">Previewing tonal hierarchy and accent harmony across surfaces.</string>
+    <string name="appearance_preview_primary">Primary</string>
+    <string name="appearance_preview_secondary">Secondary</string>
+    <string name="appearance_preview_tertiary">Tertiary</string>
+    <string name="appearance_preview_container">Container</string>
+
     <string name="appearance_theme_mode_label">Theme mode</string>
     <string name="theme_mode_system">Follow system</string>
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
 
-    <string name="appearance_theme_color_label">Color source</string>
-    <string name="theme_color_system_dynamic">Follow system</string>
-    <string name="theme_color_preset">Recommended</string>
-    <string name="theme_color_custom">Custom</string>
-    <string name="appearance_dynamic_color_hint">Uses system wallpaper colors on Android 12+, falling back to recommended palette on older versions.</string>
-    <string name="appearance_custom_hex_label">Custom Hex (#RRGGBB)</string>
+    <string name="appearance_monet_dynamic_title">Dynamic wallpaper color</string>
+    <string name="appearance_monet_dynamic_subtitle">Use Android 12+ system wallpaper colors. Accent color, palette style, and color spec are managed by the system when enabled.</string>
+    <string name="appearance_monet_dynamic_unsupported">Requires Android 12 or higher. Using custom theme palette below.</string>
 
-    <string name="appearance_animation_speed_label">Animation speed</string>
-    <string name="appearance_animation_speed_hint">Controls screen transition and trace expand/collapse speed.</string>
-    <string name="animation_speed_default">Default</string>
-    <string name="animation_speed_fast">Fast</string>
-    <string name="animation_speed_slow">Slow</string>
-    <string name="animation_speed_off">Off</string>
+    <string name="appearance_accent_source_label">Accent color</string>
+    <string name="theme_color_system_dynamic">Dynamic wallpaper</string>
+    <string name="theme_color_preset">Presets</string>
+    <string name="theme_color_custom">Custom</string>
+    <string name="appearance_custom_hex_label">Custom Hex (#RRGGBB)</string>
 
     <string name="seed_baseline">Baseline</string>
     <string name="seed_blue">Blue</string>
@@ -26,4 +30,38 @@
     <string name="seed_orange">Orange</string>
     <string name="seed_rose">Rose</string>
     <string name="seed_violet">Violet</string>
+
+    <string name="appearance_palette_style_label">Palette style</string>
+    <string name="palette_style_tonal_spot">Tonal Spot</string>
+    <string name="palette_style_tonal_spot_desc">Balanced Material You default with calm, restrained chroma.</string>
+    <string name="palette_style_neutral">Neutral</string>
+    <string name="palette_style_neutral_desc">Low-saturation, quiet surfaces close to grayscale.</string>
+    <string name="palette_style_vibrant">Vibrant</string>
+    <string name="palette_style_vibrant_desc">High-chroma primary and vivid, energetic accents.</string>
+    <string name="palette_style_expressive">Expressive</string>
+    <string name="palette_style_expressive_desc">Playful secondary and tertiary hues detached from the seed.</string>
+    <string name="palette_style_rainbow">Rainbow</string>
+    <string name="palette_style_rainbow_desc">Chromatic accents paired with pure neutral grayscale surfaces.</string>
+    <string name="palette_style_fruit_salad">Fruit Salad</string>
+    <string name="palette_style_fruit_salad_desc">Lively rotated multi-hue pairings across accent roles.</string>
+    <string name="palette_style_monochrome">Monochrome</string>
+    <string name="palette_style_monochrome_desc">Pure black, white, and gray tonal scale with zero color tint.</string>
+    <string name="palette_style_fidelity">Fidelity</string>
+    <string name="palette_style_fidelity_desc">Preserves the seed color faithfully inside primary containers.</string>
+    <string name="palette_style_content">Content</string>
+    <string name="palette_style_content_desc">Preserves seed fidelity with analogous harmonious accents.</string>
+
+    <string name="appearance_color_spec_label">Color specification</string>
+    <string name="color_spec_2021">2021 Standard</string>
+    <string name="color_spec_2025">2025 Expressive</string>
+    <string name="appearance_color_spec_2021_hint">Classic Material 3 tonal palette specification.</string>
+    <string name="appearance_color_spec_2025_hint">Material 3 Expressive specification with richer tonal contrast.</string>
+    <string name="appearance_color_spec_2025_fallback_hint">2025 Expressive applies to Tonal Spot, Neutral, Vibrant, and Expressive. The current style falls back to 2021.</string>
+
+    <string name="appearance_animation_speed_label">Animation speed</string>
+    <string name="appearance_animation_speed_hint">Controls screen transition and trace expand/collapse speed.</string>
+    <string name="animation_speed_default">Default</string>
+    <string name="animation_speed_fast">Fast</string>
+    <string name="animation_speed_slow">Slow</string>
+    <string name="animation_speed_off">Off</string>
 </resources>
