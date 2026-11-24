@@ -1,0 +1,15 @@
+<resources>
+    <string name="session_composer_paused_hint">已暂停 · 可输入纠偏指令，或直接点击恢复…</string>
+    <string name="session_composer_attach">添加文件或图片</string>
+    <string name="session_composer_pick_file">选择本地文件</string>
+    <string name="session_composer_pick_image">选择图片</string>
+    <string name="session_composer_remove_attachment">移除附件</string>
+    <string name="session_composer_expand">展开全屏输入</string>
+    <string name="session_composer_collapse">收起全屏输入</string>
+    <string name="session_composer_fullscreen_title">全屏编辑指令</string>
+    <string name="session_composer_char_count">%1$d 字符</string>
+    <string name="session_composer_pause">暂停</string>
+    <string name="session_composer_resume">恢复执行</string>
+    <string name="session_composer_send_resume">发送并恢复</string>
+    <string name="session_composer_select_model">选择模型与推理强度</string>
+</resources>

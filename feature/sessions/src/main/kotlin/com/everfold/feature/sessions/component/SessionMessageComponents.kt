@@ -1,12 +1,21 @@
 package com.everfold.feature.sessions.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,11 +28,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.everfold.core.model.ObservedItem
+import com.everfold.core.model.SessionAttachment
 import com.everfold.core.ui.ActionTraceGroupCard
 import com.everfold.core.ui.MarkdownMessageContent
 import com.everfold.feature.sessions.R
+import kotlinx.collections.immutable.ImmutableList
 
 private const val LONG_MESSAGE_CHAR_LIMIT = 240
 private const val COLLAPSED_PREVIEW_CHARS = 160
@@ -31,6 +43,7 @@ private const val COLLAPSED_PREVIEW_CHARS = 160
 @Composable
 internal fun ObservedItemRow(
     item: ObservedItem,
+    isPaused: Boolean,
     autoCollapseLongMessages: Boolean,
     expandRunningActionTraces: Boolean,
     expandCompletedActionTraces: Boolean,
@@ -39,6 +52,7 @@ internal fun ObservedItemRow(
         is ObservedItem.UserMessage -> {
             UserMessageBubble(
                 content = item.content,
+                attachments = item.attachments,
                 autoCollapseLongMessages = autoCollapseLongMessages,
             )
         }
@@ -48,6 +62,7 @@ internal fun ObservedItemRow(
                 actions = item.actions,
                 expandWhenRunning = expandRunningActionTraces,
                 expandWhenCompleted = expandCompletedActionTraces,
+                isPaused = isPaused,
             )
         }
 
@@ -63,6 +78,7 @@ internal fun ObservedItemRow(
 @Composable
 private fun UserMessageBubble(
     content: String,
+    attachments: ImmutableList<SessionAttachment>,
     autoCollapseLongMessages: Boolean,
 ) {
     val isLong = autoCollapseLongMessages && content.length > LONG_MESSAGE_CHAR_LIMIT
@@ -75,13 +91,56 @@ private fun UserMessageBubble(
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.widthIn(max = 320.dp),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Text(
-                    text = if (expanded) content else "${content.take(COLLAPSED_PREVIEW_CHARS)}…",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                if (isLong) {
-                    MessageCollapseToggle(expanded = expanded, onToggle = { expanded = !expanded })
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (attachments.isNotEmpty()) {
+                    UserMessageAttachmentPills(attachments = attachments)
+                }
+                if (content.isNotBlank()) {
+                    Text(
+                        text = if (expanded) content else "${content.take(COLLAPSED_PREVIEW_CHARS)}…",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    if (isLong) {
+                        MessageCollapseToggle(expanded = expanded, onToggle = { expanded = !expanded })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun UserMessageAttachmentPills(attachments: ImmutableList<SessionAttachment>) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        attachments.forEach { attachment ->
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = if (attachment.isImage) Icons.Rounded.Image else Icons.Rounded.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = formatAttachmentLabel(attachment),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }

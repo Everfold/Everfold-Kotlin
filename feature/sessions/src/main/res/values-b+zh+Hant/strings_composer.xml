@@ -1,0 +1,15 @@
+<resources>
+    <string name="session_composer_paused_hint">已暫停 · 可輸入糾偏指令，或直接點擊恢復…</string>
+    <string name="session_composer_attach">新增檔案或圖片</string>
+    <string name="session_composer_pick_file">選擇本機檔案</string>
+    <string name="session_composer_pick_image">選擇圖片</string>
+    <string name="session_composer_remove_attachment">移除附件</string>
+    <string name="session_composer_expand">展開全螢幕輸入</string>
+    <string name="session_composer_collapse">收合全螢幕輸入</string>
+    <string name="session_composer_fullscreen_title">全螢幕編輯指令</string>
+    <string name="session_composer_char_count">%1$d 字元</string>
+    <string name="session_composer_pause">暫停</string>
+    <string name="session_composer_resume">恢復執行</string>
+    <string name="session_composer_send_resume">傳送並恢復</string>
+    <string name="session_composer_select_model">選擇模型與推理強度</string>
+</resources>

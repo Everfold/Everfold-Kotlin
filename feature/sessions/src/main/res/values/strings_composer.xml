@@ -1,0 +1,15 @@
+<resources>
+    <string name="session_composer_paused_hint">Paused · Add steering instruction or tap Resume…</string>
+    <string name="session_composer_attach">Attach file or image</string>
+    <string name="session_composer_pick_file">Choose file</string>
+    <string name="session_composer_pick_image">Choose photo</string>
+    <string name="session_composer_remove_attachment">Remove attachment</string>
+    <string name="session_composer_expand">Expand editor</string>
+    <string name="session_composer_collapse">Collapse editor</string>
+    <string name="session_composer_fullscreen_title">Prompt Editor</string>
+    <string name="session_composer_char_count">%1$d chars</string>
+    <string name="session_composer_pause">Pause</string>
+    <string name="session_composer_resume">Resume</string>
+    <string name="session_composer_send_resume">Send and resume</string>
+    <string name="session_composer_select_model">Select model &amp; effort</string>
+</resources>

@@ -49,6 +49,7 @@ import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.LoopState
 import com.everfold.core.model.NodeDescriptor
 import com.everfold.core.model.ReasoningEffort
+import com.everfold.core.model.SessionAttachment
 import com.everfold.core.model.WorkspaceDescriptor
 import com.everfold.feature.sessions.component.ArchivedSessionBottomBar
 import com.everfold.feature.sessions.component.ObservedItemRow
@@ -56,6 +57,7 @@ import com.everfold.feature.sessions.component.SessionComposerBar
 import com.everfold.feature.sessions.component.SessionContextDetailSheet
 import com.everfold.feature.sessions.component.SessionContextPickerSheet
 import com.everfold.feature.sessions.component.SessionDetailTopBar
+import com.everfold.feature.sessions.component.SessionFullscreenComposerDialog
 import com.everfold.feature.sessions.component.SessionModelEffortSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -63,6 +65,23 @@ private const val EMPTY_LOGO_ALPHA = 0.75f
 private const val SESSION_BODY_OUT_MS = 80
 private const val SESSION_BODY_IN_MS = 200
 private const val SESSION_BODY_INITIAL_SCALE = 0.96f
+
+private class ScreenActions(
+    val onOpenDrawer: () -> Unit,
+    val onNewSession: () -> Unit,
+    val onOpenSessionMenu: (AgentSessionSummary) -> Unit,
+    val onOpenNodes: () -> Unit,
+    val onRestore: () -> Unit,
+    val onDraftChange: (String) -> Unit,
+    val onAddAttachments: (List<SessionAttachment>) -> Unit,
+    val onRemoveAttachment: (String) -> Unit,
+    val onSend: () -> Unit,
+    val onPause: () -> Unit,
+    val onResume: () -> Unit,
+    val onCancel: () -> Unit,
+    val onSelectContext: (NodeDescriptor, WorkspaceDescriptor?) -> Unit,
+    val onSelectModelAndEffort: (String, ReasoningEffort?) -> Unit,
+)
 
 @Composable
 fun SessionDetailScreen(
@@ -77,45 +96,40 @@ fun SessionDetailScreen(
 ) {
     LaunchedEffect(sessionId) { viewModel.bindSession(sessionId) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SessionDetailScreenContent(
-        state = state,
-        onOpenDrawer = onOpenDrawer,
-        onNewSession = onNewSession,
-        onOpenSessionMenu = onOpenSessionMenu,
-        onOpenNodes = onOpenNodes,
-        onRestore = viewModel::restoreActiveSession,
-        onDraftChange = viewModel::updateDraft,
-        onSend = { viewModel.sendDraft(onSessionCreate) },
-        onCancel = viewModel::cancelActiveLoop,
-        onSelectContext = viewModel::selectRuntimeContext,
-        onSelectModelAndEffort = viewModel::selectModelAndEffort,
-        modifier = modifier,
-    )
+    val actions =
+        ScreenActions(
+            onOpenDrawer = onOpenDrawer,
+            onNewSession = onNewSession,
+            onOpenSessionMenu = onOpenSessionMenu,
+            onOpenNodes = onOpenNodes,
+            onRestore = viewModel::restoreActiveSession,
+            onDraftChange = viewModel::updateDraft,
+            onAddAttachments = viewModel::addAttachments,
+            onRemoveAttachment = viewModel::removeAttachment,
+            onSend = { viewModel.sendDraft(onSessionCreate) },
+            onPause = viewModel::pauseActiveLoop,
+            onResume = viewModel::resumeActiveLoop,
+            onCancel = viewModel::cancelActiveLoop,
+            onSelectContext = viewModel::selectRuntimeContext,
+            onSelectModelAndEffort = viewModel::selectModelAndEffort,
+        )
+    SessionDetailScreenContent(state = state, actions = actions, modifier = modifier)
 }
 
 @Composable
 private fun SessionDetailScreenContent(
     state: SessionDetailUiState,
-    onOpenDrawer: () -> Unit,
-    onNewSession: () -> Unit,
-    onOpenSessionMenu: (AgentSessionSummary) -> Unit,
-    onOpenNodes: () -> Unit,
-    onRestore: () -> Unit,
-    onDraftChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onCancel: () -> Unit,
-    onSelectContext: (NodeDescriptor, WorkspaceDescriptor?) -> Unit,
-    onSelectModelAndEffort: (String, ReasoningEffort?) -> Unit,
+    actions: ScreenActions,
     modifier: Modifier = Modifier,
 ) {
     val detail = state.detail
-    val isRunning = detail?.summary?.loopState == LoopState.PLANNING || detail?.summary?.loopState == LoopState.EXECUTING_ACTION
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val dismissIme: () -> Unit = { focusManager.clearFocus(force = true).also { keyboardController?.hide() } }
     var showContextPicker by rememberSaveable { mutableStateOf(false) }
     var showContextDetail by rememberSaveable { mutableStateOf(false) }
     var showModelSheet by rememberSaveable { mutableStateOf(false) }
+    var showFullscreenComposer by rememberSaveable { mutableStateOf(false) }
     val handleContextClick: () -> Unit = {
         dismissIme()
         if (detail != null) {
@@ -123,7 +137,7 @@ private fun SessionDetailScreenContent(
         } else if (state.hasConnectedRelay) {
             showContextPicker = true
         } else {
-            onOpenNodes()
+            actions.onOpenNodes()
         }
     }
 
@@ -133,60 +147,78 @@ private fun SessionDetailScreenContent(
             topBar = {
                 SessionDetailTopBar(
                     state = state,
-                    onOpenDrawer = { dismissIme().also { onOpenDrawer() } },
+                    onOpenDrawer = { dismissIme().also { actions.onOpenDrawer() } },
                     onContextClick = handleContextClick,
-                    onNewSession = { dismissIme().also { onNewSession() } },
-                    onOpenMenu = { summary -> dismissIme().also { onOpenSessionMenu(summary) } },
+                    onNewSession = { dismissIme().also { actions.onNewSession() } },
+                    onOpenMenu = { summary -> dismissIme().also { actions.onOpenSessionMenu(summary) } },
                 )
             },
             bottomBar = {
                 SessionDetailBottomBar(
-                    isArchived = detail?.summary?.isArchived == true,
-                    draft = state.draft,
-                    isRunning = isRunning,
-                    onRestore = onRestore,
-                    onDraftChange = onDraftChange,
-                    onSend = { dismissIme().also { onSend() } },
-                    onCancel = { dismissIme().also { onCancel() } },
+                    state = state,
+                    actions = actions,
+                    dismissIme = dismissIme,
+                    onOpenModelSheet = { showModelSheet = true },
+                    onOpenFullscreen = { showFullscreenComposer = true },
                 )
             },
         ) { innerPadding ->
             SessionDetailBody(state = state, modifier = Modifier.fillMaxSize().padding(innerPadding).clearFocusOnTouch(dismissIme))
         }
-        SessionDetailSheets(
+        SessionDetailOverlays(
             state = state,
+            actions = actions,
             showContextPicker = showContextPicker,
             showContextDetail = showContextDetail,
             showModelSheet = showModelSheet,
-            onSelectContext = onSelectContext,
-            onSelectModelAndEffort = onSelectModelAndEffort,
-            onOpenNodes = onOpenNodes,
+            showFullscreenComposer = showFullscreenComposer,
+            onOpenModelSheet = { showModelSheet = true },
             onDismissPicker = { showContextPicker = false },
             onDismissDetail = { showContextDetail = false },
             onDismissModel = { showModelSheet = false },
+            onDismissFullscreen = { showFullscreenComposer = false },
         )
     }
 }
 
 @Composable
-private fun SessionDetailSheets(
+private fun SessionDetailOverlays(
     state: SessionDetailUiState,
+    actions: ScreenActions,
     showContextPicker: Boolean,
     showContextDetail: Boolean,
     showModelSheet: Boolean,
-    onSelectContext: (NodeDescriptor, WorkspaceDescriptor?) -> Unit,
-    onSelectModelAndEffort: (String, ReasoningEffort?) -> Unit,
-    onOpenNodes: () -> Unit,
+    showFullscreenComposer: Boolean,
+    onOpenModelSheet: () -> Unit,
     onDismissPicker: () -> Unit,
     onDismissDetail: () -> Unit,
     onDismissModel: () -> Unit,
+    onDismissFullscreen: () -> Unit,
 ) {
+    if (showFullscreenComposer && state.detail?.summary?.isArchived != true) {
+        SessionFullscreenComposerDialog(
+            draft = state.draft,
+            attachments = state.draftAttachments,
+            loopState = state.detail?.summary?.loopState ?: LoopState.IDLE,
+            activeModel = state.activeModel,
+            activeEffort = state.activeEffort,
+            onDraftChange = actions.onDraftChange,
+            onAddAttachments = actions.onAddAttachments,
+            onRemoveAttachment = actions.onRemoveAttachment,
+            onOpenModelSheet = onOpenModelSheet,
+            onSend = actions.onSend,
+            onPause = actions.onPause,
+            onResume = actions.onResume,
+            onCancel = actions.onCancel,
+            onDismiss = onDismissFullscreen,
+        )
+    }
     if (showContextPicker && state.detail == null) {
         SessionContextPickerSheet(
             nodes = state.availableNodes,
             selectedContext = state.activeContext,
-            onSelect = onSelectContext,
-            onOpenNodes = onOpenNodes,
+            onSelect = actions.onSelectContext,
+            onOpenNodes = actions.onOpenNodes,
             onDismiss = onDismissPicker,
         )
     }
@@ -199,7 +231,7 @@ private fun SessionDetailSheets(
             models = state.availableModels,
             activeModel = state.activeModel,
             activeEffort = state.activeEffort,
-            onSelectModelAndEffort = onSelectModelAndEffort,
+            onSelectModelAndEffort = actions.onSelectModelAndEffort,
             onDismiss = onDismissModel,
         )
     }
@@ -207,23 +239,30 @@ private fun SessionDetailSheets(
 
 @Composable
 private fun SessionDetailBottomBar(
-    isArchived: Boolean,
-    draft: String,
-    isRunning: Boolean,
-    onRestore: () -> Unit,
-    onDraftChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onCancel: () -> Unit,
+    state: SessionDetailUiState,
+    actions: ScreenActions,
+    dismissIme: () -> Unit,
+    onOpenModelSheet: () -> Unit,
+    onOpenFullscreen: () -> Unit,
 ) {
-    if (isArchived) {
-        ArchivedSessionBottomBar(onRestore = onRestore)
+    if (state.detail?.summary?.isArchived == true) {
+        ArchivedSessionBottomBar(onRestore = actions.onRestore)
     } else {
         SessionComposerBar(
-            draft = draft,
-            isRunning = isRunning,
-            onDraftChange = onDraftChange,
-            onSend = onSend,
-            onCancel = onCancel,
+            draft = state.draft,
+            attachments = state.draftAttachments,
+            loopState = state.detail?.summary?.loopState ?: LoopState.IDLE,
+            activeModel = state.activeModel,
+            activeEffort = state.activeEffort,
+            onDraftChange = actions.onDraftChange,
+            onAddAttachments = actions.onAddAttachments,
+            onRemoveAttachment = actions.onRemoveAttachment,
+            onOpenModelSheet = { dismissIme().also { onOpenModelSheet() } },
+            onOpenFullscreen = onOpenFullscreen,
+            onSend = { dismissIme().also { actions.onSend() } },
+            onPause = { dismissIme().also { actions.onPause() } },
+            onResume = { dismissIme().also { actions.onResume() } },
+            onCancel = { dismissIme().also { actions.onCancel() } },
         )
     }
 }
@@ -278,6 +317,7 @@ private fun SessionMessageList(
             density = currentDensity.density,
             fontScale = currentDensity.fontScale * state.chatTextSize.scale,
         )
+    val isPaused = detail.summary.loopState == LoopState.PAUSED
     CompositionLocalProvider(LocalDensity provides scaledDensity) {
         LazyColumn(
             modifier = modifier,
@@ -287,6 +327,7 @@ private fun SessionMessageList(
             items(detail.items, key = { it.id }) { item ->
                 ObservedItemRow(
                     item = item,
+                    isPaused = isPaused,
                     autoCollapseLongMessages = state.autoCollapseLongMessages,
                     expandRunningActionTraces = state.expandRunningActionTraces,
                     expandCompletedActionTraces = state.expandCompletedActionTraces,
