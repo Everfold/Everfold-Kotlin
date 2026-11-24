@@ -12,8 +12,11 @@ import com.everfold.core.model.RemoteTransportConfig
 import com.everfold.core.model.defaultProfileName
 import com.everfold.core.model.displayAddress
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +34,12 @@ class MockAuthorityGateway(
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
+    private val _connectedProfileIds = MutableStateFlow<ImmutableSet<String>>(persistentSetOf())
+    override val connectedProfileIds: StateFlow<ImmutableSet<String>> = _connectedProfileIds.asStateFlow()
+
+    private val _isLocalModeConnected = MutableStateFlow(false)
+    override val isLocalModeConnected: StateFlow<Boolean> = _isLocalModeConnected.asStateFlow()
+
     private val _savedProfiles = MutableStateFlow(defaultMockProfiles())
     override val savedProfiles: StateFlow<ImmutableList<ConnectionProfile>> = _savedProfiles.asStateFlow()
 
@@ -41,6 +50,13 @@ class MockAuthorityGateway(
         _connectionState.value = ConnectionState.Connecting(endpoint)
         if (stepDelayMs > 0) delay(stepDelayMs)
 
+        if (endpoint.mode == ConnectionMode.LOCAL_ONLY) {
+            _isLocalModeConnected.value = true
+        }
+        val profileId = endpoint.profileId
+        if (profileId != null) {
+            _connectedProfileIds.update { (it + profileId).toImmutableSet() }
+        }
         val newNodes = MockFixtures.nodesFor(endpoint.mode)
         _nodes.value = newNodes
         val authorityId = newNodes.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId
@@ -116,6 +132,50 @@ class MockAuthorityGateway(
         }
     }
 
+    override suspend fun disconnectProfile(profileId: String) {
+        _connectedProfileIds.update { (it - profileId).toImmutableSet() }
+        val remainingIds = _connectedProfileIds.value
+        val nextProfile = _savedProfiles.value.firstOrNull { it.id in remainingIds }
+        when {
+            nextProfile != null -> {
+                val remoteNodes = MockFixtures.nodesFor(ConnectionMode.REMOTE)
+                _nodes.value = remoteNodes
+                _connectionState.value =
+                    ConnectionState.Connected(
+                        endpoint =
+                            AuthorityEndpoint(
+                                mode = ConnectionMode.REMOTE,
+                                address = nextProfile.transport.displayAddress(),
+                                label = nextProfile.name,
+                                profileId = nextProfile.id,
+                                transport = nextProfile.transport,
+                            ),
+                        authorityNodeId = remoteNodes.firstOrNull()?.id ?: MockFixtures.cloudAttribution.nodeId,
+                    )
+            }
+
+            _isLocalModeConnected.value -> {
+                val localNodes = MockFixtures.nodesFor(ConnectionMode.LOCAL_ONLY)
+                _nodes.value = localNodes
+                _connectionState.value =
+                    ConnectionState.Connected(
+                        endpoint =
+                            AuthorityEndpoint(
+                                mode = ConnectionMode.LOCAL_ONLY,
+                                label = MockFixtures.localAttribution.nodeName,
+                            ),
+                        authorityNodeId = localNodes.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId,
+                    )
+            }
+
+            else -> {
+                onDisconnected()
+                _connectionState.value = ConnectionState.Disconnected
+                _nodes.value = persistentListOf()
+            }
+        }
+    }
+
     override suspend fun saveProfile(profile: ConnectionProfile): ConnectionProfile {
         val resolvedName = profile.name.trim().ifEmpty { profile.transport.defaultProfileName() }
         val resolvedId = profile.id.ifBlank { "profile-${profileCounter.incrementAndGet()}" }
@@ -143,14 +203,15 @@ class MockAuthorityGateway(
 
     override suspend fun deleteProfile(profileId: String) {
         _savedProfiles.update { current -> current.filterNot { it.id == profileId }.toImmutableList() }
-        val active = _connectionState.value as? ConnectionState.Connected
-        if (active?.endpoint?.profileId == profileId) {
-            disconnect()
+        if (profileId in _connectedProfileIds.value) {
+            disconnectProfile(profileId)
         }
     }
 
     override suspend fun disconnect() {
         onDisconnected()
+        _connectedProfileIds.value = persistentSetOf()
+        _isLocalModeConnected.value = false
         _connectionState.value = ConnectionState.Disconnected
         _nodes.value = persistentListOf()
     }

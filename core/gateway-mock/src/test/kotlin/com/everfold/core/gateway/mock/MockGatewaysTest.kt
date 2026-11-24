@@ -337,6 +337,31 @@ class MockGatewaysTest {
             assertEquals(ConnectionState.Disconnected, authority.connectionState.value)
         }
 
+    @Test
+    fun multiNodeConnectionsCanConnectAndDisconnectIndependently() =
+        runTest {
+            val authority = MockAuthorityGateway(stepDelayMs = 0L)
+            val firstId = "profile-nats-cloud"
+            val secondId = "profile-zenoh-p2p"
+
+            assertTrue(authority.connectProfile(firstId))
+            assertTrue(authority.connectProfile(secondId))
+            assertEquals(setOf(firstId, secondId), authority.connectedProfileIds.value)
+
+            assertFalse(
+                authority.connectRemote(transport = RemoteTransportConfig.Nats(host = "fail.example.com")),
+            )
+            assertEquals(setOf(firstId, secondId), authority.connectedProfileIds.value)
+
+            authority.disconnectProfile(firstId)
+            assertEquals(setOf(secondId), authority.connectedProfileIds.value)
+            assertTrue(authority.connectionState.value is ConnectionState.Connected)
+
+            authority.deleteProfile(secondId)
+            assertTrue(authority.connectedProfileIds.value.isEmpty())
+            assertEquals(ConnectionState.Disconnected, authority.connectionState.value)
+        }
+
     private suspend fun TestScope.createSeededSessionsGateway(): MockSessionGateway {
         lateinit var sessions: MockSessionGateway
         val authority =
