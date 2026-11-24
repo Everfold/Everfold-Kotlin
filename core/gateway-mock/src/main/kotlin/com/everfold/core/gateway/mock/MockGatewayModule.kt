@@ -16,7 +16,7 @@ val mockGatewayModule =
             lateinit var sessions: MockSessionGateway
             val authority =
                 MockAuthorityGateway(
-                    onConnected = { mode -> sessions.seedIfEmpty(mode) },
+                    onConnected = { mode -> sessions.syncConnection(mode) },
                 )
             val models =
                 MockModelGateway(

@@ -7,6 +7,7 @@ import com.everfold.core.gateway.ModelGateway
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.ChatTextSize
+import com.everfold.core.model.LoopControlCommand
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -116,7 +117,7 @@ class SessionDetailViewModel(
     fun cancelActiveLoop() {
         val sessionId = currentSessionId.value ?: return
         viewModelScope.launch {
-            sessionGateway.cancelLoop(sessionId)
+            sessionGateway.controlLoop(sessionId, LoopControlCommand.Stop)
         }
     }
 

@@ -57,9 +57,8 @@ class MockAuthorityGateway(
         if (profileId != null) {
             _connectedProfileIds.update { (it + profileId).toImmutableSet() }
         }
-        val newNodes = MockFixtures.nodesFor(endpoint.mode)
-        _nodes.value = newNodes
-        val authorityId = newNodes.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId
+        rebuildNodes(fallbackRemoteEndpoint = endpoint.takeIf { it.mode == ConnectionMode.REMOTE && profileId == null })
+        val authorityId = _nodes.value.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId
         onConnected(endpoint.mode)
         _connectionState.value =
             ConnectionState.Connected(
@@ -138,8 +137,7 @@ class MockAuthorityGateway(
         val nextProfile = _savedProfiles.value.firstOrNull { it.id in remainingIds }
         when {
             nextProfile != null -> {
-                val remoteNodes = MockFixtures.nodesFor(ConnectionMode.REMOTE)
-                _nodes.value = remoteNodes
+                rebuildNodes()
                 _connectionState.value =
                     ConnectionState.Connected(
                         endpoint =
@@ -150,13 +148,12 @@ class MockAuthorityGateway(
                                 profileId = nextProfile.id,
                                 transport = nextProfile.transport,
                             ),
-                        authorityNodeId = remoteNodes.firstOrNull()?.id ?: MockFixtures.cloudAttribution.nodeId,
+                        authorityNodeId = _nodes.value.firstOrNull()?.id ?: MockFixtures.cloudAttribution.nodeId,
                     )
             }
 
             _isLocalModeConnected.value -> {
-                val localNodes = MockFixtures.nodesFor(ConnectionMode.LOCAL_ONLY)
-                _nodes.value = localNodes
+                rebuildNodes()
                 _connectionState.value =
                     ConnectionState.Connected(
                         endpoint =
@@ -164,7 +161,7 @@ class MockAuthorityGateway(
                                 mode = ConnectionMode.LOCAL_ONLY,
                                 label = MockFixtures.localAttribution.nodeName,
                             ),
-                        authorityNodeId = localNodes.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId,
+                        authorityNodeId = _nodes.value.firstOrNull()?.id ?: MockFixtures.localAttribution.nodeId,
                     )
             }
 
@@ -220,8 +217,26 @@ class MockAuthorityGateway(
         val current = _connectionState.value
         if (current is ConnectionState.Connected) {
             if (stepDelayMs > 0) delay(stepDelayMs)
-            _nodes.value = MockFixtures.nodesFor(current.endpoint.mode)
+            rebuildNodes(fallbackRemoteEndpoint = current.endpoint.takeIf { it.mode == ConnectionMode.REMOTE && it.profileId == null })
         }
+    }
+
+    private fun rebuildNodes(fallbackRemoteEndpoint: AuthorityEndpoint? = null) {
+        val connectedIds = _connectedProfileIds.value
+        val remoteProfileNodes =
+            _savedProfiles.value
+                .filter { it.id in connectedIds }
+                .flatMap { MockWorkspaceFixtures.nodesForProfile(it) }
+        val fallbackNodes =
+            if (fallbackRemoteEndpoint != null && remoteProfileNodes.isEmpty()) {
+                val relayLabel =
+                    fallbackRemoteEndpoint.label.ifBlank { fallbackRemoteEndpoint.address.ifBlank { "Remote Cluster" } }
+                MockFixtures.nodesFor(ConnectionMode.REMOTE).map { it.copy(relayName = relayLabel) }
+            } else {
+                emptyList()
+            }
+        val localNodes = if (_isLocalModeConnected.value) MockWorkspaceFixtures.localNodes() else emptyList()
+        _nodes.value = (remoteProfileNodes + fallbackNodes + localNodes).distinctBy { it.id }.toImmutableList()
     }
 
     internal companion object {

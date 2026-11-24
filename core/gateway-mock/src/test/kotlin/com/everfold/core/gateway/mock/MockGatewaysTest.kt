@@ -35,8 +35,8 @@ class MockGatewaysTest {
             val authority =
                 MockAuthorityGateway(
                     stepDelayMs = 0L,
-                    onConnected = { mode -> sessions.seedIfEmpty(mode) },
-                    onDisconnected = { sessions.clearAll() },
+                    onConnected = { mode -> sessions.syncConnection(mode) },
+                    onDisconnected = { sessions.syncConnection(null) },
                 )
             val models =
                 MockModelGateway(
@@ -367,8 +367,8 @@ class MockGatewaysTest {
         val authority =
             MockAuthorityGateway(
                 stepDelayMs = 0L,
-                onConnected = { mode -> sessions.seedIfEmpty(mode) },
-                onDisconnected = { sessions.clearAll() },
+                onConnected = { mode -> sessions.syncConnection(mode) },
+                onDisconnected = { sessions.syncConnection(null) },
             )
         sessions =
             MockSessionGateway(

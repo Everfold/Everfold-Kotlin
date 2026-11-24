@@ -15,6 +15,8 @@ import com.everfold.core.model.NodeDescriptor
 import com.everfold.core.model.NodeRole
 import com.everfold.core.model.NodeStatus
 import com.everfold.core.model.ObservedItem
+import com.everfold.core.model.ReasoningEffort
+import com.everfold.core.model.SessionRuntimeContext
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -68,6 +70,14 @@ internal object MockFixtures {
                         ModelCapability.VISION,
                         ModelCapability.CODE_MODE,
                     ),
+                supportedEfforts =
+                    persistentListOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.HIGH,
+                        ReasoningEffort.MAX,
+                    ),
+                defaultEffort = ReasoningEffort.HIGH,
                 isDefault = true,
             ),
             ModelDescriptor(
@@ -82,6 +92,13 @@ internal object MockFixtures {
                         ModelCapability.TOOL_USE,
                         ModelCapability.VISION,
                     ),
+                supportedEfforts =
+                    persistentListOf(
+                        ReasoningEffort.LOW,
+                        ReasoningEffort.MEDIUM,
+                        ReasoningEffort.HIGH,
+                    ),
+                defaultEffort = ReasoningEffort.MEDIUM,
             ),
             ModelDescriptor(
                 id = "model-local-qwen",
@@ -94,11 +111,35 @@ internal object MockFixtures {
         )
 
     fun initialSessions(mode: ConnectionMode): List<AgentSessionDetail> {
-        val loopHost =
-            if (mode == ConnectionMode.LOCAL_ONLY) {
-                localAttribution.nodeName
+        val isLocal = mode == ConnectionMode.LOCAL_ONLY
+        val loopHost = if (isLocal) localAttribution.nodeName else cloudAttribution.nodeName
+        val welcomeContext =
+            if (isLocal) {
+                SessionRuntimeContext(
+                    relayProfileId = "local",
+                    relayName = "本机运行模式",
+                    nodeId = localAttribution.nodeId,
+                    nodeName = localAttribution.nodeName,
+                    nodePlatform = localAttribution.platform,
+                    workspaceId = MockWorkspaceFixtures.localAndroidWorkspace.id,
+                    workspaceName = MockWorkspaceFixtures.localAndroidWorkspace.name,
+                    workspaceFileScope = MockWorkspaceFixtures.localAndroidWorkspace.fileScope,
+                    workspacePermission = MockWorkspaceFixtures.localAndroidWorkspace.permissionLevel,
+                    workspaceCapabilities = MockWorkspaceFixtures.localAndroidWorkspace.capabilities,
+                )
             } else {
-                cloudAttribution.nodeName
+                SessionRuntimeContext(
+                    relayProfileId = "profile-nats-cloud",
+                    relayName = "Cloud NATS Authority",
+                    nodeId = cloudAttribution.nodeId,
+                    nodeName = cloudAttribution.nodeName,
+                    nodePlatform = cloudAttribution.platform,
+                    workspaceId = MockWorkspaceFixtures.everfoldCloudWorkspace.id,
+                    workspaceName = MockWorkspaceFixtures.everfoldCloudWorkspace.name,
+                    workspaceFileScope = MockWorkspaceFixtures.everfoldCloudWorkspace.fileScope,
+                    workspacePermission = MockWorkspaceFixtures.everfoldCloudWorkspace.permissionLevel,
+                    workspaceCapabilities = MockWorkspaceFixtures.everfoldCloudWorkspace.capabilities,
+                )
             }
         val welcomeSession =
             AgentSessionDetail(
@@ -112,6 +153,8 @@ internal object MockFixtures {
                         lastMessagePreview = "已完成跨节点动作检查，当前拓扑健康。",
                         updatedAtLabel = "刚刚",
                         workspaceName = "Everfold-Kotlin",
+                        reasoningEffort = ReasoningEffort.HIGH,
+                        runtimeContext = welcomeContext,
                     ),
                 items = welcomeItems(mode = mode, loopHost = loopHost),
             )
@@ -128,6 +171,9 @@ internal object MockFixtures {
             capabilities = persistentSetOf(NodeCapability.LOOP_HOST, NodeCapability.TOOL_RUNTIME),
             latencyMs = LOCAL_LATENCY_MS,
             isLocalDevice = true,
+            relayProfileId = "local",
+            relayName = "本机运行模式",
+            workspaces = MockWorkspaceFixtures.localWorkspaces(),
         )
 
     private fun remoteClusterNodes(): ImmutableList<NodeDescriptor> =
@@ -145,6 +191,8 @@ internal object MockFixtures {
                         NodeCapability.CODE_MODE,
                     ),
                 latencyMs = CLOUD_LATENCY_MS,
+                relayName = "Remote Cluster",
+                workspaces = MockWorkspaceFixtures.cloudWorkspaces(),
             ),
             NodeDescriptor(
                 id = desktopAttribution.nodeId,
@@ -159,16 +207,8 @@ internal object MockFixtures {
                         NodeCapability.CODE_MODE,
                     ),
                 latencyMs = DESKTOP_LATENCY_MS,
-            ),
-            NodeDescriptor(
-                id = localAttribution.nodeId,
-                name = localAttribution.nodeName,
-                platform = localAttribution.platform,
-                roles = persistentSetOf(NodeRole.WORKER),
-                status = NodeStatus.ONLINE,
-                capabilities = persistentSetOf(NodeCapability.TOOL_RUNTIME),
-                latencyMs = LOCAL_LATENCY_MS,
-                isLocalDevice = true,
+                relayName = "Remote Cluster",
+                workspaces = MockWorkspaceFixtures.workstationWorkspaces(),
             ),
         )
 

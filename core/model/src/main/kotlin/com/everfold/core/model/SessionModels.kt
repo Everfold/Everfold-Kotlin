@@ -1,6 +1,9 @@
 package com.everfold.core.model
 
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,9 +11,46 @@ enum class LoopState {
     IDLE,
     PLANNING,
     EXECUTING_ACTION,
+    PAUSED,
     AWAITING_INPUT,
     COMPLETED,
     FAILED,
+}
+
+@Serializable
+data class SessionAttachment(
+    val id: String,
+    val displayName: String,
+    val mimeType: String,
+    val sizeBytes: Long? = null,
+    val uriString: String = "",
+) {
+    val isImage: Boolean
+        get() = mimeType.startsWith("image/", ignoreCase = true)
+}
+
+data class SessionRuntimeContext(
+    val relayProfileId: String? = null,
+    val relayName: String = "",
+    val nodeId: String = "",
+    val nodeName: String = "",
+    val nodePlatform: String = "",
+    val workspaceId: String? = null,
+    val workspaceName: String = "",
+    val workspaceFileScope: String = "",
+    val workspacePermission: WorkspacePermissionLevel? = null,
+    val workspaceCapabilities: ImmutableSet<WorkspaceCapability> = persistentSetOf(),
+)
+
+sealed interface LoopControlCommand {
+    data object Pause : LoopControlCommand
+
+    data class Resume(
+        val steeringMessage: String? = null,
+        val attachments: ImmutableList<SessionAttachment> = persistentListOf(),
+    ) : LoopControlCommand
+
+    data object Stop : LoopControlCommand
 }
 
 @Serializable
@@ -45,6 +85,7 @@ sealed interface ObservedItem {
         override val id: String,
         val content: String,
         val timestampLabel: String,
+        val attachments: ImmutableList<SessionAttachment> = persistentListOf(),
     ) : ObservedItem
 
     data class ActionGroup(
@@ -71,6 +112,8 @@ data class AgentSessionSummary(
     val workspaceName: String = "Default",
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
+    val reasoningEffort: ReasoningEffort? = null,
+    val runtimeContext: SessionRuntimeContext? = null,
 )
 
 data class AgentSessionDetail(

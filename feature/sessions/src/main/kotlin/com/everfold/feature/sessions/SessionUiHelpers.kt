@@ -22,6 +22,7 @@ internal fun LoopState.labelRes(): Int =
         LoopState.IDLE -> R.string.loop_state_idle
         LoopState.PLANNING -> R.string.loop_state_planning
         LoopState.EXECUTING_ACTION -> R.string.loop_state_executing
+        LoopState.PAUSED -> R.string.loop_state_paused
         LoopState.AWAITING_INPUT -> R.string.loop_state_awaiting_input
         LoopState.COMPLETED -> R.string.loop_state_completed
         LoopState.FAILED -> R.string.loop_state_failed

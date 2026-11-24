@@ -429,6 +429,10 @@ private fun loopStateColors(state: LoopState): Pair<Color, Color> =
             MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
         }
 
+        LoopState.PAUSED -> {
+            MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        }
+
         LoopState.IDLE, LoopState.AWAITING_INPUT, LoopState.COMPLETED -> {
             MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
         }

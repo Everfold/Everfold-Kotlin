@@ -7,7 +7,11 @@ import com.everfold.core.model.AgentSessionDetail
 import com.everfold.core.model.AgentSessionSummary
 import com.everfold.core.model.ConnectionMode
 import com.everfold.core.model.LoopState
+import com.everfold.core.model.NodeAttribution
 import com.everfold.core.model.ObservedItem
+import com.everfold.core.model.ReasoningEffort
+import com.everfold.core.model.SessionRuntimeContext
+import com.everfold.core.model.WorkspaceDescriptor
 import kotlinx.collections.immutable.persistentListOf
 
 internal object MockSessionFixtures {
@@ -27,12 +31,8 @@ internal object MockSessionFixtures {
         )
 
     private fun gatewayRefactorSession(mode: ConnectionMode): AgentSessionDetail {
-        val nodeAttribution =
-            if (mode == ConnectionMode.LOCAL_ONLY) {
-                MockFixtures.localAttribution
-            } else {
-                MockFixtures.desktopAttribution
-            }
+        val node = if (mode == ConnectionMode.LOCAL_ONLY) MockFixtures.localAttribution else MockFixtures.desktopAttribution
+        val context = buildFixtureContext(mode, node, MockWorkspaceFixtures.infraOpsWorkspace)
         return AgentSessionDetail(
             summary =
                 AgentSessionSummary(
@@ -40,52 +40,57 @@ internal object MockSessionFixtures {
                     title = "排查 Gateway 重连超时与心跳抖动",
                     modelId = "model-claude-sonnet",
                     loopState = LoopState.AWAITING_INPUT,
-                    loopHostNodeName = nodeAttribution.nodeName,
+                    loopHostNodeName = node.nodeName,
                     lastMessagePreview = "已定位 WebSocket 心跳退避策略偏差，等待确认重连阈值。",
                     updatedAtLabel = "12 分钟前",
-                    workspaceName = "Infra Ops",
+                    workspaceName = MockWorkspaceFixtures.infraOpsWorkspace.name,
+                    reasoningEffort = ReasoningEffort.HIGH,
+                    runtimeContext = context,
                 ),
-            items =
-                persistentListOf(
-                    ObservedItem.UserMessage(
-                        id = "msg-gw-u-1",
-                        content = "弱网切换时 Gateway 长连接经常卡在重连阶段，帮我检查心跳和退避逻辑。",
-                        timestampLabel = "15 分钟前",
-                    ),
-                    ObservedItem.ActionGroup(
-                        id = "act-gw-g-1",
-                        actions =
-                            persistentListOf(
-                                ActionTrace(
-                                    id = "act-gw-1",
-                                    kind = ActionKind.MCP_CALL,
-                                    title = "MCP · logs.inspect",
-                                    summary = "分析断线重连时序日志 trace-only-token-99",
-                                    status = ActionStatus.SUCCEEDED,
-                                    durationMs = SAMPLE_GATEWAY_MS,
-                                    executedOn = nodeAttribution,
-                                ),
-                            ),
-                    ),
-                    ObservedItem.AssistantMessage(
-                        id = "msg-gw-a-1",
-                        markdown =
-                            "已排查 WebSocket 心跳与退避策略：\n\n" +
-                                "- 当前指数退避未重置抖动上限，建议将最大重试间隔收紧至 15s。\n" +
-                                "- 请确认是否允许在断网恢复时立即触发一次轻量探活。",
-                        timestampLabel = "12 分钟前",
-                    ),
-                ),
+            items = gatewayRefactorItems(node),
         )
     }
 
+    private fun gatewayRefactorItems(nodeAttribution: NodeAttribution) =
+        persistentListOf(
+            ObservedItem.UserMessage(
+                id = "msg-gw-u-1",
+                content = "弱网切换时 Gateway 长连接经常卡在重连阶段，帮我检查心跳和退避逻辑。",
+                timestampLabel = "15 分钟前",
+            ),
+            ObservedItem.ActionGroup(
+                id = "act-gw-g-1",
+                actions =
+                    persistentListOf(
+                        ActionTrace(
+                            id = "act-gw-1",
+                            kind = ActionKind.MCP_CALL,
+                            title = "MCP · logs.inspect",
+                            summary = "分析断线重连时序日志 trace-only-token-99",
+                            status = ActionStatus.SUCCEEDED,
+                            durationMs = SAMPLE_GATEWAY_MS,
+                            executedOn = nodeAttribution,
+                        ),
+                    ),
+            ),
+            ObservedItem.AssistantMessage(
+                id = "msg-gw-a-1",
+                markdown =
+                    "已排查 WebSocket 心跳与退避策略：\n\n" +
+                        "- 当前指数退避未重置抖动上限，建议将最大重试间隔收紧至 15s。\n" +
+                        "- 请确认是否允许在断网恢复时立即触发一次轻量探活。",
+                timestampLabel = "12 分钟前",
+            ),
+        )
+
     private fun composePerfSession(mode: ConnectionMode): AgentSessionDetail {
-        val workerNode =
-            if (mode == ConnectionMode.LOCAL_ONLY) {
-                MockFixtures.localAttribution
-            } else {
-                MockFixtures.desktopAttribution
-            }
+        val workerNode = if (mode == ConnectionMode.LOCAL_ONLY) MockFixtures.localAttribution else MockFixtures.desktopAttribution
+        val context =
+            buildFixtureContext(
+                mode = ConnectionMode.LOCAL_ONLY,
+                node = MockFixtures.localAttribution,
+                workspace = MockWorkspaceFixtures.workstationEverfoldWorkspace,
+            )
         return AgentSessionDetail(
             summary =
                 AgentSessionSummary(
@@ -97,51 +102,56 @@ internal object MockSessionFixtures {
                     lastMessagePreview = "建议固定 LazyColumn key 并统一 MotionDurationScale 缩放。",
                     updatedAtLabel = "2 小时前",
                     workspaceName = "Everfold-Kotlin",
+                    reasoningEffort = ReasoningEffort.MEDIUM,
+                    runtimeContext = context,
                 ),
-            items =
-                persistentListOf(
-                    ObservedItem.UserMessage(
-                        id = "msg-perf-u-1",
-                        content = "抽屉切换和消息长列表快速滑动时有轻微掉帧，帮我查下重组热点。",
-                        timestampLabel = "2 小时前",
-                    ),
-                    ObservedItem.ActionGroup(
-                        id = "act-perf-g-1",
-                        actions =
-                            persistentListOf(
-                                ActionTrace(
-                                    id = "act-perf-1",
-                                    kind = ActionKind.CODE_MODE,
-                                    title = "CodeMode · compose_metrics",
-                                    summary = "检查 LazyColumn 稳定性与重组次数",
-                                    status = ActionStatus.SUCCEEDED,
-                                    durationMs = SAMPLE_PERF_MS,
-                                    executedOn = workerNode,
-                                ),
-                            ),
-                    ),
-                    ObservedItem.AssistantMessage(
-                        id = "msg-perf-a-1",
-                        markdown =
-                            "定位到两处优化点：\n\n" +
-                                "1. 为 `LazyColumn` 所有 item 显式提供稳定的 `key`，避免重组抖动。\n" +
-                                "2. 动画统一接入 `MotionDurationScale`，跟随全局动画速度配置。",
-                        timestampLabel = "2 小时前",
-                    ),
-                ),
+            items = composePerfItems(workerNode),
         )
     }
+
+    private fun composePerfItems(workerNode: NodeAttribution) =
+        persistentListOf(
+            ObservedItem.UserMessage(
+                id = "msg-perf-u-1",
+                content = "抽屉切换和消息长列表快速滑动时有轻微掉帧，帮我查下重组热点。",
+                timestampLabel = "2 小时前",
+            ),
+            ObservedItem.ActionGroup(
+                id = "act-perf-g-1",
+                actions =
+                    persistentListOf(
+                        ActionTrace(
+                            id = "act-perf-1",
+                            kind = ActionKind.CODE_MODE,
+                            title = "CodeMode · compose_metrics",
+                            summary = "检查 LazyColumn 稳定性与重组次数",
+                            status = ActionStatus.SUCCEEDED,
+                            durationMs = SAMPLE_PERF_MS,
+                            executedOn = workerNode,
+                        ),
+                    ),
+            ),
+            ObservedItem.AssistantMessage(
+                id = "msg-perf-a-1",
+                markdown =
+                    "定位到两处优化点：\n\n" +
+                        "1. 为 `LazyColumn` 所有 item 显式提供稳定的 `key`，避免重组抖动。\n" +
+                        "2. 动画统一接入 `MotionDurationScale`，跟随全局动画速度配置。",
+                timestampLabel = "2 小时前",
+            ),
+        )
 
     private fun mcpSandboxSession(
         mode: ConnectionMode,
         loopHost: String,
     ): AgentSessionDetail {
-        val actionNode =
-            if (mode == ConnectionMode.LOCAL_ONLY) {
-                MockFixtures.localAttribution
-            } else {
-                MockFixtures.cloudAttribution
-            }
+        val actionNode = if (mode == ConnectionMode.LOCAL_ONLY) MockFixtures.localAttribution else MockFixtures.cloudAttribution
+        val context =
+            buildFixtureContext(
+                mode = mode,
+                node = actionNode.copy(nodeName = loopHost),
+                workspace = MockWorkspaceFixtures.specResearchWorkspace,
+            )
         return AgentSessionDetail(
             summary =
                 AgentSessionSummary(
@@ -152,44 +162,54 @@ internal object MockSessionFixtures {
                     loopHostNodeName = loopHost,
                     lastMessagePreview = "沙箱隔离测试在只读目录校验时触发权限拒绝，已保留现场。",
                     updatedAtLabel = "昨天",
-                    workspaceName = "Spec Research",
+                    workspaceName = MockWorkspaceFixtures.specResearchWorkspace.name,
+                    reasoningEffort = ReasoningEffort.HIGH,
+                    runtimeContext = context,
                 ),
-            items =
-                persistentListOf(
-                    ObservedItem.UserMessage(
-                        id = "msg-sb-u-1",
-                        content = "请跑一遍沙箱文件权限回归，确认越界写入会被拦截并正确回滚。",
-                        timestampLabel = "昨天",
-                    ),
-                    ObservedItem.ActionGroup(
-                        id = "act-sb-g-1",
-                        actions =
-                            persistentListOf(
-                                ActionTrace(
-                                    id = "act-sb-1",
-                                    kind = ActionKind.TOOL_CALL,
-                                    title = "Tool · sandbox.verify",
-                                    summary = "执行只读工作区越界写入与回滚测试",
-                                    status = ActionStatus.FAILED,
-                                    durationMs = SAMPLE_SANDBOX_MS,
-                                    executedOn = actionNode,
-                                ),
-                            ),
-                    ),
-                    ObservedItem.AssistantMessage(
-                        id = "msg-sb-a-1",
-                        markdown =
-                            "沙箱权限回归检测发现异常：\n\n" +
-                                "- 越界写入已被内核沙箱成功拦截。\n" +
-                                "- 但临时工作区的快照回滚脚本因只读挂载未完成清理。",
-                        timestampLabel = "昨天",
-                    ),
-                ),
+            items = mcpSandboxItems(actionNode),
         )
     }
 
-    private fun legacyMigrationSession(loopHost: String): AgentSessionDetail =
-        AgentSessionDetail(
+    private fun mcpSandboxItems(actionNode: NodeAttribution) =
+        persistentListOf(
+            ObservedItem.UserMessage(
+                id = "msg-sb-u-1",
+                content = "请跑一遍沙箱文件权限回归，确认越界写入会被拦截并正确回滚。",
+                timestampLabel = "昨天",
+            ),
+            ObservedItem.ActionGroup(
+                id = "act-sb-g-1",
+                actions =
+                    persistentListOf(
+                        ActionTrace(
+                            id = "act-sb-1",
+                            kind = ActionKind.TOOL_CALL,
+                            title = "Tool · sandbox.verify",
+                            summary = "执行只读工作区越界写入与回滚测试",
+                            status = ActionStatus.FAILED,
+                            durationMs = SAMPLE_SANDBOX_MS,
+                            executedOn = actionNode,
+                        ),
+                    ),
+            ),
+            ObservedItem.AssistantMessage(
+                id = "msg-sb-a-1",
+                markdown =
+                    "沙箱权限回归检测发现异常：\n\n" +
+                        "- 越界写入已被内核沙箱成功拦截。\n" +
+                        "- 但临时工作区的快照回滚脚本因只读挂载未完成清理。",
+                timestampLabel = "昨天",
+            ),
+        )
+
+    private fun legacyMigrationSession(loopHost: String): AgentSessionDetail {
+        val context =
+            buildFixtureContext(
+                mode = ConnectionMode.REMOTE,
+                node = MockFixtures.cloudAttribution.copy(nodeName = loopHost),
+                workspace = MockWorkspaceFixtures.infraOpsWorkspace,
+            )
+        return AgentSessionDetail(
             summary =
                 AgentSessionSummary(
                     id = "session-legacy-migration",
@@ -201,6 +221,8 @@ internal object MockSessionFixtures {
                     updatedAtLabel = "3 天前",
                     workspaceName = "Infra Ops",
                     isArchived = true,
+                    reasoningEffort = ReasoningEffort.MEDIUM,
+                    runtimeContext = context,
                 ),
             items =
                 persistentListOf(
@@ -215,5 +237,24 @@ internal object MockSessionFixtures {
                         timestampLabel = "3 天前",
                     ),
                 ),
+        )
+    }
+
+    private fun buildFixtureContext(
+        mode: ConnectionMode,
+        node: NodeAttribution,
+        workspace: WorkspaceDescriptor,
+    ): SessionRuntimeContext =
+        SessionRuntimeContext(
+            relayProfileId = if (mode == ConnectionMode.LOCAL_ONLY) "local" else "profile-nats-cloud",
+            relayName = if (mode == ConnectionMode.LOCAL_ONLY) "本机运行模式" else "Cloud NATS Authority",
+            nodeId = node.nodeId,
+            nodeName = node.nodeName,
+            nodePlatform = node.platform,
+            workspaceId = workspace.id,
+            workspaceName = workspace.name,
+            workspaceFileScope = workspace.fileScope,
+            workspacePermission = workspace.permissionLevel,
+            workspaceCapabilities = workspace.capabilities,
         )
 }

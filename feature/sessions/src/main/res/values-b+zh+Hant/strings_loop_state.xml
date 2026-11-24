@@ -2,6 +2,7 @@
     <string name="loop_state_idle">待命</string>
     <string name="loop_state_planning">規劃中</string>
     <string name="loop_state_executing">執行動作</string>
+    <string name="loop_state_paused">已暫停</string>
     <string name="loop_state_awaiting_input">等待輸入</string>
     <string name="loop_state_completed">已完成</string>
     <string name="loop_state_failed">異常</string>
