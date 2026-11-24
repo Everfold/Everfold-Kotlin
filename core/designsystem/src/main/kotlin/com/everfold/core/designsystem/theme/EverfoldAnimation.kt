@@ -1,6 +1,7 @@
 package com.everfold.core.designsystem.theme
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.MotionDurationScale
 import com.everfold.core.model.AnimationSpeed
 import kotlin.math.roundToInt
 
@@ -11,4 +12,9 @@ fun AnimationSpeed.scaleDuration(baseMs: Int): Int =
         0
     } else {
         (baseMs * durationScale).roundToInt().coerceAtLeast(1)
+    }
+
+fun AnimationSpeed.toMotionDurationScale(): MotionDurationScale =
+    object : MotionDurationScale {
+        override val scaleFactor: Float = durationScale
     }

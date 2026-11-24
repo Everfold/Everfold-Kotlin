@@ -8,6 +8,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,8 +56,9 @@ import com.everfold.feature.sessions.component.SessionComposerBar
 import org.koin.androidx.compose.koinViewModel
 
 private const val EMPTY_LOGO_ALPHA = 0.75f
-private const val SESSION_BODY_ENTER_MS = 140
-private const val SESSION_BODY_EXIT_MS = 100
+private const val SESSION_BODY_OUT_MS = 80
+private const val SESSION_BODY_IN_MS = 200
+private const val SESSION_BODY_INITIAL_SCALE = 0.96f
 
 @Composable
 fun SessionDetailScreen(
@@ -176,8 +178,11 @@ private fun sessionBodyTransition(speed: AnimationSpeed): ContentTransform =
     if (speed == AnimationSpeed.OFF) {
         EnterTransition.None togetherWith ExitTransition.None
     } else {
-        fadeIn(tween(speed.scaleDuration(SESSION_BODY_ENTER_MS))) togetherWith
-            fadeOut(tween(speed.scaleDuration(SESSION_BODY_EXIT_MS)))
+        val outMs = speed.scaleDuration(SESSION_BODY_OUT_MS)
+        val inMs = speed.scaleDuration(SESSION_BODY_IN_MS)
+        val inSpec = tween<Float>(inMs, delayMillis = outMs)
+        (fadeIn(inSpec) + scaleIn(inSpec, initialScale = SESSION_BODY_INITIAL_SCALE)) togetherWith
+            fadeOut(tween(outMs))
     }
 
 @Composable

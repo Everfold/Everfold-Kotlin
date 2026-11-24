@@ -6,6 +6,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -33,6 +34,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.everfold.core.designsystem.theme.LocalAnimationSpeed
 import com.everfold.core.designsystem.theme.scaleDuration
+import com.everfold.core.designsystem.theme.toMotionDurationScale
 import com.everfold.core.gateway.SessionGateway
 import com.everfold.core.model.AnimationSpeed
 import com.everfold.feature.nodes.NodesScreen
@@ -46,8 +48,9 @@ import com.everfold.feature.settings.screen.SessionSettingsScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
-private const val PEER_ENTER_DURATION_MS = 150
-private const val PEER_EXIT_DURATION_MS = 100
+private const val FADE_THROUGH_OUT_MS = 90
+private const val FADE_THROUGH_IN_MS = 210
+private const val FADE_THROUGH_INITIAL_SCALE = 0.92f
 private const val NAV_ENTER_DURATION_MS = 200
 private const val NAV_EXIT_DURATION_MS = 140
 private const val NAV_POP_DURATION_MS = 180
@@ -64,6 +67,7 @@ internal fun EverfoldAppShell(
     val currentRoute = backStack.lastOrNull() as? AppDestination ?: AppDestination.Session
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val animationSpeed = LocalAnimationSpeed.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -80,7 +84,7 @@ internal fun EverfoldAppShell(
             backStack.clear()
             backStack.add(target)
         }
-        scope.launch { drawerState.close() }
+        scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.close() }
     }
 
     ModalNavigationDrawer(
@@ -114,7 +118,7 @@ internal fun EverfoldAppShell(
             onNewSession = { activeSessionId = null },
             onOpenDrawer = {
                 dismissIme()
-                scope.launch { drawerState.open() }
+                scope.launch(animationSpeed.toMotionDurationScale()) { drawerState.open() }
             },
         )
     }
@@ -150,7 +154,7 @@ private fun AppNavDisplay(
             if (backStack.size > 1) {
                 forwardSlideTransition(animationSpeed)
             } else {
-                peerCrossfadeTransition(animationSpeed)
+                peerFadeThroughTransition(animationSpeed)
             }
         },
         popTransitionSpec = { popSlideTransition(animationSpeed) },
@@ -181,12 +185,15 @@ private fun AppNavDisplay(
     )
 }
 
-private fun peerCrossfadeTransition(speed: AnimationSpeed): ContentTransform =
+private fun peerFadeThroughTransition(speed: AnimationSpeed): ContentTransform =
     if (speed == AnimationSpeed.OFF) {
         EnterTransition.None togetherWith ExitTransition.None
     } else {
-        fadeIn(tween(speed.scaleDuration(PEER_ENTER_DURATION_MS))) togetherWith
-            fadeOut(tween(speed.scaleDuration(PEER_EXIT_DURATION_MS)))
+        val outMs = speed.scaleDuration(FADE_THROUGH_OUT_MS)
+        val inMs = speed.scaleDuration(FADE_THROUGH_IN_MS)
+        val inSpec = tween<Float>(inMs, delayMillis = outMs)
+        (fadeIn(inSpec) + scaleIn(inSpec, initialScale = FADE_THROUGH_INITIAL_SCALE)) togetherWith
+            fadeOut(tween(outMs))
     }
 
 private fun forwardSlideTransition(speed: AnimationSpeed): ContentTransform =
