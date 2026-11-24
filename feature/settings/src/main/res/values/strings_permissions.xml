@@ -1,0 +1,9 @@
+<resources>
+    <string name="perm_pref_section_live_activity">Live Activity &amp; Alerts</string>
+    <string name="perm_pref_live_capsule_title">Background Live Activity capsule</string>
+    <string name="perm_pref_live_capsule_subtitle">Show ongoing progress in status bar capsule when switching away from the app</string>
+    <string name="perm_pref_alert_attention_title">Error &amp; intervention alerts</string>
+    <string name="perm_pref_alert_attention_subtitle">Notify prominently when an Agent Loop fails or requires human input in background</string>
+    <string name="perm_pref_alert_completed_title">Completion alerts</string>
+    <string name="perm_pref_alert_completed_subtitle">Send a notification when a background Agent Loop completes</string>
+</resources>

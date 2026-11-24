@@ -51,15 +51,20 @@ fun SystemPermissionsCard(modifier: Modifier = Modifier) {
             NotificationPermissionRow(
                 granted = status.notificationsGranted,
                 onAction = {
-                    if (!status.notificationsGranted &&
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                    ) {
+                    if (!status.notificationsGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
                         openNotificationSettings(context)
                     }
                 },
             )
+            if (status.promotedNotificationsSupported) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                PromotedNotificationsRow(
+                    granted = status.promotedNotificationsGranted,
+                    onAction = { openPromotedNotificationSettings(context) },
+                )
+            }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             BackgroundPermissionRow(
                 allowed = status.backgroundUnrestricted,
@@ -98,6 +103,26 @@ private fun NotificationPermissionRow(
         buttonText =
             stringResource(
                 if (granted) R.string.perm_action_notification_settings else R.string.perm_action_request,
+            ),
+        onAction = onAction,
+    )
+}
+
+@Composable
+private fun PromotedNotificationsRow(
+    granted: Boolean,
+    onAction: () -> Unit,
+) {
+    PermissionActionRow(
+        title = stringResource(R.string.perm_live_updates_title),
+        subtitle = stringResource(R.string.perm_live_updates_subtitle),
+        statusText =
+            stringResource(
+                if (granted) R.string.perm_status_granted else R.string.perm_status_denied,
+            ),
+        buttonText =
+            stringResource(
+                if (granted) R.string.perm_action_live_updates_settings else R.string.perm_action_enable_live_updates,
             ),
         onAction = onAction,
     )

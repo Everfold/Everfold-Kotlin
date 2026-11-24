@@ -56,6 +56,12 @@ private const val FAST_ANIMATION_SCALE = 0.55f
 private const val SLOW_ANIMATION_SCALE = 1.75f
 private const val OFF_ANIMATION_SCALE = 0f
 
+data class NotificationPreferences(
+    val liveActivityEnabled: Boolean = true,
+    val alertOnNeedsAttention: Boolean = true,
+    val alertOnCompleted: Boolean = true,
+)
+
 data class AppPreferences(
     val onboardingCompleted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -68,6 +74,7 @@ data class AppPreferences(
     val autoCollapseLongMessages: Boolean = true,
     val expandRunningActionTraces: Boolean = true,
     val expandCompletedActionTraces: Boolean = false,
+    val notifications: NotificationPreferences = NotificationPreferences(),
 )
 
 data class AppInfo(

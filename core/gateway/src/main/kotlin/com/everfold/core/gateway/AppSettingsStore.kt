@@ -4,6 +4,7 @@ import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
+import com.everfold.core.model.NotificationPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
@@ -28,9 +29,12 @@ interface AppSettingsStore {
 
     fun updateAutoCollapseLongMessages(enabled: Boolean)
 
-    fun updateExpandRunningActionTraces(enabled: Boolean)
+    fun updateActionTraceExpansion(
+        expandRunning: Boolean,
+        expandCompleted: Boolean,
+    )
 
-    fun updateExpandCompletedActionTraces(enabled: Boolean)
+    fun updateNotifications(notifications: NotificationPreferences)
 
     fun markOnboardingCompleted()
 }

@@ -9,6 +9,7 @@ import com.everfold.core.model.AppInfo
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
+import com.everfold.core.model.NotificationPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
@@ -49,9 +50,19 @@ class SettingsViewModel(
 
     fun setAutoCollapseLongMessages(enabled: Boolean) = settingsStore.updateAutoCollapseLongMessages(enabled)
 
-    fun setExpandRunningActionTraces(enabled: Boolean) = settingsStore.updateExpandRunningActionTraces(enabled)
+    fun setExpandRunningActionTraces(enabled: Boolean) =
+        settingsStore.updateActionTraceExpansion(
+            expandRunning = enabled,
+            expandCompleted = preferences.value.expandCompletedActionTraces,
+        )
 
-    fun setExpandCompletedActionTraces(enabled: Boolean) = settingsStore.updateExpandCompletedActionTraces(enabled)
+    fun setExpandCompletedActionTraces(enabled: Boolean) =
+        settingsStore.updateActionTraceExpansion(
+            expandRunning = preferences.value.expandRunningActionTraces,
+            expandCompleted = enabled,
+        )
+
+    fun setNotifications(notifications: NotificationPreferences) = settingsStore.updateNotifications(notifications)
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

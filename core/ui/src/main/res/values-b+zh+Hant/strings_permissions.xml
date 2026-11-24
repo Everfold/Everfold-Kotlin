@@ -6,6 +6,11 @@
     <string name="perm_action_notification_settings">通知設定</string>
     <string name="perm_action_request">申請權限</string>
 
+    <string name="perm_live_updates_title">即時活動 / 流體雲通知</string>
+    <string name="perm_live_updates_subtitle">切入背景時在狀態列膠囊與鎖定螢幕卡片即時顯示 Agent 執行進度</string>
+    <string name="perm_action_live_updates_settings">即時活動設定</string>
+    <string name="perm_action_enable_live_updates">開啟即時活動</string>
+
     <string name="perm_background_title">允許背景執行</string>
     <string name="perm_background_subtitle">將應用程式加入電池最佳化白名單，避免長任務被系統暫停</string>
     <string name="perm_status_allowed">已允許</string>

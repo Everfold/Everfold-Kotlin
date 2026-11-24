@@ -5,6 +5,7 @@ import com.everfold.core.model.AnimationSpeed
 import com.everfold.core.model.AppLanguage
 import com.everfold.core.model.AppPreferences
 import com.everfold.core.model.ChatTextSize
+import com.everfold.core.model.NotificationPreferences
 import com.everfold.core.model.SeedColorPreset
 import com.everfold.core.model.ThemeColorMode
 import com.everfold.core.model.ThemeMode
@@ -49,12 +50,20 @@ class InMemoryAppSettingsStore : AppSettingsStore {
         _preferences.update { it.copy(autoCollapseLongMessages = enabled) }
     }
 
-    override fun updateExpandRunningActionTraces(enabled: Boolean) {
-        _preferences.update { it.copy(expandRunningActionTraces = enabled) }
+    override fun updateActionTraceExpansion(
+        expandRunning: Boolean,
+        expandCompleted: Boolean,
+    ) {
+        _preferences.update {
+            it.copy(
+                expandRunningActionTraces = expandRunning,
+                expandCompletedActionTraces = expandCompleted,
+            )
+        }
     }
 
-    override fun updateExpandCompletedActionTraces(enabled: Boolean) {
-        _preferences.update { it.copy(expandCompletedActionTraces = enabled) }
+    override fun updateNotifications(notifications: NotificationPreferences) {
+        _preferences.update { it.copy(notifications = notifications) }
     }
 
     override fun markOnboardingCompleted() {

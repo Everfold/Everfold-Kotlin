@@ -6,6 +6,11 @@
     <string name="perm_action_notification_settings">通知设置</string>
     <string name="perm_action_request">申请权限</string>
 
+    <string name="perm_live_updates_title">实时活动 / 流体云通知</string>
+    <string name="perm_live_updates_subtitle">切入后台时在状态栏胶囊与锁屏卡片实时显示 Agent 运行进度</string>
+    <string name="perm_action_live_updates_settings">实时活动设置</string>
+    <string name="perm_action_enable_live_updates">开启实时活动</string>
+
     <string name="perm_background_title">允许后台运行</string>
     <string name="perm_background_subtitle">将应用加入电池优化白名单，避免长任务被系统挂起</string>
     <string name="perm_status_allowed">已允许</string>

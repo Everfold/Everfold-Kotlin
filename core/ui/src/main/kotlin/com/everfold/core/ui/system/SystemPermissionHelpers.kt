@@ -2,6 +2,7 @@ package com.everfold.core.ui.system
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -17,6 +18,8 @@ fun readSystemPermissionStatus(context: Context): SystemPermissionStatus =
     SystemPermissionStatus(
         notificationsGranted = hasNotificationPermission(context),
         backgroundUnrestricted = isIgnoringBatteryOptimizations(context),
+        promotedNotificationsSupported = isPromotedNotificationsSupported(),
+        promotedNotificationsGranted = hasPromotedNotificationsPermission(context),
     )
 
 fun hasNotificationPermission(context: Context): Boolean =
@@ -27,6 +30,15 @@ fun hasNotificationPermission(context: Context): Boolean =
         ) == PackageManager.PERMISSION_GRANTED
     } else {
         NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+fun isPromotedNotificationsSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+
+fun hasPromotedNotificationsPermission(context: Context): Boolean =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        context.getSystemService(NotificationManager::class.java)?.canPostPromotedNotifications() == true
+    } else {
+        false
     }
 
 fun isIgnoringBatteryOptimizations(context: Context): Boolean {
@@ -41,6 +53,19 @@ fun openNotificationSettings(context: Context) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     launchSafely(context, intent) { openAppDetailsSettings(context) }
+}
+
+fun openPromotedNotificationSettings(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        val intent =
+            Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        launchSafely(context, intent) { openNotificationSettings(context) }
+    } else {
+        openNotificationSettings(context)
+    }
 }
 
 @SuppressLint("BatteryLife")
